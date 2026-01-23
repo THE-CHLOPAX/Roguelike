@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "jsx": "react-jsx",
+    "paths": {
+      "@tgdf": [
+        "src/lib/index.ts"
+      ],
+      "@tgdf/*": [
+        "src/lib/*"
+      ]
+    }
+  },
+  "include": [
+    "src/renderer/**/*"
+  ],
+  "exclude": [
+    "src/main/**/*",
+    "node_modules"
+  ]
+}

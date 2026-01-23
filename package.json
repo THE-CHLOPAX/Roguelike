@@ -1,0 +1,153 @@
+{
+  "name": "tgdf",
+  "version": "1.1.4",
+  "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
+  "main": "main.js",
+  "homepage": "./",
+  "scripts": {
+    "dev": "concurrently --kill-others --names \"WEBPACK,ELECTRON\" --prefix-colors \"blue,green\" \"npm run webpack-dev\" \"wait-on http://localhost:3000 && npm run electron\"",
+    "webpack-dev": "cross-env NODE_ENV=development webpack serve --mode=development",
+    "electron": "cross-env NODE_ENV=development electron .",
+    "build": "webpack --mode=production",
+    "build-app": "sh scripts/build.sh",
+    "build-icons": "node scripts/build-icons.js",
+    "build-electron": "npm run build-app && electron-builder",
+    "copy-assets": "rm -rf release/dist/assets && node -e \"require('fs').cpSync('src/renderer/assets', 'release/dist/assets', {recursive: true})\"",
+    "dist": "npm run build-app && electron-builder --publish=never",
+    "dist-mac": "npm run build-app && electron-builder --mac",
+    "dist-win": "npm run build-app && electron-builder --win",
+    "dist-all": "npm run build-app && electron-builder -mw",
+    "pack": "npm run build-app && electron-builder --dir",
+    "postinstall": "cp scripts/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "test": "npx vitest run"
+  },
+  "build": {
+    "appId": "com.tgdf.app",
+    "productName": "TGDF App",
+    "directories": {
+      "output": "release/packages",
+      "buildResources": "assets"
+    },
+    "files": [
+      {
+        "from": "release/dist",
+        "to": "dist"
+      },
+      {
+        "from": "release/dist-main",
+        "to": "dist-main"
+      },
+      "main.js",
+      "node_modules/",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "asarUnpack": [
+      "node_modules/@dimforge/**"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "release/icons/mac/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "icon": "release/icons/win/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "author": "Michał Zagojski",
+  "license": "ISC",
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.19.3",
+    "@radix-ui/themes": "^3.2.1",
+    "cross-env": "^10.1.0",
+    "electron-is-dev": "^3.0.1",
+    "gsap": "^3.14.2",
+    "icon-gen": "^5.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "stats.js": "^0.17.0",
+    "three": "^0.181.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.38.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/electron": "^1.6.12",
+    "@types/node": "^24.9.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@types/three": "^0.181.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "@vitest/ui": "^4.0.11",
+    "babel-loader": "^10.0.0",
+    "concurrently": "^9.2.1",
+    "copy-webpack-plugin": "^13.0.1",
+    "css-loader": "^7.1.2",
+    "electron": "^38.4.0",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-perfectionist": "^4.15.1",
+    "html-webpack-plugin": "^5.6.4",
+    "jsdom": "^27.2.0",
+    "prettier": "^3.8.0",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.11",
+    "wait-on": "^9.0.1",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}

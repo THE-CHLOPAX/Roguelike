@@ -1,0 +1,47 @@
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Disable text selection globally */
+* {
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE10+/Edge */
+  user-select: none;
+  /* Standard */
+}
+
+body {
+  background: #000;
+}
+
+/* Re-enable text selection for inputs and contenteditable */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+button,
+input[type="button"],
+input[type="checkbox"] {
+  cursor: pointer !important;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+
+  >.radix-themes {
+    background: #000;
+  }
+}

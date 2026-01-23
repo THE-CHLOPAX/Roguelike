@@ -1,0 +1,11 @@
+#!/bin/sh
+
+echo " "
+echo "====== Updating version ======"
+echo " "
+
+git add ./ && npm version patch --no-git-tag-version && git add ./
+
+status=$?
+
+exit $status

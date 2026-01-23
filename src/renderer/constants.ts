@@ -1,0 +1,1 @@
+export const TEST_TEAPOT_ASSET_ID = 'test-teapot-asset-id';
