@@ -1,6 +1,6 @@
 {
-  "name": "tgdf",
-  "version": "1.1.5",
+  "name": "roguelike",
+  "version": "1.0.1",
   "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
   "main": "main.js",
   "homepage": "./",
@@ -20,7 +20,7 @@
     "dist-win": "npm run build-app && electron-builder --win",
     "dist-all": "npm run build-app && electron-builder -mw",
     "pack": "npm run build-app && electron-builder --dir",
-    "postinstall": "cp scripts/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit",
+    "postinstall": "if [ \"$CI\" != \"true\" ] && [ -d .git/hooks ]; then cp scripts/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit; fi",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "type-check": "tsc --noEmit",
@@ -28,8 +28,8 @@
     "test": "npx vitest run"
   },
   "build": {
-    "appId": "com.tgdf.app",
-    "productName": "TGDF App",
+    "appId": "com.roguelike.app",
+    "productName": "Roguelike",
     "directories": {
       "output": "release/packages",
       "buildResources": "assets"
