@@ -15,11 +15,13 @@ export class Camera extends THREE.PerspectiveCamera {
   private _keyboardInput: KeyboardInput;
   private _mouseInput: MouseInput;
 
+  private _isDragging: boolean = false;
+
   private _direction: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
   private _acceleration: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
   private _maxAcceleration: THREE.Vector3 = new THREE.Vector3(10, 10, 10);
   private _accelerationDamping: number = 0.8;
-  private _decelerationDamping: number = 0.01;
+  private _decelerationDamping: number = 0.03;
 
   constructor({ options, scene }: CameraDependencies) {
     super(options.fov, options.aspect, options.near, options.far);
@@ -27,6 +29,9 @@ export class Camera extends THREE.PerspectiveCamera {
     if (!scene.keyboardInput || !scene.mouseInput) {
       throw new Error('Camera requires keyboardInput and mouseInput dependencies.');
     }
+
+    this.rotation.order = 'YXZ';
+    this.up.set(0, 1, 0);
 
     this._keyboardInput = scene.keyboardInput;
     this._mouseInput = scene.mouseInput;
@@ -50,6 +55,12 @@ export class Camera extends THREE.PerspectiveCamera {
     this._keyboardInput.addKeyPressListener('d', () => {
       this._direction.x = 1;
     });
+    this._keyboardInput.addKeyPressListener('Space', () => {
+      this._direction.y = 1;
+    });
+    this._keyboardInput.addKeyPressListener('c', () => {
+      this._direction.y = -1;
+    });
 
     this._keyboardInput.addKeyUpListener('w', () => {
       this._direction.z = 0;
@@ -63,13 +74,41 @@ export class Camera extends THREE.PerspectiveCamera {
     this._keyboardInput.addKeyUpListener('d', () => {
       this._direction.x = 0;
     });
+    this._keyboardInput.addKeyUpListener('Space', () => {
+      this._direction.y = 0;
+    });
+    this._keyboardInput.addKeyUpListener('c', () => {
+      this._direction.y = 0;
+    });
   }
 
-  private _handleMouseInput(): void {}
+  private _handleMouseInput(): void {
+    this._mouseInput.addMouseClickListener('left', () => {
+      document.body.style.cursor = 'grabbing';
+      this._isDragging = true;
+    });
 
-  private _accelerateInDirection(direction: THREE.Vector3): void {
+    this._mouseInput.addMouseUpListener('left', () => {
+      document.body.style.cursor = 'grab';
+      this._isDragging = false;
+    });
+
+    this._mouseInput.addMouseMoveListener((e: MouseEvent) => {
+      if (this._isDragging) {
+        const movementX = e.movementX || 0;
+        const movementY = e.movementY || 0;
+
+        this.rotation.y -= movementX * 0.002;
+        this.rotation.x -= movementY * 0.002;
+
+        // Clamp the vertical rotation to prevent flipping
+        this.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.rotation.x));
+      }
+    });
+  }
+
+  private _applyAcceleration(direction: THREE.Vector3): void {
     for (const axis of ['x', 'y', 'z'] as const) {
-      console.log('axis:', axis, ' direction:', direction[axis]);
       if (
         direction[axis] === -1 &&
         compareFloats(this._acceleration[axis], 'greater-than', -this._maxAcceleration[axis])
@@ -97,7 +136,7 @@ export class Camera extends THREE.PerspectiveCamera {
   }
 
   private _onUpdate(value: { deltaTime: number }): void {
-    this._accelerateInDirection(this._direction);
+    this._applyAcceleration(this._direction);
 
     // Update local translation based on acceleration
     this.translateX(this._acceleration.x * value.deltaTime);

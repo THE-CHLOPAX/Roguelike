@@ -28,7 +28,7 @@ export function useKeyboard(): KeyboardInput {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const keyId = e.code || e.key;
+      const keyId = String(e.code || e.key).toLowerCase();
 
       // Fire anyInteraction listeners for any key press
       for (const handler of anyInteractionHandlers.current) {
@@ -89,7 +89,7 @@ export function useKeyboard(): KeyboardInput {
     }
 
     function onKeyUp(e: KeyboardEvent) {
-      const keyId = e.code || e.key;
+      const keyId = String(e.code || e.key).toLowerCase();
 
       // Clear intervals for this key
       const keyData = pressedKeys.current.get(keyId);

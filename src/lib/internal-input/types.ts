@@ -53,9 +53,15 @@ export type MouseInput = {
     handler: (e: MouseEvent) => void,
     once?: boolean
   ) => () => void;
+  addMouseUpListener: (
+    matcher: ButtonMatcher,
+    handler: (e: MouseEvent) => void,
+    once?: boolean
+  ) => () => void;
   onAnyInteraction: (handler: (e: MouseEvent) => void, once?: boolean) => () => void;
   removeMouseMoveListener: (handler: (e: MouseEvent) => void) => void;
   removeMouseClickListener: (matcher: ButtonMatcher, handler: (e: MouseEvent) => void) => void;
+  removeMouseUpListener: (matcher: ButtonMatcher, handler: (e: MouseEvent) => void) => void;
   removeAllListeners: () => void;
   disable: () => void;
   enable: () => void;

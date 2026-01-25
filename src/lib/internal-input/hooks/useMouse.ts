@@ -43,6 +43,7 @@ export function useMouse(): MouseInput {
   // Centralized sets for default (window) listeners
   const mouseMoveHandlers = useRef<Set<(e: MouseEvent) => void>>(new Set());
   const mouseClickHandlers = useRef<Set<MouseHandlerRecord>>(new Set());
+  const mouseUpHandlers = useRef<Set<MouseHandlerRecord>>(new Set());
   const anyInteractionHandlers = useRef<Set<(e: MouseEvent) => void>>(new Set());
 
   useEffect(() => {
@@ -82,14 +83,38 @@ export function useMouse(): MouseInput {
       }
     }
 
+    function onMouseUp(e: MouseEvent) {
+      if (disabledRef.current) return;
+
+      // Fire anyInteraction listeners
+      for (const handler of anyInteractionHandlers.current) {
+        try {
+          handler(e);
+        } catch {
+          // swallow handler errors
+        }
+      }
+
+      for (const rec of mouseUpHandlers.current) {
+        try {
+          if (matchesButton(rec.matcher, e)) rec.handler(e);
+        } catch {
+          // swallow handler errors
+        }
+      }
+    }
+
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mouseup', onMouseUp);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mouseup', onMouseUp);
       mouseMoveHandlers.current.clear();
       mouseClickHandlers.current.clear();
+      mouseUpHandlers.current.clear();
       anyInteractionHandlers.current.clear();
     };
   }, []);
@@ -121,6 +146,22 @@ export function useMouse(): MouseInput {
     return () => mouseClickHandlers.current.delete(record);
   }
 
+  function addMouseUpListener(
+    matcher: ButtonMatcher,
+    handler: (e: MouseEvent) => void,
+    once?: boolean
+  ): () => void {
+    const wrappedHandler = (e: MouseEvent) => {
+      handler(e);
+      if (once) {
+        mouseUpHandlers.current.delete(record);
+      }
+    };
+    const record: MouseHandlerRecord = { matcher, handler: wrappedHandler };
+    mouseUpHandlers.current.add(record);
+    return () => mouseUpHandlers.current.delete(record);
+  }
+
   function onAnyInteraction(handler: (e: MouseEvent) => void, once?: boolean): () => void {
     const wrappedHandler = (e: MouseEvent) => {
       handler(e);
@@ -140,6 +181,15 @@ export function useMouse(): MouseInput {
     for (const rec of mouseClickHandlers.current) {
       if (rec.matcher === matcher && rec.handler === handler) {
         mouseClickHandlers.current.delete(rec);
+        break;
+      }
+    }
+  }
+
+  function removeMouseUpListener(matcher: ButtonMatcher, handler: (e: MouseEvent) => void) {
+    for (const rec of mouseUpHandlers.current) {
+      if (rec.matcher === matcher && rec.handler === handler) {
+        mouseUpHandlers.current.delete(rec);
         break;
       }
     }
@@ -168,9 +218,11 @@ export function useMouse(): MouseInput {
     },
     addMouseMoveListener,
     addMouseClickListener,
+    addMouseUpListener,
     onAnyInteraction,
     removeMouseMoveListener,
     removeMouseClickListener,
+    removeMouseUpListener,
     removeAllListeners,
     disable,
     enable,
