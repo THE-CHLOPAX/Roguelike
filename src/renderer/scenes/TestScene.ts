@@ -18,8 +18,7 @@ export class TestScene extends Scene {
 
     this.camera = new Camera({
       options: { fov: 75, aspect: window.innerWidth / window.innerHeight, near: 0.1, far: 1000 },
-      keyboardInput: this.keyboardInput,
-      mouseInput: this.mouseInput,
+      scene: this,
     });
     this.camera.position.z = 15;
     this.camera.position.y = 5;

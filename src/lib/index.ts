@@ -43,4 +43,5 @@ export { GameObjectComponent } from './internal-game-components/GameObjectCompon
 
 // Internal Math
 export * from './internal-math/utils/clamp';
-
+export * from './internal-math/utils/compareFloats';
+export * from './internal-math/utils/filterBelow';

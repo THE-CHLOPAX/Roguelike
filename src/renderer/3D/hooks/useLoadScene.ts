@@ -30,7 +30,7 @@ export function useLoadScene({
   // Load all assets
   useEffect(() => {
     loadWithProgress(assetsToLoad, setLoadingProgress);
-  }, [assetsToLoad]);
+  }, []);
 
   // Instantiate scene once assets are loaded
   useEffect(() => {

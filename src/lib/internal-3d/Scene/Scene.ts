@@ -52,6 +52,8 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
       }
     });
 
+    this.events.trigger('update', { deltaTime });
+
     this.onUpdate(deltaTime);
   }
 
@@ -83,6 +85,8 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
           }
         }
       });
+
+      this._emitter.removeAll();
     } catch (error) {
       logger({ message: 'Scene: Error during disposal:', type: 'error' });
     }

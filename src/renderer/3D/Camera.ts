@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { KeyboardInput, MouseInput } from '@tgdf';
+import { KeyboardInput, MouseInput, Scene, compareFloats, filterBelow } from '@tgdf';
 
 export type CameraDependencies = {
   options: {
@@ -8,23 +8,100 @@ export type CameraDependencies = {
     near: number;
     far: number;
   };
-  keyboardInput?: KeyboardInput;
-  mouseInput?: MouseInput;
+  scene: Scene;
 };
 
 export class Camera extends THREE.PerspectiveCamera {
   private _keyboardInput: KeyboardInput;
   private _mouseInput: MouseInput;
 
-  constructor({ options, keyboardInput, mouseInput }: CameraDependencies) {
+  private _direction: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+  private _acceleration: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+  private _maxAcceleration: THREE.Vector3 = new THREE.Vector3(10, 10, 10);
+  private _accelerationDamping: number = 0.8;
+  private _decelerationDamping: number = 0.01;
+
+  constructor({ options, scene }: CameraDependencies) {
     super(options.fov, options.aspect, options.near, options.far);
 
-    console.log(keyboardInput, mouseInput);
-    if (!keyboardInput || !mouseInput) {
+    if (!scene.keyboardInput || !scene.mouseInput) {
       throw new Error('Camera requires keyboardInput and mouseInput dependencies.');
     }
 
-    this._keyboardInput = keyboardInput;
-    this._mouseInput = mouseInput;
+    this._keyboardInput = scene.keyboardInput;
+    this._mouseInput = scene.mouseInput;
+
+    scene.events.on('update', this._onUpdate.bind(this));
+
+    this._handleKeyboardInput();
+    this._handleMouseInput();
+  }
+
+  private _handleKeyboardInput(): void {
+    this._keyboardInput.addKeyPressListener('w', () => {
+      this._direction.z = -1;
+    });
+    this._keyboardInput.addKeyPressListener('a', () => {
+      this._direction.x = -1;
+    });
+    this._keyboardInput.addKeyPressListener('s', () => {
+      this._direction.z = 1;
+    });
+    this._keyboardInput.addKeyPressListener('d', () => {
+      this._direction.x = 1;
+    });
+
+    this._keyboardInput.addKeyUpListener('w', () => {
+      this._direction.z = 0;
+    });
+    this._keyboardInput.addKeyUpListener('a', () => {
+      this._direction.x = 0;
+    });
+    this._keyboardInput.addKeyUpListener('s', () => {
+      this._direction.z = 0;
+    });
+    this._keyboardInput.addKeyUpListener('d', () => {
+      this._direction.x = 0;
+    });
+  }
+
+  private _handleMouseInput(): void {}
+
+  private _accelerateInDirection(direction: THREE.Vector3): void {
+    for (const axis of ['x', 'y', 'z'] as const) {
+      console.log('axis:', axis, ' direction:', direction[axis]);
+      if (
+        direction[axis] === -1 &&
+        compareFloats(this._acceleration[axis], 'greater-than', -this._maxAcceleration[axis])
+      ) {
+        const accelerationDamping = this._accelerationDamping <= 0 ? 1 : this._accelerationDamping;
+        this._acceleration[axis] -= accelerationDamping;
+      }
+      if (
+        direction[axis] === 1 &&
+        compareFloats(this._acceleration[axis], 'less-than', this._maxAcceleration[axis])
+      ) {
+        const accelerationDamping = this._accelerationDamping <= 0 ? 1 : this._accelerationDamping;
+        this._acceleration[axis] += accelerationDamping;
+      }
+      // Stop accelerating forward/backward
+      if (direction[axis] === 0) {
+        const decelerationDamping =
+          this._decelerationDamping <= 0 ? 1 : 1 + this._decelerationDamping;
+        this._acceleration[axis] = filterBelow(
+          this._acceleration[axis] / decelerationDamping,
+          1e-2
+        );
+      }
+    }
+  }
+
+  private _onUpdate(value: { deltaTime: number }): void {
+    this._accelerateInDirection(this._direction);
+
+    // Update local translation based on acceleration
+    this.translateX(this._acceleration.x * value.deltaTime);
+    this.translateY(this._acceleration.y * value.deltaTime);
+    this.translateZ(this._acceleration.z * value.deltaTime);
   }
 }
