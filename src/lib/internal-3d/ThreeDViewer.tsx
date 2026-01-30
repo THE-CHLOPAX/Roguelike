@@ -1,6 +1,6 @@
 import Stats from 'stats.js';
 import * as THREE from 'three';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Scene, logger, useGraphicsStore } from '@tgdf';
 
 import { SceneEventsMap } from '../internal-3d/types/scene';
@@ -25,18 +25,16 @@ type RendererState = {
   facesCount?: number;
 };
 
-export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
-  {
-    scene,
-    camera,
-    resX,
-    resY,
-    width,
-    height,
-    isPaused,
-    debug
-  }: ThreeDViewerProps<T>) {
-
+export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
+  scene,
+  camera,
+  resX,
+  resY,
+  width,
+  height,
+  isPaused,
+  debug,
+}: ThreeDViewerProps<T>) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const debugContainerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -44,9 +42,12 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const statsRef = useRef<Stats | null>(null);
 
+  const rendererCleanupRef = useRef<(() => void) | undefined>(null);
+  const rafIdRef = useRef<number | null>(null);
+
   const { antialiasing } = useGraphicsStore();
 
-  function renderFrame() {
+  const renderFrame = useCallback(() => {
     if (rendererRef.current) {
       const deltaTime = clockRef.current.getDelta();
       statsRef.current?.begin();
@@ -54,7 +55,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
       scene.update(deltaTime);
       statsRef.current?.end();
     }
-  }
+  }, [scene, camera]);
 
   function updateCameraAspect() {
     if (camera instanceof THREE.PerspectiveCamera && canvasRef.current) {
@@ -78,20 +79,37 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
     }
   }
 
-  function pauseRendering() {
+  function disposeRenderer() {
+    if (rendererRef.current) {
+      rendererRef.current.dispose();
+      rendererRef.current.forceContextLoss();
+      rendererRef.current = null;
+    }
+  }
+
+  function resetRendererAndCanvas() {
+    if (rendererCleanupRef.current) {
+      rendererCleanupRef.current();
+    }
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+  }
+
+  const pauseRendering = useCallback(() => {
     if (rendererRef.current) {
       rendererRef.current.setAnimationLoop(null);
       scene.disableInput();
     }
-  }
+  }, [scene]);
 
-  function startRendering() {
+  const startRendering = useCallback(() => {
     if (rendererRef.current) {
       clockRef.current.oldTime = performance.now();
       rendererRef.current.setAnimationLoop(renderFrame);
       scene.enableInput();
     }
-  }
+  }, [scene, renderFrame]);
 
   function initializeRenderer() {
     if (!containerRef.current) {
@@ -108,7 +126,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
     // Create renderer with the new canvas
     rendererRef.current = new THREE.WebGLRenderer({
       antialias: antialiasing,
-      canvas
+      canvas,
     });
 
     rendererRef.current.shadowMap.enabled = true;
@@ -125,13 +143,9 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
       pauseRendering();
     }
 
-    // Cleanup on unmount or when antialiasing changes
+    // Return cleanup
     return () => {
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-        rendererRef.current.forceContextLoss();
-        rendererRef.current = null;
-      }
+      disposeRenderer();
       // Remove the canvas from DOM
       if (canvasRef.current) {
         canvasRef.current.remove();
@@ -140,62 +154,63 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
     };
   }
 
-  // Track renderer state for debug info
-  useEffect(() => {
-    let rafId: number;
+  function updateLoop(): number {
+    // Read renderer state directly in the loop to get latest values
+    if (rendererRef.current) {
+      const size = rendererRef.current.getSize(new THREE.Vector2());
+      const newState: RendererState = {
+        resolutionX: size.x,
+        resolutionY: size.y,
+        antialiasing: rendererRef.current.getContext().getContextAttributes()?.antialias || false,
+        sceneObjects: scene.children.length,
+        drawCalls: rendererRef.current.info.render.calls,
+        facesCount: rendererRef.current.info.render.triangles,
+      };
 
+      if (debugContainerRef.current) {
+        Object.entries(newState).forEach(([key, value]) => {
+          const preElement = debugContainerRef.current!.querySelector(`pre[data-key='${key}']`);
+          if (preElement) {
+            preElement.textContent = `${key}: ${value}`;
+          } else {
+            const newPre = document.createElement('pre');
+            newPre.style.color = 'white';
+            newPre.style.fontSize = '10px';
+            newPre.dataset.key = key;
+            newPre.textContent = `${key}: ${value}`;
+            debugContainerRef.current!.appendChild(newPre);
+          }
+        });
+      }
+    }
+    return requestAnimationFrame(updateLoop);
+  }
+
+  // Renderer initialization
+  useEffect(() => {
     if (!statsRef.current) {
       statsRef.current = new Stats();
       statsRef.current.dom.style.position = 'static';
       debugContainerRef.current?.prepend(statsRef.current.dom);
     }
 
-    function updateLoop() {
-      // Read renderer state directly in the loop to get latest values
-      if (rendererRef.current) {
-        const size = rendererRef.current.getSize(new THREE.Vector2());
-        const newState: RendererState = {
-          resolutionX: size.x,
-          resolutionY: size.y,
-          antialiasing: rendererRef.current.getContext().getContextAttributes()?.antialias || false,
-          sceneObjects: scene.children.length,
-          drawCalls: rendererRef.current.info.render.calls,
-          facesCount: rendererRef.current.info.render.triangles,
-        };
-
-        if (debugContainerRef.current) {
-          Object.entries(newState).forEach(([key, value]) => {
-            const preElement = debugContainerRef.current!.querySelector(`pre[data-key='${key}']`);
-            if (preElement) {
-              preElement.textContent = `${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: ${value}`;
-            } else {
-              const newPre = document.createElement('pre');
-              newPre.style.color = 'white';
-              newPre.style.fontSize = '10px';
-              newPre.dataset.key = key;
-              newPre.textContent = `${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: ${value}`;
-              debugContainerRef.current!.appendChild(newPre);
-            }
-          });
-        }
-      }
-      rafId = requestAnimationFrame(updateLoop);
-    }
-
-    updateLoop();
+    rendererCleanupRef.current = initializeRenderer();
+    rafIdRef.current = updateLoop();
 
     return () => {
-      cancelAnimationFrame(rafId);
+      resetRendererAndCanvas();
       scene.dispose();
     };
   }, []);
 
   // On antialiasing change, re-initialize renderer
   useEffect(() => {
-    const cleanup = initializeRenderer();
-    return () => {
-      if (cleanup) cleanup();
-    };
+    if (!canvasRef.current) return;
+
+    resetRendererAndCanvas();
+
+    rendererCleanupRef.current = initializeRenderer();
+    rafIdRef.current = updateLoop();
   }, [antialiasing]);
 
   // Update resolution when change
@@ -203,8 +218,8 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
     if (!canvasRef.current) return;
 
     setRendererResolution(
-      resX ?? (canvasRef.current?.clientWidth),
-      resY ?? (canvasRef.current?.clientHeight)
+      resX ?? canvasRef.current?.clientWidth,
+      resY ?? canvasRef.current?.clientHeight
     );
     // Render a frame to apply changes immediately
     if (rendererRef.current) {
@@ -240,16 +255,19 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>(
         width: width ? `${width}px` : '100%',
         height: height ? `${height}px` : '100%',
         overflow: 'hidden',
-      }}>
+      }}
+    >
       {debug && (
-        <div style={{
-          position: 'absolute',
-          top: 10,
-          left: 10,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          padding: '10px',
-        }} ref={debugContainerRef}>
-        </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            padding: '10px',
+          }}
+          ref={debugContainerRef}
+        ></div>
       )}
     </div>
   );
