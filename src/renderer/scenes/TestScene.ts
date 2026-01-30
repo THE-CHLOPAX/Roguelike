@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { logger, Scene, useAssetStore } from '@tgdf';
+import { logger, Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
+import { Camera } from '../3D/Camera';
 import { TEST_TEAPOT_ASSET_ID } from '../constants';
 
 export class TestScene extends Scene {
@@ -8,15 +9,22 @@ export class TestScene extends Scene {
 
   private _teapot: THREE.Object3D | undefined;
 
-  constructor() {
-    super();
+  constructor(options: SceneConstructorOptions) {
+    super(options);
     this.name = 'Test Scene';
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
+
+    this.camera = new Camera({
+      options: {
+        fov: 75,
+        aspect: window.innerWidth / window.innerHeight,
+        near: 0.1,
+        far: 1000,
+        maxAcceleration: new THREE.Vector3(100, 20, 20),
+        accelerationRate: 0.2,
+        decelerationDamping: 0.03,
+      },
+      scene: this,
+    });
     this.camera.position.z = 15;
     this.camera.position.y = 5;
 

@@ -13,6 +13,7 @@ function createWindow(): void {
     width: 1280,
     height: 720,
     backgroundColor: '#000000',
+    resizable: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -49,8 +50,18 @@ app.on('window-all-closed', (): void => {
 });
 
 export const main = {
-  send: <T extends keyof NativeEventMainMap>(channel: T, data: NativeEventMainMap[T]) => mainWindow?.webContents.send(channel, data ?? {}),
-  on: <T extends keyof NativeEventRendererMap>(channel: T, func: (args: NativeEventRendererMap[T]) => void) => ipcMain.on(channel, (_, ...args) => func(args[0])),
-  once: <T extends keyof NativeEventRendererMap>(channel: T, func: (args: NativeEventRendererMap[T]) => void) => ipcMain.once(channel, (_, ...args) => func(args[0])),
-  off: <T extends keyof NativeEventRendererMap>(channel: T, func: (args: NativeEventRendererMap[T]) => void) => ipcMain.off(channel, (_, ...args) => func(args[0])),
+  send: <T extends keyof NativeEventMainMap>(channel: T, data: NativeEventMainMap[T]) =>
+    mainWindow?.webContents.send(channel, data ?? {}),
+  on: <T extends keyof NativeEventRendererMap>(
+    channel: T,
+    func: (args: NativeEventRendererMap[T]) => void
+  ) => ipcMain.on(channel, (_, ...args) => func(args[0])),
+  once: <T extends keyof NativeEventRendererMap>(
+    channel: T,
+    func: (args: NativeEventRendererMap[T]) => void
+  ) => ipcMain.once(channel, (_, ...args) => func(args[0])),
+  off: <T extends keyof NativeEventRendererMap>(
+    channel: T,
+    func: (args: NativeEventRendererMap[T]) => void
+  ) => ipcMain.off(channel, (_, ...args) => func(args[0])),
 };
