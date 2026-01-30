@@ -3,8 +3,15 @@ import { KeyMatcher, KeyboardInput, KeyboardHandlerRecord } from '@tgdf';
 
 function matches(matcher: KeyMatcher, e: KeyboardEvent): boolean {
   if (typeof matcher === 'function') return matcher(e);
-  if (typeof matcher === 'string') return e.key === matcher || e.code === matcher;
-  if (Array.isArray(matcher)) return matcher.some((m) => e.key === m || e.code === m);
+  if (typeof matcher === 'string')
+    return (
+      e.key.toLowerCase() === matcher.toLowerCase() ||
+      e.code.toLowerCase() === matcher.toLowerCase()
+    );
+  if (Array.isArray(matcher))
+    return matcher.some(
+      (m) => e.key.toLowerCase() === m.toLowerCase() || e.code.toLowerCase() === m.toLowerCase()
+    );
   return false;
 }
 

@@ -80,43 +80,23 @@ export class Camera extends THREE.PerspectiveCamera {
   }
 
   private _handleKeyboardInput(): void {
-    this._keyboardInput.addKeyPressListener('w', () => {
-      this._direction.z = -1;
-    });
-    this._keyboardInput.addKeyPressListener('a', () => {
-      this._direction.x = -1;
-    });
-    this._keyboardInput.addKeyPressListener('s', () => {
-      this._direction.z = 1;
-    });
-    this._keyboardInput.addKeyPressListener('d', () => {
-      this._direction.x = 1;
-    });
-    this._keyboardInput.addKeyPressListener('Space', () => {
-      this._direction.y = 1;
-    });
-    this._keyboardInput.addKeyPressListener('c', () => {
-      this._direction.y = -1;
-    });
+    const keyMappings = [
+      { key: 'w', axis: 'z' as const, value: -1 },
+      { key: 'a', axis: 'x' as const, value: -1 },
+      { key: 's', axis: 'z' as const, value: 1 },
+      { key: 'd', axis: 'x' as const, value: 1 },
+      { key: 'Space', axis: 'y' as const, value: 1 },
+      { key: 'c', axis: 'y' as const, value: -1 },
+    ];
 
-    this._keyboardInput.addKeyUpListener('w', () => {
-      this._direction.z = 0;
-    });
-    this._keyboardInput.addKeyUpListener('a', () => {
-      this._direction.x = 0;
-    });
-    this._keyboardInput.addKeyUpListener('s', () => {
-      this._direction.z = 0;
-    });
-    this._keyboardInput.addKeyUpListener('d', () => {
-      this._direction.x = 0;
-    });
-    this._keyboardInput.addKeyUpListener('Space', () => {
-      this._direction.y = 0;
-    });
-    this._keyboardInput.addKeyUpListener('c', () => {
-      this._direction.y = 0;
-    });
+    for (const { key, axis, value } of keyMappings) {
+      this._keyboardInput.addKeyPressListener(key, () => {
+        this._direction[axis] = value;
+      });
+      this._keyboardInput.addKeyUpListener(key, () => {
+        this._direction[axis] = 0;
+      });
+    }
   }
 
   private _handleMouseInput(): void {

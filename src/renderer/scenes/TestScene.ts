@@ -13,9 +13,6 @@ export class TestScene extends Scene {
     super(options);
     this.name = 'Test Scene';
 
-    console.log('TestScene keyboardInput:', this.keyboardInput);
-    console.log('TestScene mouseInput:', this.mouseInput);
-
     this.camera = new Camera({
       options: {
         fov: 75,

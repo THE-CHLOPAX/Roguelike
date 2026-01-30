@@ -1,7 +1,5 @@
 import * as THREE from 'three';
-import { AssetState, KeyboardInput, MouseInput } from '@tgdf';
-
-import { Scene } from '../Scene/Scene';
+import { KeyboardInput, MouseInput } from '@tgdf';
 
 export type SceneConstructorOptions = {
   physics?: {
