@@ -9,7 +9,7 @@ export function TestView() {
   const { goBack } = useViewsStore();
   const { loadModelJSON } = useAssetStore();
 
-  const { scene } = useLoadScene({
+  const { scene, loadingProgress } = useLoadScene({
     sceneClass: TestScene,
     assetsToLoad: [
       loadModelJSON(TEST_TEAPOT_ASSET_ID, './assets/teapot.json', 'Utah_teapot_(solid).stl'),
@@ -29,6 +29,6 @@ export function TestView() {
   return loadingFinished && scene ? (
     <ThreeDViewer scene={scene} camera={scene.camera} debug />
   ) : (
-    <InternalLoader progress={scene ? 100 : 0} onComplete={() => setLoadingFinished(true)} />
+    <InternalLoader progress={loadingProgress * 100} onComplete={() => setLoadingFinished(true)} />
   );
 }

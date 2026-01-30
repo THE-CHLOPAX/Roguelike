@@ -198,8 +198,11 @@ export function useMouse(): MouseInput {
     return () => mouseUpHandlers.current.delete(record);
   }
 
-  function onAnyInteraction(handler: (e: MouseEvent) => void, once?: boolean): () => void {
-    const wrappedHandler = (e: MouseEvent) => {
+  function onAnyInteraction(
+    handler: (e: MouseEvent | WheelEvent) => void,
+    once?: boolean
+  ): () => void {
+    const wrappedHandler = (e: MouseEvent | WheelEvent) => {
       handler(e);
       if (once) {
         anyInteractionHandlers.current.delete(wrappedHandler);
