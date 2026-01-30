@@ -47,6 +47,7 @@ export type KeyboardInput = {
 export type MouseInput = {
   mouseX: number;
   mouseY: number;
+  addMouseScrollListener: (handler: (e: WheelEvent) => void, once?: boolean) => () => void;
   addMouseMoveListener: (handler: (e: MouseEvent) => void, once?: boolean) => () => void;
   addMouseClickListener: (
     matcher: ButtonMatcher,
@@ -59,6 +60,7 @@ export type MouseInput = {
     once?: boolean
   ) => () => void;
   onAnyInteraction: (handler: (e: MouseEvent) => void, once?: boolean) => () => void;
+  removeMouseScrollListener: (handler: (e: WheelEvent) => void) => void;
   removeMouseMoveListener: (handler: (e: MouseEvent) => void) => void;
   removeMouseClickListener: (matcher: ButtonMatcher, handler: (e: MouseEvent) => void) => void;
   removeMouseUpListener: (matcher: ButtonMatcher, handler: (e: MouseEvent) => void) => void;

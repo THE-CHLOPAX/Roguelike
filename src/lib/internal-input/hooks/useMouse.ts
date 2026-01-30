@@ -41,6 +41,7 @@ export function useMouse(): MouseInput {
   const disabledRef = useRef<boolean>(false);
 
   // Centralized sets for default (window) listeners
+  const mouseScrollHandlers = useRef<Set<(e: WheelEvent) => void>>(new Set());
   const mouseMoveHandlers = useRef<Set<(e: MouseEvent) => void>>(new Set());
   const mouseClickHandlers = useRef<Set<MouseHandlerRecord>>(new Set());
   const mouseUpHandlers = useRef<Set<MouseHandlerRecord>>(new Set());
@@ -58,6 +59,27 @@ export function useMouse(): MouseInput {
           handler(e);
         } catch {
           // swallow handler errors to avoid breaking others
+        }
+      }
+    }
+
+    function onMouseScroll(e: WheelEvent) {
+      if (disabledRef.current) return;
+
+      // Fire anyInteraction listeners
+      for (const handler of anyInteractionHandlers.current) {
+        try {
+          handler(e);
+        } catch {
+          // swallow handler errors
+        }
+      }
+
+      for (const handler of mouseScrollHandlers.current) {
+        try {
+          handler(e);
+        } catch {
+          // swallow handler errors
         }
       }
     }
@@ -104,20 +126,34 @@ export function useMouse(): MouseInput {
       }
     }
 
+    window.addEventListener('wheel', onMouseScroll);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
 
     return () => {
+      window.removeEventListener('wheel', onMouseScroll);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mouseup', onMouseUp);
+      mouseScrollHandlers.current.clear();
       mouseMoveHandlers.current.clear();
       mouseClickHandlers.current.clear();
       mouseUpHandlers.current.clear();
       anyInteractionHandlers.current.clear();
     };
   }, []);
+
+  function addMouseScrollListener(handler: (e: WheelEvent) => void, once?: boolean): () => void {
+    const wrappedHandler = (e: WheelEvent) => {
+      handler(e);
+      if (once) {
+        mouseScrollHandlers.current.delete(wrappedHandler);
+      }
+    };
+    mouseScrollHandlers.current.add(wrappedHandler);
+    return () => mouseScrollHandlers.current.delete(wrappedHandler);
+  }
 
   function addMouseMoveListener(handler: (e: MouseEvent) => void, once?: boolean): () => void {
     const wrappedHandler = (e: MouseEvent) => {
@@ -173,6 +209,10 @@ export function useMouse(): MouseInput {
     return () => anyInteractionHandlers.current.delete(wrappedHandler);
   }
 
+  function removeMouseScrollListener(handler: (e: WheelEvent) => void) {
+    mouseScrollHandlers.current.delete(handler);
+  }
+
   function removeMouseMoveListener(handler: (e: MouseEvent) => void) {
     mouseMoveHandlers.current.delete(handler);
   }
@@ -216,10 +256,12 @@ export function useMouse(): MouseInput {
     get mouseY() {
       return mouseYRef.current;
     },
+    addMouseScrollListener,
     addMouseMoveListener,
     addMouseClickListener,
     addMouseUpListener,
     onAnyInteraction,
+    removeMouseScrollListener,
     removeMouseMoveListener,
     removeMouseClickListener,
     removeMouseUpListener,

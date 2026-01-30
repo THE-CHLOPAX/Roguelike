@@ -17,7 +17,15 @@ export class TestScene extends Scene {
     console.log('TestScene mouseInput:', this.mouseInput);
 
     this.camera = new Camera({
-      options: { fov: 75, aspect: window.innerWidth / window.innerHeight, near: 0.1, far: 1000 },
+      options: {
+        fov: 75,
+        aspect: window.innerWidth / window.innerHeight,
+        near: 0.1,
+        far: 1000,
+        maxAcceleration: new THREE.Vector3(100, 20, 20),
+        accelerationRate: 0.2,
+        decelerationDamping: 0.03,
+      },
       scene: this,
     });
     this.camera.position.z = 15;

@@ -7,9 +7,15 @@ export type CameraDependencies = {
     aspect: number;
     near: number;
     far: number;
+    maxAcceleration?: THREE.Vector3;
+    accelerationRate?: number;
+    decelerationDamping?: number;
   };
   scene: Scene;
 };
+
+const AFTER_ZOOM_TIMEOUT_MS = 300;
+const ZOOM_VALUE = 1;
 
 export class Camera extends THREE.PerspectiveCamera {
   private _keyboardInput: KeyboardInput;
@@ -19,12 +25,19 @@ export class Camera extends THREE.PerspectiveCamera {
 
   private _direction: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
   private _acceleration: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-  private _maxAcceleration: THREE.Vector3 = new THREE.Vector3(10, 10, 10);
-  private _accelerationDamping: number = 0.8;
+  private _maxAcceleration: THREE.Vector3 = new THREE.Vector3(15, 15, 15);
+  private _accelerationRate: number = 0.8;
   private _decelerationDamping: number = 0.03;
+
+  private _zoomTimeout: NodeJS.Timeout | null = null;
 
   constructor({ options, scene }: CameraDependencies) {
     super(options.fov, options.aspect, options.near, options.far);
+
+    if (options.maxAcceleration) this._maxAcceleration.copy(options.maxAcceleration);
+    if (options.accelerationRate !== undefined) this._accelerationRate = options.accelerationRate;
+    if (options.decelerationDamping !== undefined)
+      this._decelerationDamping = options.decelerationDamping;
 
     if (!scene.keyboardInput || !scene.mouseInput) {
       throw new Error('Camera requires keyboardInput and mouseInput dependencies.');
@@ -40,6 +53,30 @@ export class Camera extends THREE.PerspectiveCamera {
 
     this._handleKeyboardInput();
     this._handleMouseInput();
+  }
+
+  public set maxAcceleration(maxAcceleration: THREE.Vector3) {
+    this._maxAcceleration.copy(maxAcceleration);
+  }
+
+  public get maxAcceleration(): THREE.Vector3 {
+    return this._maxAcceleration;
+  }
+
+  public set accelerationRate(damping: number) {
+    this._accelerationRate = damping;
+  }
+
+  public get accelerationRate(): number {
+    return this._accelerationRate;
+  }
+
+  public set decelerationDamping(damping: number) {
+    this._decelerationDamping = damping;
+  }
+
+  public get decelerationDamping(): number {
+    return this._decelerationDamping;
   }
 
   private _handleKeyboardInput(): void {
@@ -93,6 +130,20 @@ export class Camera extends THREE.PerspectiveCamera {
       this._isDragging = false;
     });
 
+    this._mouseInput.addMouseScrollListener((e: WheelEvent) => {
+      const delta = Math.sign(e.deltaY);
+      this._direction.z = delta * ZOOM_VALUE;
+
+      if (this._zoomTimeout) {
+        clearTimeout(this._zoomTimeout);
+      }
+
+      this._zoomTimeout = setTimeout(() => {
+        this._direction.z = 0;
+        this._zoomTimeout = null;
+      }, AFTER_ZOOM_TIMEOUT_MS);
+    });
+
     this._mouseInput.addMouseMoveListener((e: MouseEvent) => {
       if (this._isDragging) {
         const movementX = e.movementX || 0;
@@ -110,18 +161,18 @@ export class Camera extends THREE.PerspectiveCamera {
   private _applyAcceleration(direction: THREE.Vector3): void {
     for (const axis of ['x', 'y', 'z'] as const) {
       if (
-        direction[axis] === -1 &&
+        direction[axis] < 0 &&
         compareFloats(this._acceleration[axis], 'greater-than', -this._maxAcceleration[axis])
       ) {
-        const accelerationDamping = this._accelerationDamping <= 0 ? 1 : this._accelerationDamping;
-        this._acceleration[axis] -= accelerationDamping;
+        const accelerationRate = this._accelerationRate <= 0 ? 1 : this._accelerationRate;
+        this._acceleration[axis] -= accelerationRate;
       }
       if (
-        direction[axis] === 1 &&
+        direction[axis] > 0 &&
         compareFloats(this._acceleration[axis], 'less-than', this._maxAcceleration[axis])
       ) {
-        const accelerationDamping = this._accelerationDamping <= 0 ? 1 : this._accelerationDamping;
-        this._acceleration[axis] += accelerationDamping;
+        const accelerationRate = this._accelerationRate <= 0 ? 1 : this._accelerationRate;
+        this._acceleration[axis] += accelerationRate;
       }
       // Stop accelerating forward/backward
       if (direction[axis] === 0) {
