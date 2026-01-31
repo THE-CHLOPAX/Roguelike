@@ -1,9 +1,10 @@
 import Stats from 'stats.js';
 import * as THREE from 'three';
 import { useCallback, useEffect, useRef } from 'react';
-import { Scene, logger, useGraphicsStore } from '@tgdf';
-
-import { SceneEventsMap } from '../internal-3d/types/scene';
+import { Pass } from 'three/examples/jsm/postprocessing/Pass';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { Scene, logger, useGraphicsStore, type SceneEventsMap } from '@tgdf';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 
 type ThreeDViewerProps<T extends SceneEventsMap = SceneEventsMap> = {
   scene: Scene<T>;
@@ -14,6 +15,7 @@ type ThreeDViewerProps<T extends SceneEventsMap = SceneEventsMap> = {
   height?: number;
   isPaused?: boolean;
   debug?: boolean;
+  postProcessingPasses?: Pass[];
 };
 
 type RendererState = {
@@ -34,11 +36,13 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   height,
   isPaused,
   debug,
+  postProcessingPasses = [],
 }: ThreeDViewerProps<T>) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const debugContainerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const clockRef = useRef<THREE.Clock>(new THREE.Clock());
+  const composerRef = useRef<EffectComposer | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const statsRef = useRef<Stats | null>(null);
 
@@ -47,15 +51,24 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
 
   const { antialiasing } = useGraphicsStore();
 
-  const renderFrame = useCallback(() => {
+  const rendererLoop = useCallback(() => {
     if (rendererRef.current) {
       const deltaTime = clockRef.current.getDelta();
       statsRef.current?.begin();
-      rendererRef.current.render(scene, camera);
+      renderFrame();
       scene.update(deltaTime);
       statsRef.current?.end();
     }
   }, [scene, camera]);
+
+  function renderFrame() {
+    // Render with post-processing if composer exists
+    if (composerRef.current) {
+      composerRef.current.render();
+    } else if (rendererRef.current) {
+      rendererRef.current.render(scene, camera);
+    }
+  }
 
   function updateCameraAspect() {
     if (camera instanceof THREE.PerspectiveCamera && canvasRef.current) {
@@ -67,6 +80,9 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   function setRendererResolution(width: number, height: number) {
     if (rendererRef.current) {
       rendererRef.current.setSize(width, height, false);
+      if (composerRef.current) {
+        composerRef.current.setSize(width, height);
+      }
       updateCameraAspect();
     }
   }
@@ -80,6 +96,11 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   }
 
   function disposeRenderer() {
+    if (composerRef.current) {
+      composerRef.current.dispose();
+      composerRef.current = null;
+    }
+
     if (rendererRef.current) {
       rendererRef.current.dispose();
       rendererRef.current.forceContextLoss();
@@ -106,10 +127,10 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   const startRendering = useCallback(() => {
     if (rendererRef.current) {
       clockRef.current.oldTime = performance.now();
-      rendererRef.current.setAnimationLoop(renderFrame);
+      rendererRef.current.setAnimationLoop(rendererLoop);
       scene.enableInput();
     }
-  }, [scene, renderFrame]);
+  }, [scene, rendererLoop]);
 
   function initializeRenderer() {
     if (!containerRef.current) {
@@ -136,10 +157,24 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
       resY ?? (canvasRef.current?.clientHeight || 600)
     );
 
+    // Setup post-processing if passes are provided
+    if (postProcessingPasses.length > 0) {
+      composerRef.current = new EffectComposer(rendererRef.current);
+
+      // Always add RenderPass first
+      const renderPass = new RenderPass(scene, camera);
+      composerRef.current.addPass(renderPass);
+
+      // Add user-provided passes
+      postProcessingPasses.forEach((pass) => {
+        composerRef.current!.addPass(pass);
+      });
+    }
+
     if (!isPaused) {
       startRendering();
     } else {
-      rendererRef.current.render(scene, camera);
+      renderFrame();
       pauseRendering();
     }
 
@@ -222,18 +257,14 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
       resY ?? canvasRef.current?.clientHeight
     );
     // Render a frame to apply changes immediately
-    if (rendererRef.current) {
-      rendererRef.current.render(scene, camera);
-    }
+    renderFrame();
   }, [resX, resY]);
 
   // Update canvas size when width/height change
   useEffect(() => {
     setCanvasSize(width, height);
     // Render a frame to apply changes immediately
-    if (rendererRef.current) {
-      rendererRef.current.render(scene, camera);
-    }
+    renderFrame();
   }, [width, height]);
 
   // Pause or resume rendering loop
