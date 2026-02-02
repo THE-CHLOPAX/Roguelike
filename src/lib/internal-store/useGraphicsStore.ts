@@ -18,7 +18,7 @@ export type GraphicsState = {
   setAntialiasing: (antialiasing: boolean) => void;
   setResolution: (resolution: Resolution) => void;
   setFullscreen: (fullscreen: boolean) => void;
-}
+};
 
 // Find closest available resolution to current window size
 async function getInitialResolution(): Promise<Resolution> {
@@ -64,7 +64,10 @@ export const useGraphicsStore = create<GraphicsState>((set) => ({
     });
   },
   setFullscreen: (fullscreen) => {
-    ipc.send('set-fullscreen-request', { fullscreen, resolution: useGraphicsStore.getState().resolution });
+    ipc.send('set-fullscreen-request', {
+      fullscreen,
+      resolution: useGraphicsStore.getState().resolution,
+    });
     ipc.once('set-fullscreen-response', (response) => {
       set({ fullscreen: response.fullscreen });
     });
@@ -72,10 +75,9 @@ export const useGraphicsStore = create<GraphicsState>((set) => ({
 }));
 
 // Initialize resolution and fullscreen state on store creation
-Promise.all([
-  getInitialResolution(),
-  getInitialFullscreenState()
-]).then(([resolution, fullscreen]) => {
-  useGraphicsStore.getState().setFullscreen(fullscreen);
-  useGraphicsStore.getState().setResolution(resolution);
-});
+Promise.all([getInitialResolution(), getInitialFullscreenState()]).then(
+  ([resolution, fullscreen]) => {
+    useGraphicsStore.getState().setFullscreen(fullscreen);
+    useGraphicsStore.getState().setResolution(resolution);
+  }
+);

@@ -11,6 +11,7 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   public abstract camera: THREE.Camera;
 
   private _emitter = new Emitter<T>();
+  private _renderer: THREE.WebGLRenderer | null = null;
   private _keyboardInput?: KeyboardInput;
   private _mouseInput?: MouseInput;
 
@@ -41,9 +42,17 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
     return this._physicsManager;
   }
 
-  public update(deltaTime: number): void {
+  public get renderer(): THREE.WebGLRenderer | null {
+    return this._renderer;
+  }
+
+  public update(deltaTime: number, renderer: THREE.WebGLRenderer | null): void {
     // Update physics world with deltaTime for fixed time step
     this.physics?.update(deltaTime);
+
+    // Assign current renderer
+    if (this._renderer !== renderer) this.events.trigger('rendererChange', { renderer });
+    this._renderer = renderer;
 
     // Update all GameObjects
     this.traverse((child) => {

@@ -1,0 +1,34 @@
+import { ThreeDViewer, ThreeDViewerProps } from '@tgdf';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass';
+import { RenderPixelatedPass } from 'three/examples/jsm/postprocessing/RenderPixelatedPass';
+
+const PIXEL_SIZE = 4;
+
+export function ThreeDViewerPixelated({
+  scene,
+  camera,
+  resX,
+  resY,
+  debug,
+}: ThreeDViewerProps & {
+  resX: number;
+  resY: number;
+}) {
+  const renderPixelatedPass = new RenderPixelatedPass(PIXEL_SIZE, scene, scene.camera, {
+    depthEdgeStrength: 0.7,
+    normalEdgeStrength: 0.3,
+  });
+
+  const outputPass = new OutputPass();
+
+  return (
+    <ThreeDViewer
+      scene={scene}
+      camera={camera}
+      debug={debug}
+      resX={resX}
+      resY={resY}
+      postProcessingPasses={[renderPixelatedPass, outputPass]}
+    />
+  );
+}

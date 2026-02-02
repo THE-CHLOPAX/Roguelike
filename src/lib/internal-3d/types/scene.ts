@@ -11,4 +11,5 @@ export type SceneConstructorOptions = {
 
 export type SceneEventsMap = {
   update: { deltaTime: number };
+  rendererChange: { renderer: THREE.WebGLRenderer | null };
 };

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { logger, Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
-import { Camera } from '../3D/Camera';
+import { Camera } from '../3D/classes/Camera';
 import { TEST_TEAPOT_ASSET_ID } from '../constants';
 
 export class TestScene extends Scene {

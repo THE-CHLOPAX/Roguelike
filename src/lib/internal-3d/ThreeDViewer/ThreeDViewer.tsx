@@ -6,7 +6,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { Scene, logger, useGraphicsStore, type SceneEventsMap } from '@tgdf';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 
-type ThreeDViewerProps<T extends SceneEventsMap = SceneEventsMap> = {
+export type ThreeDViewerProps<T extends SceneEventsMap = SceneEventsMap> = {
   scene: Scene<T>;
   camera: THREE.Camera;
   resX?: number;
@@ -56,7 +56,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
       const deltaTime = clockRef.current.getDelta();
       statsRef.current?.begin();
       renderFrame();
-      scene.update(deltaTime);
+      scene.update(deltaTime, rendererRef.current);
       statsRef.current?.end();
     }
   }, [scene, camera]);
@@ -238,7 +238,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
     };
   }, []);
 
-  // On antialiasing change, re-initialize renderer
+  // On antialiasing or post processing change, re-initialize renderer
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -246,7 +246,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
 
     rendererCleanupRef.current = initializeRenderer();
     rafIdRef.current = updateLoop();
-  }, [antialiasing]);
+  }, [antialiasing, postProcessingPasses]);
 
   // Update resolution when change
   useEffect(() => {

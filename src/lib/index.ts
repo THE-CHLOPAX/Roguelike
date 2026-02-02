@@ -31,7 +31,7 @@ export * from './internal-3d/Emitter';
 export * from './internal-3d/GameObject';
 export * from './internal-3d/PhysicsManager';
 export * from './internal-3d/Scene';
-export * from './internal-3d/ThreeDViewer';
+export * from './internal-3d/ThreeDViewer/ThreeDViewer';
 export * from './internal-3d/types/gameObjects';
 export * from './internal-3d/types/physics';
 export * from './internal-3d/types/scene';
