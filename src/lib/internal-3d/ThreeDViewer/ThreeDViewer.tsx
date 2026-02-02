@@ -24,7 +24,7 @@ type RendererState = {
   antialiasing: boolean;
   sceneObjects?: number;
   drawCalls?: number;
-  facesCount?: number;
+  triangles?: number;
 };
 
 export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
@@ -47,7 +47,6 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   const statsRef = useRef<Stats | null>(null);
 
   const rendererCleanupRef = useRef<(() => void) | undefined>(null);
-  const rafIdRef = useRef<number | null>(null);
 
   const { antialiasing } = useGraphicsStore();
 
@@ -57,6 +56,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
       statsRef.current?.begin();
       renderFrame();
       scene.update(deltaTime, rendererRef.current);
+      updateDebugStats();
       statsRef.current?.end();
     }
   }, [scene, camera]);
@@ -64,10 +64,41 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   function renderFrame() {
     // Render with post-processing if composer exists
     if (composerRef.current) {
+      composerRef.current.renderer.info.reset();
       composerRef.current.render();
     } else if (rendererRef.current) {
       rendererRef.current.render(scene, camera);
     }
+  }
+
+  function updateDebugStats() {
+    if (!rendererRef.current || !debugContainerRef.current) return;
+
+    const renderer = composerRef.current ? composerRef.current.renderer : rendererRef.current;
+    const size = renderer.getSize(new THREE.Vector2());
+
+    const newState: RendererState = {
+      resolutionX: size.x,
+      resolutionY: size.y,
+      sceneObjects: scene.children.length,
+      antialiasing: renderer.getContext().getContextAttributes()?.antialias || false,
+      drawCalls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+    };
+
+    Object.entries(newState).forEach(([key, value]) => {
+      const preElement = debugContainerRef.current!.querySelector(`pre[data-key='${key}']`);
+      if (preElement) {
+        preElement.textContent = `${key}: ${value}`;
+      } else {
+        const newPre = document.createElement('pre');
+        newPre.style.color = 'white';
+        newPre.style.fontSize = '10px';
+        newPre.dataset.key = key;
+        newPre.textContent = `${key}: ${value}`;
+        debugContainerRef.current!.appendChild(newPre);
+      }
+    });
   }
 
   function updateCameraAspect() {
@@ -111,9 +142,6 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
   function resetRendererAndCanvas() {
     if (rendererCleanupRef.current) {
       rendererCleanupRef.current();
-    }
-    if (rafIdRef.current) {
-      cancelAnimationFrame(rafIdRef.current);
     }
   }
 
@@ -160,6 +188,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
     // Setup post-processing if passes are provided
     if (postProcessingPasses.length > 0) {
       composerRef.current = new EffectComposer(rendererRef.current);
+      composerRef.current.renderer.info.autoReset = false;
 
       // Always add RenderPass first
       const renderPass = new RenderPass(scene, camera);
@@ -189,38 +218,6 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
     };
   }
 
-  function updateLoop(): number {
-    // Read renderer state directly in the loop to get latest values
-    if (rendererRef.current) {
-      const size = rendererRef.current.getSize(new THREE.Vector2());
-      const newState: RendererState = {
-        resolutionX: size.x,
-        resolutionY: size.y,
-        antialiasing: rendererRef.current.getContext().getContextAttributes()?.antialias || false,
-        sceneObjects: scene.children.length,
-        drawCalls: rendererRef.current.info.render.calls,
-        facesCount: rendererRef.current.info.render.triangles,
-      };
-
-      if (debugContainerRef.current) {
-        Object.entries(newState).forEach(([key, value]) => {
-          const preElement = debugContainerRef.current!.querySelector(`pre[data-key='${key}']`);
-          if (preElement) {
-            preElement.textContent = `${key}: ${value}`;
-          } else {
-            const newPre = document.createElement('pre');
-            newPre.style.color = 'white';
-            newPre.style.fontSize = '10px';
-            newPre.dataset.key = key;
-            newPre.textContent = `${key}: ${value}`;
-            debugContainerRef.current!.appendChild(newPre);
-          }
-        });
-      }
-    }
-    return requestAnimationFrame(updateLoop);
-  }
-
   // Renderer initialization
   useEffect(() => {
     if (!statsRef.current) {
@@ -230,7 +227,6 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
     }
 
     rendererCleanupRef.current = initializeRenderer();
-    rafIdRef.current = updateLoop();
 
     return () => {
       resetRendererAndCanvas();
@@ -245,7 +241,6 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
     resetRendererAndCanvas();
 
     rendererCleanupRef.current = initializeRenderer();
-    rafIdRef.current = updateLoop();
   }, [antialiasing, postProcessingPasses]);
 
   // Update resolution when change

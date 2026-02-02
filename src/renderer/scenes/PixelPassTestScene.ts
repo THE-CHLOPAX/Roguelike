@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { logger, Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
-import { Camera } from '../3D/classes/Camera';
 import { CHECKERBOARD_TEXTURE, TEST_TEAPOT_ASSET_ID } from '../constants';
 
 export class PixelPassTestScene extends Scene {
