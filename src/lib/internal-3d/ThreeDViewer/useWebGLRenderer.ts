@@ -57,12 +57,14 @@ export function useWebGLRenderer({
     return () => {
       if (composer) {
         console.log('Disposing EffectComposer');
+        composer.renderer.domElement.remove();
         composer.dispose();
       }
       if (renderer) {
         console.log('Disposing WebGLRenderer');
         renderer.domElement.remove();
         renderer.dispose();
+        renderer.forceContextLoss();
       }
     };
   }, [composer, renderer]);

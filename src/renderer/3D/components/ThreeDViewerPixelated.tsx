@@ -11,6 +11,7 @@ export function ThreeDViewerPixelated({
   resX,
   resY,
   debug,
+  isPaused,
 }: ThreeDViewerProps & {
   resX: number;
   resY: number;
@@ -33,6 +34,7 @@ export function ThreeDViewerPixelated({
       debug={debug}
       resX={resX}
       resY={resY}
+      isPaused={isPaused}
       postProcessingPasses={[renderPixelatedPass, outputPass]}
     />
   );
