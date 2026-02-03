@@ -50,6 +50,16 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
 
   const { antialiasing } = useGraphicsStore();
 
+  const renderFrame = useCallback(() => {
+    // Render with post-processing if composer exists
+    if (composerRef.current) {
+      composerRef.current.renderer.info.reset();
+      composerRef.current.render();
+    } else if (rendererRef.current) {
+      rendererRef.current.render(scene, camera);
+    }
+  }, [scene, camera]);
+
   const rendererLoop = useCallback(() => {
     if (rendererRef.current) {
       const deltaTime = clockRef.current.getDelta();
@@ -59,17 +69,7 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
       updateDebugStats();
       statsRef.current?.end();
     }
-  }, [scene, camera]);
-
-  function renderFrame() {
-    // Render with post-processing if composer exists
-    if (composerRef.current) {
-      composerRef.current.renderer.info.reset();
-      composerRef.current.render();
-    } else if (rendererRef.current) {
-      rendererRef.current.render(scene, camera);
-    }
-  }
+  }, [scene, renderFrame]);
 
   function updateDebugStats() {
     if (!rendererRef.current || !debugContainerRef.current) return;
@@ -230,7 +230,6 @@ export function ThreeDViewer<T extends SceneEventsMap = SceneEventsMap>({
 
     return () => {
       resetRendererAndCanvas();
-      scene.dispose();
     };
   }, []);
 

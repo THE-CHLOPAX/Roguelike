@@ -75,6 +75,11 @@ export class PixelPassTestScene extends Scene {
       this._teapot.rotation.z += deltaTime * 0.5; // Rotate at 0.5 radians per second
     }
   }
+
+  public override dispose(): void {
+    super.dispose();
+    this._controls?.dispose();
+  }
 }
 
 function pixelateTexture(texture?: THREE.Texture): THREE.Texture | undefined {

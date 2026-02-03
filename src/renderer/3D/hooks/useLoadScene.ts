@@ -32,6 +32,13 @@ export function useLoadScene({
     loadWithProgress(assetsToLoad, setLoadingProgress);
   }, []);
 
+  // Scene cleanup on unmount
+  useEffect(() => {
+    return () => {
+      scene?.dispose();
+    };
+  }, [scene]);
+
   // Instantiate scene once assets are loaded
   useEffect(() => {
     if (loadingProgress === 1 && loading) {

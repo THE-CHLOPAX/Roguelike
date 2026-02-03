@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ThreeDViewer, ThreeDViewerProps } from '@tgdf';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass';
 import { RenderPixelatedPass } from 'three/examples/jsm/postprocessing/RenderPixelatedPass';
@@ -14,12 +15,16 @@ export function ThreeDViewerPixelated({
   resX: number;
   resY: number;
 }) {
-  const renderPixelatedPass = new RenderPixelatedPass(PIXEL_SIZE, scene, scene.camera, {
-    depthEdgeStrength: 0.7,
-    normalEdgeStrength: 0.3,
-  });
+  const renderPixelatedPass = useMemo(
+    () =>
+      new RenderPixelatedPass(PIXEL_SIZE, scene, scene.camera, {
+        depthEdgeStrength: 0.7,
+        normalEdgeStrength: 0.3,
+      }),
+    [scene]
+  );
 
-  const outputPass = new OutputPass();
+  const outputPass = useMemo(() => new OutputPass(), []);
 
   return (
     <ThreeDViewer
