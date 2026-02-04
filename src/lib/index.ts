@@ -10,7 +10,6 @@ export * from './internal-store/useGamepadStore';
 
 // Internal UI
 export * from './internal-ui/components';
-export * from './internal-ui/ThreeDViewer';
 export * from './internal-ui/ViewManager';
 export * from './internal-ui/SoundChannel';
 export * from './internal-ui/types/native';
@@ -32,6 +31,7 @@ export * from './internal-3d/Emitter';
 export * from './internal-3d/GameObject';
 export * from './internal-3d/PhysicsManager';
 export * from './internal-3d/Scene';
+export * from './internal-3d/ThreeDViewer/ThreeDViewer';
 export * from './internal-3d/types/gameObjects';
 export * from './internal-3d/types/physics';
 export * from './internal-3d/types/scene';

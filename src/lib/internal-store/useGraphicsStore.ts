@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { ipc, Resolution } from '@tgdf';
 
 export const AVAILABLE_RESOLUTIONS: Resolution[] = [
+  { width: 3840, height: 1080 },
   { width: 1920, height: 1080 },
   { width: 1280, height: 720 },
   { width: 640, height: 480 },
@@ -18,7 +19,7 @@ export type GraphicsState = {
   setAntialiasing: (antialiasing: boolean) => void;
   setResolution: (resolution: Resolution) => void;
   setFullscreen: (fullscreen: boolean) => void;
-}
+};
 
 // Find closest available resolution to current window size
 async function getInitialResolution(): Promise<Resolution> {
@@ -64,18 +65,23 @@ export const useGraphicsStore = create<GraphicsState>((set) => ({
     });
   },
   setFullscreen: (fullscreen) => {
-    ipc.send('set-fullscreen-request', { fullscreen, resolution: useGraphicsStore.getState().resolution });
-    ipc.once('set-fullscreen-response', (response) => {
-      set({ fullscreen: response.fullscreen });
+    ipc.send('set-fullscreen-request', {
+      fullscreen,
+      resolution: useGraphicsStore.getState().resolution,
     });
   },
 }));
 
 // Initialize resolution and fullscreen state on store creation
-Promise.all([
-  getInitialResolution(),
-  getInitialFullscreenState()
-]).then(([resolution, fullscreen]) => {
-  useGraphicsStore.getState().setFullscreen(fullscreen);
-  useGraphicsStore.getState().setResolution(resolution);
+Promise.all([getInitialResolution(), getInitialFullscreenState()]).then(
+  ([resolution, fullscreen]) => {
+    useGraphicsStore.setState({ fullscreen });
+    useGraphicsStore.setState({ resolution });
+  }
+);
+
+// Always listen for fullscreen state changes from main process
+ipc.on('set-fullscreen-response', (response) => {
+  console.log('Received fullscreen state change from main process:', response.fullscreen);
+  useGraphicsStore.setState({ fullscreen: response.fullscreen });
 });

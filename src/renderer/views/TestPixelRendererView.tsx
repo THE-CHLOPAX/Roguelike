@@ -5,27 +5,28 @@ import {
   useKeyboard,
   useAssetStore,
   InternalLoader,
-  ThreeDViewer,
   useGraphicsStore,
-  InternalSelect,
   AVAILABLE_RESOLUTIONS,
+  InternalSelect,
 } from '@tgdf';
 
-import { TestScene } from '../scenes/TestScene';
-import { TEST_TEAPOT_ASSET_ID } from '../constants';
 import { useLoadScene } from '../3D/hooks/useLoadScene';
+import { PixelPassTestScene } from '../scenes/PixelPassTestScene';
+import { CHECKERBOARD_TEXTURE, TEST_TEAPOT_ASSET_ID } from '../constants';
+import { ThreeDViewerPixelated } from '../3D/components/ThreeDViewerPixelated';
 
-export function TestView() {
+export function TestPixelRendererView() {
   const { goBack } = useViewsStore();
-  const { loadModelJSON } = useAssetStore();
+  const { resolution, antialiasing, setAntialiasing, fullscreen, setFullscreen, setResolution } =
+    useGraphicsStore();
+  const { loadModelJSON, loadTexture } = useAssetStore();
 
   const [paused, setPaused] = useState(false);
-  const { antialiasing, setAntialiasing, setFullscreen, fullscreen, setResolution, resolution } =
-    useGraphicsStore();
 
   const { scene, loadingProgress } = useLoadScene({
-    sceneClass: TestScene,
+    sceneClass: PixelPassTestScene,
     assetsToLoad: [
+      loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
       loadModelJSON(TEST_TEAPOT_ASSET_ID, './assets/teapot.json', 'Utah_teapot_(solid).stl'),
     ],
   });
@@ -73,8 +74,14 @@ export function TestView() {
           }}
         />
       </div>
-
-      <ThreeDViewer scene={scene} camera={scene.camera} isPaused={paused} debug />
+      <ThreeDViewerPixelated
+        scene={scene}
+        camera={scene.camera}
+        debug
+        resX={resolution.width}
+        resY={resolution.height}
+        isPaused={paused}
+      />
     </>
   ) : (
     <InternalLoader progress={loadingProgress * 100} onComplete={() => setLoadingFinished(true)} />

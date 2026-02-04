@@ -11,6 +11,7 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   public abstract camera: THREE.Camera;
 
   private _emitter = new Emitter<T>();
+  private _renderer: THREE.WebGLRenderer | null = null;
   private _keyboardInput?: KeyboardInput;
   private _mouseInput?: MouseInput;
 
@@ -41,9 +42,17 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
     return this._physicsManager;
   }
 
-  public update(deltaTime: number): void {
+  public get renderer(): THREE.WebGLRenderer | null {
+    return this._renderer;
+  }
+
+  public update(deltaTime: number, renderer: THREE.WebGLRenderer | null): void {
     // Update physics world with deltaTime for fixed time step
     this.physics?.update(deltaTime);
+
+    // Assign current renderer
+    if (this._renderer !== renderer) this.events.trigger('rendererChange', { renderer });
+    this._renderer = renderer;
 
     // Update all GameObjects
     this.traverse((child) => {
@@ -61,34 +70,32 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
     // Safety check: ensure scene has children before traversing
     if (!this.children || this.children.length === 0) {
       logger({ message: 'Scene: No children to dispose of in the scene.', type: 'warn' });
-      this._physicsManager?.dispose();
-      return;
-    }
+    } else {
+      try {
+        // Create a copy of children array to avoid modification during iteration
+        const childrenCopy = [...this.children];
 
-    try {
-      // Create a copy of children array to avoid modification during iteration
-      const childrenCopy = [...this.children];
-
-      childrenCopy.forEach((child) => {
-        if (child instanceof GameObject) {
-          child.destroy();
-        } else if (child instanceof THREE.Mesh) {
-          if (child.geometry) {
-            child.geometry.dispose();
-          }
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              child.material.forEach((mat) => mat?.dispose());
-            } else {
-              child.material.dispose();
+        childrenCopy.forEach((child) => {
+          if (child instanceof GameObject) {
+            child.destroy();
+          } else if (child instanceof THREE.Mesh) {
+            if (child.geometry) {
+              child.geometry.dispose();
+            }
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach((mat) => mat?.dispose());
+              } else {
+                child.material.dispose();
+              }
             }
           }
-        }
-      });
+        });
 
-      this._emitter.removeAll();
-    } catch (error) {
-      logger({ message: 'Scene: Error during disposal:', type: 'error' });
+        this._emitter.removeAll();
+      } catch (error) {
+        logger({ message: 'Scene: Error during disposal:', type: 'error' });
+      }
     }
 
     this._physicsManager?.dispose();
