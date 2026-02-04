@@ -3,12 +3,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { logger, Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
 import { CHECKERBOARD_TEXTURE, TEST_TEAPOT_ASSET_ID } from '../constants';
+import { InertialOrtographicCameraWithControls } from '../3D/classes/cameras/InertialOrtographicCameraWithControls';
 
 export class PixelPassTestScene extends Scene {
   public camera: THREE.Camera;
 
   private _teapot: THREE.Object3D | undefined;
-  private _controls: OrbitControls | undefined;
 
   constructor(options: SceneConstructorOptions) {
     super(options);
@@ -20,7 +20,24 @@ export class PixelPassTestScene extends Scene {
     );
     checkerboardTexture?.repeat.set(3, 3);
 
-    this.camera = new THREE.OrthographicCamera(-aspectRatio, aspectRatio, 1, -1, 0.1, 20);
+    const frustumSize = 1;
+    this.camera = new InertialOrtographicCameraWithControls({
+      options: {
+        left: (-frustumSize * aspectRatio) / 2,
+        right: (frustumSize * aspectRatio) / 2,
+        top: frustumSize / 2,
+        bottom: -frustumSize / 2,
+        near: 0.1,
+        far: 20,
+      },
+      zoom: {
+        min: 0.18,
+        max: 0.35,
+      },
+      scene: this,
+    });
+    this.camera.position.set(3, 3, 3);
+    this.camera.lookAt(0, 0, 0);
 
     this.background = new THREE.Color(0x151729);
 
@@ -57,16 +74,6 @@ export class PixelPassTestScene extends Scene {
     target.position.set(0, 0, 0);
     spotLight.castShadow = true;
     this.add(spotLight);
-
-    this.events.on('rendererChange', ({ renderer }) => {
-      if (!renderer) return;
-      this._controls?.dispose();
-      this._controls = new OrbitControls(this.camera, renderer.domElement);
-      this._controls.target.set(0, 0, 0);
-      this.camera.position.z = 7;
-      this.camera.position.y = 7 * Math.tan(Math.PI / 6);
-      this._controls.update();
-    });
   }
 
   protected override onUpdate(deltaTime: number): void {
@@ -74,11 +81,6 @@ export class PixelPassTestScene extends Scene {
     if (this._teapot) {
       this._teapot.rotation.z += deltaTime * 0.5; // Rotate at 0.5 radians per second
     }
-  }
-
-  public override dispose(): void {
-    super.dispose();
-    this._controls?.dispose();
   }
 }
 

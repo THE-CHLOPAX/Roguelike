@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { logger, Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
-import { Camera } from '../3D/classes/Camera';
 import { TEST_TEAPOT_ASSET_ID } from '../constants';
+import { InertialPerspectiveCameraWithControls } from '../3D/classes/cameras/InertialPerspectiveCameraWithControls';
 
 export class TestScene extends Scene {
   public camera: THREE.Camera;
@@ -13,12 +13,14 @@ export class TestScene extends Scene {
     super(options);
     this.name = 'Test Scene';
 
-    this.camera = new Camera({
+    this.camera = new InertialPerspectiveCameraWithControls({
       options: {
         fov: 75,
         aspect: window.innerWidth / window.innerHeight,
         near: 0.1,
         far: 1000,
+      },
+      inertiaOptions: {
         maxAcceleration: new THREE.Vector3(100, 20, 20),
         accelerationRate: 0.2,
         decelerationDamping: 0.03,
