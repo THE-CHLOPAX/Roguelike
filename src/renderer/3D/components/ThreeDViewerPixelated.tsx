@@ -16,16 +16,14 @@ export function ThreeDViewerPixelated({
   resX: number;
   resY: number;
 }) {
-  const renderPixelatedPass = useMemo(
-    () =>
-      new RenderPixelatedPass(PIXEL_SIZE, scene, scene.camera, {
-        depthEdgeStrength: 0.7,
-        normalEdgeStrength: 0.3,
-      }),
-    [scene]
-  );
-
-  const outputPass = useMemo(() => new OutputPass(), []);
+  const postProcessingPassesMemo = useMemo(() => {
+    const renderPixelatedPass = new RenderPixelatedPass(PIXEL_SIZE, scene, scene.camera, {
+      depthEdgeStrength: 0.7,
+      normalEdgeStrength: 0.3,
+    });
+    const outputPass = new OutputPass();
+    return [renderPixelatedPass, outputPass];
+  }, []);
 
   return (
     <ThreeDViewer
@@ -35,7 +33,7 @@ export function ThreeDViewerPixelated({
       resX={resX}
       resY={resY}
       isPaused={isPaused}
-      postProcessingPasses={[renderPixelatedPass, outputPass]}
+      postProcessingPasses={postProcessingPassesMemo}
     />
   );
 }

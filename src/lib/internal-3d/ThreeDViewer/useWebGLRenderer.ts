@@ -21,7 +21,6 @@ export function useWebGLRenderer({
 }: UseWebGLRendererProps): UseWebGLRendererReturn {
   // Renderer initializer
   const renderer: THREE.WebGLRenderer | null = useMemo(() => {
-    console.log('Creating WebGLRenderer with options: ', options);
     return new THREE.WebGLRenderer({ ...options });
   }, [options]);
 
@@ -44,24 +43,26 @@ export function useWebGLRenderer({
   useEffect(() => {
     if (composer) {
       const { width, height } = resolution;
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
       composer.setSize(width, height);
     }
     if (renderer) {
       const { width, height } = resolution;
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
       renderer.setSize(width, height, false);
     }
-  }, [resolution, renderer, composer]);
+  }, [resolution]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (composer) {
-        console.log('Disposing EffectComposer');
         composer.renderer.domElement.remove();
         composer.dispose();
       }
       if (renderer) {
-        console.log('Disposing WebGLRenderer');
         renderer.domElement.remove();
         renderer.dispose();
         renderer.forceContextLoss();
@@ -73,8 +74,9 @@ export function useWebGLRenderer({
   const containerRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (node && renderer) {
-        console.log('Appending renderer DOM element to container: ', node);
         node.appendChild(renderer.domElement);
+        renderer.domElement.style.width = '100%';
+        renderer.domElement.style.height = '100%';
       }
     },
     [renderer]

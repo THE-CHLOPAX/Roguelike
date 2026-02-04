@@ -1,9 +1,12 @@
+import Stats from 'stats.js';
 import * as THREE from 'three';
 import { Scene, useGraphicsStore } from '@tgdf';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useWebGLRenderer } from './useWebGLRenderer';
+import { ThreeDViewerDebugInfo } from './ThreeDViewerDebugInfo';
+import { isPerspectiveOrOrtographicCamera } from '../utils/isPerspectiveOrOrtographicCamera';
 
 export type ThreeDViewerProps = {
   scene: Scene;
@@ -32,13 +35,21 @@ export function ThreeDViewer({
   const statsRef = useRef<Stats | null>(null);
 
   const { antialiasing, resolution } = useGraphicsStore();
+
+  const rendererOptionsMemo = useMemo<THREE.WebGLRendererParameters>(() => {
+    return {
+      antialias: antialiasing,
+    };
+  }, [antialiasing]);
+
+  const postProcessingPassesMemo = useMemo(() => {
+    return [...postProcessingPasses];
+  }, [postProcessingPasses]);
+
   const { renderer, composer, containerRef } = useWebGLRenderer({
-    resolution: {
-      width: resX ?? resolution.width,
-      height: resY ?? resolution.height,
-    },
-    options: { antialias: antialiasing },
-    postProcessingPasses,
+    resolution: { width: resX ?? resolution.width, height: resY ?? resolution.height },
+    options: rendererOptionsMemo,
+    postProcessingPasses: postProcessingPassesMemo,
   });
 
   const targetRenderer = useMemo((): THREE.WebGLRenderer | null => {
@@ -47,6 +58,10 @@ export function ThreeDViewer({
     }
     return renderer;
   }, [composer, renderer]);
+
+  const handleStatsChange = useCallback((stats: Stats | null) => {
+    statsRef.current = stats;
+  }, []);
 
   const renderFrame = useCallback(() => {
     if (composer) {
@@ -62,7 +77,6 @@ export function ThreeDViewer({
     statsRef.current?.begin();
     renderFrame();
     scene.update(deltaTime, targetRenderer);
-    //updateDebugStats();
     statsRef.current?.end();
   }, [scene, renderFrame, targetRenderer]);
 
@@ -83,6 +97,7 @@ export function ThreeDViewer({
     [scene, rendererLoop]
   );
 
+  // On isPaused change
   useEffect(() => {
     if (isPaused && targetRenderer) {
       pauseRendering(targetRenderer);
@@ -91,6 +106,29 @@ export function ThreeDViewer({
       startRendering(targetRenderer);
     }
   }, [isPaused, targetRenderer, pauseRendering, startRendering]);
+
+  // On resolution change
+  useEffect(() => {
+    if (isPaused) {
+      renderFrame();
+    }
+
+    if (!isPerspectiveOrOrtographicCamera(camera)) return;
+
+    const aspect = resolution.width / resolution.height;
+
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.aspect = aspect;
+    } else if (camera instanceof THREE.OrthographicCamera) {
+      const frustumHeight = camera.top - camera.bottom;
+      const frustumWidth = frustumHeight * aspect;
+
+      camera.left = -frustumWidth / 2;
+      camera.right = frustumWidth / 2;
+    }
+
+    camera.updateProjectionMatrix();
+  }, [resolution]);
 
   return (
     <div
@@ -101,6 +139,14 @@ export function ThreeDViewer({
         height: height ? `${height}px` : '100%',
         overflow: 'hidden',
       }}
-    ></div>
+    >
+      {debug && (
+        <ThreeDViewerDebugInfo
+          renderer={composer ? composer.renderer : renderer}
+          scene={scene}
+          onStatsChange={handleStatsChange}
+        />
+      )}
+    </div>
   );
 }

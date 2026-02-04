@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { ipc, Resolution } from '@tgdf';
 
 export const AVAILABLE_RESOLUTIONS: Resolution[] = [
+  { width: 3840, height: 1080 },
   { width: 1920, height: 1080 },
   { width: 1280, height: 720 },
   { width: 640, height: 480 },
@@ -81,3 +82,8 @@ Promise.all([getInitialResolution(), getInitialFullscreenState()]).then(
     useGraphicsStore.getState().setResolution(resolution);
   }
 );
+
+// Always listen for fullscreen state changes from main process
+ipc.on('set-fullscreen-response', (response) => {
+  useGraphicsStore.getState().setFullscreen(response.fullscreen);
+});
