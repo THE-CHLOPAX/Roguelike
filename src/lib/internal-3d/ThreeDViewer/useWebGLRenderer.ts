@@ -41,14 +41,11 @@ export function useWebGLRenderer({
 
   // Update resolution
   useEffect(() => {
+    const { width, height } = resolution;
     if (composer) {
-      const { width, height } = resolution;
-      renderer.domElement.style.width = '100%';
-      renderer.domElement.style.height = '100%';
       composer.setSize(width, height);
     }
     if (renderer) {
-      const { width, height } = resolution;
       renderer.domElement.style.width = '100%';
       renderer.domElement.style.height = '100%';
       renderer.setSize(width, height, false);

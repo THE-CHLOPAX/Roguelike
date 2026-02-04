@@ -1,6 +1,6 @@
 import Stats from 'stats.js';
 import * as THREE from 'three';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export type RendererState = {
   resolutionX: number;
@@ -23,50 +23,36 @@ export function ThreeDViewerDebugInfo({
   onStatsChange,
 }: ThreeDViewerDebugInfoProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [debugState, setDebugState] = useState<RendererState | null>(null);
 
-  const updateDebugStats = useCallback(() => {
-    if (!renderer || !ref.current) return;
+  useEffect(() => {
+    if (!renderer) {
+      setDebugState(null);
+      return;
+    }
 
-    const size = renderer.getSize(new THREE.Vector2());
-
-    const newState: RendererState = {
-      resolutionX: size.x,
-      resolutionY: size.y,
-      sceneObjects: scene.children.length,
-      antialiasing: renderer.getContext().getContextAttributes()?.antialias || false,
-      drawCalls: renderer.info.render.calls,
-      triangles: renderer.info.render.triangles,
+    const updateDebugStats = () => {
+      const size = renderer.getSize(new THREE.Vector2());
+      setDebugState({
+        resolutionX: size.x,
+        resolutionY: size.y,
+        sceneObjects: scene.children.length,
+        antialiasing: renderer.getContext().getContextAttributes()?.antialias || false,
+        drawCalls: renderer.info.render.calls,
+        triangles: renderer.info.render.triangles,
+      });
     };
 
-    Object.entries(newState).forEach(([key, value]) => {
-      if (!ref.current) return;
-      const preElement = ref.current.querySelector(`pre[data-key='${key}']`);
-      if (preElement) {
-        preElement.textContent = `${key}: ${value}`;
-      } else {
-        const newPre = document.createElement('pre');
-        newPre.style.color = 'white';
-        newPre.style.fontSize = '10px';
-        newPre.dataset.key = key;
-        newPre.textContent = `${key}: ${value}`;
-        ref.current.appendChild(newPre);
-      }
-    });
+    const interval = setInterval(updateDebugStats, 100);
+    updateDebugStats();
+    return () => clearInterval(interval);
   }, [renderer, scene]);
 
   useEffect(() => {
-    const interval = setInterval(updateDebugStats, 100);
-    return () => clearInterval(interval);
-  }, [updateDebugStats]);
-
-  useEffect(() => {
+    if (!ref.current) return;
     const stats = new Stats();
-
-    if (ref.current) {
-      stats.dom.style.position = 'static';
-      ref.current.prepend(stats.dom);
-    }
-    // Notify parent of the stats instance
+    stats.dom.style.position = 'static';
+    ref.current.prepend(stats.dom);
     onStatsChange(stats);
     return () => {
       stats.dom.remove();
@@ -84,7 +70,14 @@ export function ThreeDViewerDebugInfo({
         left: 10,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         padding: '10px',
+        color: 'white',
+        fontSize: '10px',
       }}
-    ></div>
+    >
+      {debugState &&
+        Object.entries(debugState).map(([key, value]) => (
+          <pre key={key} style={{ margin: 0 }}>{`${key}: ${value}`}</pre>
+        ))}
+    </div>
   );
 }

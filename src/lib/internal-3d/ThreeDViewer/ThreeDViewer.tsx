@@ -2,7 +2,7 @@ import Stats from 'stats.js';
 import * as THREE from 'three';
 import { Scene, useGraphicsStore } from '@tgdf';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useWebGLRenderer } from './useWebGLRenderer';
 import { ThreeDViewerDebugInfo } from './ThreeDViewerDebugInfo';
@@ -85,7 +85,7 @@ export function ThreeDViewer({
       targetRenderer.setAnimationLoop(null);
       scene.disableInput();
     },
-    [scene, targetRenderer]
+    [scene]
   );
 
   const startRendering = useCallback(

@@ -69,21 +69,19 @@ export const useGraphicsStore = create<GraphicsState>((set) => ({
       fullscreen,
       resolution: useGraphicsStore.getState().resolution,
     });
-    ipc.once('set-fullscreen-response', (response) => {
-      set({ fullscreen: response.fullscreen });
-    });
   },
 }));
 
 // Initialize resolution and fullscreen state on store creation
 Promise.all([getInitialResolution(), getInitialFullscreenState()]).then(
   ([resolution, fullscreen]) => {
-    useGraphicsStore.getState().setFullscreen(fullscreen);
-    useGraphicsStore.getState().setResolution(resolution);
+    useGraphicsStore.setState({ fullscreen });
+    useGraphicsStore.setState({ resolution });
   }
 );
 
 // Always listen for fullscreen state changes from main process
 ipc.on('set-fullscreen-response', (response) => {
-  useGraphicsStore.getState().setFullscreen(response.fullscreen);
+  console.log('Received fullscreen state change from main process:', response.fullscreen);
+  useGraphicsStore.setState({ fullscreen: response.fullscreen });
 });
