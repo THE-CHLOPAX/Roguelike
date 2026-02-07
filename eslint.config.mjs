@@ -17,13 +17,7 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   {
-    ignores: [
-      '.next/**',
-      'node_modules/**',
-      'dist/**',
-      'build/**',
-      '*.min.js',
-    ],
+    ignores: ['.next/**', 'node_modules/**', 'dist/**', 'build/**', '*.min.js'],
   },
   ...compat.extends('prettier'),
   {
@@ -48,6 +42,7 @@ export default defineConfig([
         {
           code: 100,
           tabWidth: 2,
+          ignoreImports: true,
           ignoreComments: true,
         },
       ],
@@ -74,7 +69,6 @@ export default defineConfig([
           leadingUnderscore: 'require',
         },
       ],
-
       'perfectionist/sort-imports': [
         'error',
         {
@@ -82,13 +76,7 @@ export default defineConfig([
           order: 'asc',
 
           groups: [
-            [
-              'type',
-              'builtin-type',
-              'internal-type',
-              'parent-type',
-              'sibling-type',
-            ],
+            ['type', 'builtin-type', 'internal-type', 'parent-type', 'sibling-type'],
             ['builtin', 'external'],
             ['parent', 'sibling', 'index', 'internal'],
             'object',

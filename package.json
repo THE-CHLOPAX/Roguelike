@@ -1,6 +1,6 @@
 {
   "name": "roguelike",
-  "version": "1.0.19",
+  "version": "1.0.21",
   "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
   "main": "main.js",
   "homepage": "./",
