@@ -1,5 +1,6 @@
 import { Resolution } from '@tgdf/internal-ui/types/graphics';
 
+import { screen } from 'electron';
 import { mainWindow, main } from './main';
 import { getZoomFactorForResolution } from './utils/getZoomFactorForResolution';
 
@@ -73,6 +74,11 @@ export function onFullscreenRequest(request: {
 
   currentResolution.width = resolution.width;
   currentResolution.height = resolution.height;
+
+  if (process.platform === 'win32' && fullscreen) {
+    const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workAreaSize;
+    mainWindow.setContentSize(display.width, display.height);
+  }
 
   mainWindow.setFullScreen(fullscreen);
 }
