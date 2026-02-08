@@ -1,47 +1,20 @@
-import * as path from 'path';
-import * as isDev from 'electron-is-dev';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { NativeEventMainMap, NativeEventRendererMap } from '@tgdf/internal-ui/types/native';
 
 import { bindUserEvents } from './events';
+import { createWindow } from './utils/createWindow';
 
 export let mainWindow: BrowserWindow | null = null;
 
-function createWindow(): void {
-  // Create the browser window
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    backgroundColor: '#000000',
-    resizable: false,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  });
-
-  // Load the app
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
-  }
-}
-
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
-  createWindow();
+  mainWindow = createWindow();
   mainWindow?.webContents.on('dom-ready', () => {
     mainWindow?.webContents.setZoomFactor(1.0);
   });
 
   // Bind IPC event handlers
   bindUserEvents();
-
-  app.on('activate', (): void => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
 });
 
 // Quit when all windows are closed
