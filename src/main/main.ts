@@ -13,6 +13,16 @@ app.whenReady().then(() => {
     mainWindow?.webContents.setZoomFactor(1.0);
   });
 
+  // Open devtools on F12 if in development mode
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow?.webContents.on('before-input-event', (event, input) => {
+      if (input.type === 'keyDown' && input.key === 'F12') {
+        mainWindow?.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    });
+  }
+
   // Bind IPC event handlers
   bindUserEvents();
 });
