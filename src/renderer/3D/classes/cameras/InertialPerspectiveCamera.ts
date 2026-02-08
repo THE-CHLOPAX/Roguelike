@@ -21,21 +21,21 @@ export type InertialPerspectiveCameraOptions = {
  * @param {Scene} scene - The scene the camera belongs to.
  */
 export class InertialPerspectiveCamera extends THREE.PerspectiveCamera {
-  private _cameraIntertia: CameraInertia;
+  private _cameraInertia: CameraInertia;
 
   constructor({ options = {}, inertiaOptions = {}, scene }: InertialPerspectiveCameraOptions) {
     super(options.fov ?? 75, options.aspect ?? 1, options.near ?? 0.1, options.far ?? 1000);
 
-    this._cameraIntertia = new CameraInertia(this, { ...inertiaOptions });
+    this._cameraInertia = new CameraInertia(this, { ...inertiaOptions });
 
-    scene.events.on('update', this._cameraIntertia.update.bind(this._cameraIntertia));
+    scene.events.on('update', this._cameraInertia.update.bind(this._cameraInertia));
   }
 
   protected get direction(): THREE.Vector3 {
-    return this._cameraIntertia.direction;
+    return this._cameraInertia.direction;
   }
 
   protected set direction(direction: THREE.Vector3) {
-    this._cameraIntertia.direction = direction;
+    this._cameraInertia.direction = direction;
   }
 }

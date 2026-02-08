@@ -4,7 +4,7 @@ import { compareFloats, filterBelow } from '@tgdf';
 export type CameraInertiaOptions = {
   maxAcceleration?: THREE.Vector3;
   accelerationRate?: number;
-  decelerationDamping?: number;
+  decelerationRate?: number;
 };
 
 /**
@@ -24,8 +24,8 @@ export class CameraInertia {
   constructor(camera: THREE.Camera, options: CameraInertiaOptions = {}) {
     if (options.maxAcceleration) this._maxAcceleration.copy(options.maxAcceleration);
     if (options.accelerationRate !== undefined) this._accelerationRate = options.accelerationRate;
-    if (options.decelerationDamping !== undefined)
-      this._decelerationRate = options.decelerationDamping;
+    if (options.decelerationRate !== undefined)
+      this._decelerationRate = options.decelerationRate;
 
     this._camera = camera;
     this._camera.rotation.order = 'YXZ';
@@ -48,11 +48,11 @@ export class CameraInertia {
     return this._accelerationRate;
   }
 
-  public set decelerationDamping(damping: number) {
+  public set decelerationRate(damping: number) {
     this._decelerationRate = damping;
   }
 
-  public get decelerationDamping(): number {
+  public get decelerationRate(): number {
     return this._decelerationRate;
   }
 
@@ -106,9 +106,9 @@ export class CameraInertia {
       }
       // Decelerate when no input is given in this axis
       if (direction[axis] === 0) {
-        const decelerationDamping = this._decelerationRate <= 0 ? 1 : 1 + this._decelerationRate;
+        const decelerationRate = this._decelerationRate <= 0 ? 1 : 1 + this._decelerationRate;
         this._acceleration[axis] = filterBelow(
-          this._acceleration[axis] / decelerationDamping,
+          this._acceleration[axis] / decelerationRate,
           1e-2
         );
       }
