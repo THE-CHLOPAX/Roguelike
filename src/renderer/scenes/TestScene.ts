@@ -23,7 +23,7 @@ export class TestScene extends Scene {
       inertiaOptions: {
         maxAcceleration: new THREE.Vector3(100, 20, 20),
         accelerationRate: 0.2,
-        decelerationDamping: 0.03,
+        decelerationRate: 0.03,
       },
       scene: this,
     });
