@@ -10,7 +10,6 @@ import { isPerspectiveOrOrtographicCamera } from '../utils/isPerspectiveOrOrtogr
 
 export type ThreeDViewerProps = {
   scene: Scene;
-  camera: THREE.Camera;
   resX?: number;
   resY?: number;
   width?: number;
@@ -22,7 +21,6 @@ export type ThreeDViewerProps = {
 
 export function ThreeDViewer({
   scene,
-  camera,
   resX,
   resY,
   width,
@@ -68,9 +66,9 @@ export function ThreeDViewer({
       composer.renderer.info.reset();
       composer.render();
     } else if (renderer) {
-      renderer.render(scene, camera);
+      renderer.render(scene, scene.camera);
     }
-  }, [scene, camera, composer, renderer]);
+  }, [scene, composer, renderer]);
 
   const rendererLoop = useCallback(() => {
     const deltaTime = clockRef.current.getDelta();
@@ -113,6 +111,7 @@ export function ThreeDViewer({
       renderFrame();
     }
 
+    const camera = scene.camera;
     if (!isPerspectiveOrOrtographicCamera(camera)) return;
 
     const aspect = resolution.width / resolution.height;

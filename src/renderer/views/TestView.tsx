@@ -74,7 +74,7 @@ export function TestView() {
         />
       </div>
 
-      <ThreeDViewer scene={scene} camera={scene.camera} isPaused={paused} debug />
+      <ThreeDViewer scene={scene} isPaused={paused} debug />
     </>
   ) : (
     <InternalLoader progress={loadingProgress * 100} onComplete={() => setLoadingFinished(true)} />

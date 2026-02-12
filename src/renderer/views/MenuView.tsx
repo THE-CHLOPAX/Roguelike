@@ -18,9 +18,12 @@ export function MenuView() {
 
       <InternalFlex direction="column" align="center" gap={10}>
         <InternalButton label="Pixel renderer test" onClick={() => setView('testPixelRenderer')} />
+
         <InternalButton label="Camera test" onClick={() => setView('test')} />
 
         <InternalButton label="Settings" onClick={() => setView('settings')} />
+
+        <InternalButton label="Controls test" onClick={() => setView('controlsTest')} />
 
         <InternalButton
           label="Quit"

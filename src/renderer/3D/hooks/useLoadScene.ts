@@ -29,6 +29,10 @@ export function useLoadScene({
 
   // Load all assets
   useEffect(() => {
+    if (assetsToLoad.length === 0) {
+      setLoadingProgress(1);
+      return;
+    }
     loadWithProgress(assetsToLoad, setLoadingProgress);
   }, []);
 

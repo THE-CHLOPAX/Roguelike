@@ -42,8 +42,8 @@ export default defineConfig([
         {
           code: 100,
           tabWidth: 2,
-          ignoreImports: true,
           ignoreComments: true,
+          ignoreStrings: true,
         },
       ],
       quotes: [

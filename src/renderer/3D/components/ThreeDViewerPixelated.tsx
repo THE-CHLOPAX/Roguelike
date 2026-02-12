@@ -7,7 +7,6 @@ const PIXEL_SIZE = 4;
 
 export function ThreeDViewerPixelated({
   scene,
-  camera,
   resX,
   resY,
   debug,
@@ -28,7 +27,6 @@ export function ThreeDViewerPixelated({
   return (
     <ThreeDViewer
       scene={scene}
-      camera={camera}
       debug={debug}
       resX={resX}
       resY={resY}

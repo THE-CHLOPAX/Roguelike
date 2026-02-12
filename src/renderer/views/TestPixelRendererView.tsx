@@ -76,7 +76,6 @@ export function TestPixelRendererView() {
       </div>
       <ThreeDViewerPixelated
         scene={scene}
-        camera={scene.camera}
         debug
         resX={resolution.width}
         resY={resolution.height}

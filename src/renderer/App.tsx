@@ -7,6 +7,7 @@ import { Theme } from '@radix-ui/themes';
 import { MenuView } from './views/MenuView';
 import { TestView } from './views/TestView';
 import { SettingsView } from './views/SettingsView';
+import { ControlsTestView } from './views/ControlsTestView';
 import { TestPixelRendererView } from './views/TestPixelRendererView';
 
 const App: React.FC = () => {
@@ -18,6 +19,7 @@ const App: React.FC = () => {
           settings: SettingsView,
           test: TestView,
           testPixelRenderer: TestPixelRendererView,
+          controlsTest: ControlsTestView,
         }}
       />
     </Theme>
