@@ -3,7 +3,7 @@ import { Scene, SceneConstructorOptions, useAssetStore, useKeyboard, useMouse } 
 
 export type UseLoadSceneProps = {
   sceneClass: new (options: SceneConstructorOptions) => Scene;
-  sceneParams?: object;
+  sceneParams?: Omit<SceneConstructorOptions, 'keyboardHandlers' | 'mouseHandlers'>;
   assetsToLoad?: Array<Promise<unknown>>;
 };
 

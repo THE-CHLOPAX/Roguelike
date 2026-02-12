@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
@@ -12,6 +13,11 @@ export function ControlsTestView() {
   const { scene, loadingProgress } = useLoadScene({
     sceneClass: ControlsTestScene,
     assetsToLoad: [loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png')],
+    sceneParams: {
+      physics: {
+        gravity: new THREE.Vector3(0, -9.81, 0),
+      },
+    },
   });
 
   const { resolution } = useGraphicsStore();

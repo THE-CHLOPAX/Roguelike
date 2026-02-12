@@ -28,6 +28,7 @@ export class InertialOrtographicCameraWithControls extends InertialOrtographicCa
   private _mouseInput: MouseInput;
 
   private _isDragging: boolean = false;
+  private _keyboardDisabled: boolean = false;
 
   constructor({
     options = {},
@@ -53,7 +54,12 @@ export class InertialOrtographicCameraWithControls extends InertialOrtographicCa
     this.updateProjectionMatrix();
   }
 
+  public toggleKeyboardControls(enabled: boolean): void {
+    this._keyboardDisabled = enabled;
+  }
+
   private _handleKeyboardInput(): void {
+    if (this._keyboardDisabled) return;
     const keyMappings = [
       { key: 'w', axis: 'z' as const, value: -1 },
       { key: 'a', axis: 'x' as const, value: -1 },
