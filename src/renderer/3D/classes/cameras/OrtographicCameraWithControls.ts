@@ -101,8 +101,6 @@ export class OrtographicCameraWithControls extends OrtographicCamera {
           axis === 'z' ? value : 0
         );
 
-        console.log('movement vector before rotation', movementVector);
-
         const yRotation = new THREE.Euler(0, this.rotation.y, 0, 'XYZ');
         const movementRotated = movementVector.applyEuler(yRotation);
 
@@ -111,7 +109,6 @@ export class OrtographicCameraWithControls extends OrtographicCamera {
           this._movementTarget = new THREE.Vector3().copy(this.position);
         }
         this._movementTarget.add(movementRotated);
-        console.log('this position', this.position);
       });
     }
   }

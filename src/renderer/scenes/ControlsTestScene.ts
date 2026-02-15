@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
 import { CHECKERBOARD_TEXTURE } from '../constants';
-import { CAMERA_POSITION_OFFSET } from '../3D/constants';
 import { pixelateTexture } from '../3D/utils/pixelateTexture';
 import { RigidPlane } from '../3D/classes/gameObjects/RigidPlane';
 import { ControlledBox } from '../3D/classes/gameObjects/ControlledBox';
@@ -33,7 +32,7 @@ export class ControlsTestScene extends Scene {
       },
       scene: this,
     });
-    this.camera.position.set(1, 1, 1);
+    this.camera.position.set(6, 6, 6);
     this.camera.lookAt(0, 0, 0);
 
     this.background = new THREE.Color(0x151729);

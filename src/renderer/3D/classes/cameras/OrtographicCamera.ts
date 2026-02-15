@@ -19,7 +19,7 @@ export type OrtographicCameraOptions = {
  * @param {OrtographicCameraOptions} options - The options for the ortographic camera.
  */
 export class OrtographicCamera extends THREE.OrthographicCamera {
-  private _pivotPoint: THREE.Vector3 = this.position;
+  private _pivotPoint: THREE.Vector3 | null = null;
 
   constructor({ options = {} }: OrtographicCameraOptions) {
     super(
@@ -36,22 +36,29 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
   }
 
   public get pivotPoint(): THREE.Vector3 {
-    return this._pivotPoint;
+    // If no custom pivot point set, return camera position (tracks camera)
+    return this._pivotPoint ?? this.position;
   }
 
   public set pivotPoint(point: THREE.Vector3) {
-    this._pivotPoint = point;
+    // Create a new Vector3 to avoid reference issues
+    if (!this._pivotPoint) {
+      this._pivotPoint = new THREE.Vector3();
+    }
+    this._pivotPoint.copy(point);
   }
 
   public moveTo(position: THREE.Vector3, options?: CameraMoveToOptions): void {
+    const targetPosition = position.clone();
+
     if (options?.offset) {
-      position.add(options.offset);
+      targetPosition.add(options.offset);
     }
 
     if (options?.lerp) {
-      this.position.lerp(position, options.lerp);
+      this.position.lerp(targetPosition, options.lerp);
     } else {
-      this.position.copy(position);
+      this.position.copy(targetPosition);
     }
   }
 }

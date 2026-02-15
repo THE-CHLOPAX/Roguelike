@@ -100,14 +100,14 @@ export class WSADControls extends GameObjectComponent {
     const rotatedMove = new THREE.Vector3();
     rotatedMove.addScaledVector(cameraRight, moveVector.x);
     rotatedMove.addScaledVector(cameraForward, -moveVector.z);
-    this._rigidBody.applyImpulse(rotatedMove);
+    rotatedMove.multiplyScalar(this._speed);
 
-    // Limit the velocity to prevent excessive speed
+    // Get current velocity and preserve Y component (gravity)
     const currentVelocity = this._rigidBody.getLinearVelocity();
-    if (!currentVelocity) return;
-    if (currentVelocity.length() > this._speed) {
-      currentVelocity.normalize().multiplyScalar(this._speed);
-      this._rigidBody.setLinearVelocity(currentVelocity);
+    if (currentVelocity) {
+      rotatedMove.y = currentVelocity.y;
     }
+
+    this._rigidBody.setLinearVelocity(rotatedMove);
   }
 }
