@@ -8,9 +8,16 @@ export type UseWebGLRendererReturn = {
   containerRef: (node: HTMLDivElement | null) => void;
 };
 
+export type UseWebGLRendererOptions = THREE.WebGLRendererParameters & {
+  shadowMap?: {
+    enabled: boolean;
+    type: THREE.ShadowMapType;
+  };
+};
+
 export type UseWebGLRendererProps = {
   resolution: { width: number; height: number };
-  options: THREE.WebGLRendererParameters;
+  options: UseWebGLRendererOptions;
   postProcessingPasses: Pass[];
 };
 
@@ -21,7 +28,15 @@ export function useWebGLRenderer({
 }: UseWebGLRendererProps): UseWebGLRendererReturn {
   // Renderer initializer
   const renderer: THREE.WebGLRenderer | null = useMemo(() => {
-    return new THREE.WebGLRenderer({ ...options });
+    const rendererObj = new THREE.WebGLRenderer({ ...options });
+
+    // Toggle shadows
+    if (options.shadowMap) {
+      rendererObj.shadowMap.enabled = options.shadowMap.enabled;
+      rendererObj.shadowMap.type = options.shadowMap.type;
+    }
+
+    return rendererObj;
   }, [options]);
 
   // Composer initializer

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GameObject, RigidBody, Scene } from '@tgdf';
-import { ShapeType } from '@dimforge/rapier3d-compat';
 
 export class RigidPlane extends GameObject {
   constructor(scene: Scene, size: THREE.Vector2, material: THREE.Material) {

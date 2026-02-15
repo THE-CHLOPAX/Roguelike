@@ -9,8 +9,8 @@ import { GameObjectEventMap } from '../internal-3d/types/gameObjects';
 import { PhysicsCollisionCallback } from '../internal-3d/types/physics';
 
 export type RigidBodyEventsMap = {
-  'colliderready': void;
-}
+  colliderready: void;
+};
 
 export type RigidBodyType = 'dynamic' | 'static' | 'kinematic';
 export type RigidBodyOptions = {
@@ -22,10 +22,12 @@ export type RigidBodyOptions = {
   angularDamping?: number; // Rotation resistance
   colliderShape?: RAPIER.ShapeType;
   enableCollisionDetection?: boolean;
-}
+};
 
-export class RigidBody<T extends GameObjectEventMap = GameObjectEventMap, K extends SceneEventsMap = SceneEventsMap> extends GameObjectComponent<RigidBodyOptions, K, T> {
-
+export class RigidBody<
+  T extends GameObjectEventMap = GameObjectEventMap,
+  K extends SceneEventsMap = SceneEventsMap,
+> extends GameObjectComponent<RigidBodyOptions, K, T> {
   public static BodyType = RAPIER.RigidBodyType;
   public static ShapeType = RAPIER.ShapeType;
   public static ActiveEvents = RAPIER.ActiveEvents;
@@ -137,6 +139,20 @@ export class RigidBody<T extends GameObjectEventMap = GameObjectEventMap, K exte
     }
   }
 
+  public getLinearVelocity(): THREE.Vector3 | null {
+    if (this._body) {
+      const vel = this._body.linvel();
+      return new THREE.Vector3(vel.x, vel.y, vel.z);
+    }
+    return null;
+  }
+
+  public setLinearVelocity(velocity: THREE.Vector3): void {
+    if (this._body) {
+      this._body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
+    }
+  }
+
   public onCollision(callback: PhysicsCollisionCallback) {
     if (!this.gameObject.scene?.physics) {
       logger({ message: 'RigidBody: Physics world not initialized', type: 'error' });
@@ -233,11 +249,16 @@ export class RigidBody<T extends GameObjectEventMap = GameObjectEventMap, K exte
       !isFinite(size.x) ||
       !isFinite(size.y) ||
       !isFinite(size.z) ||
-      size.x <= 0 || size.y <= 0 || (size.z <= 0 && (mesh.geometry.type !== 'PlaneGeometry' && mesh.geometry.type !== 'RingGeometry'))
+      size.x <= 0 ||
+      size.y <= 0 ||
+      (size.z <= 0 &&
+        mesh.geometry.type !== 'PlaneGeometry' &&
+        mesh.geometry.type !== 'RingGeometry')
     ) {
       logger({
-        message: `RigidBody: Invalid collider size (${size.x}, ${size.y}, ${size.z}) for ${this.gameObject.name}`,
-        type: 'error'
+        message: `RigidBody: Invalid collider size (${size.x}, ${size.y}, ${size.z})
+        for ${this.gameObject.name}`,
+        type: 'error',
       });
       return;
     }
@@ -312,7 +333,7 @@ export class RigidBody<T extends GameObjectEventMap = GameObjectEventMap, K exte
         const halfY = size.y / 2;
         const halfZ = size.z / 2;
 
-        if (halfX <= 0 || halfY <= 0 || (halfZ <= 0)) {
+        if (halfX <= 0 || halfY <= 0 || halfZ <= 0) {
           logger({ message: 'RigidBody: Invalid cuboid dimensions', type: 'error' });
           throw new Error('Invalid cuboid dimensions');
         }
@@ -376,7 +397,7 @@ export class RigidBody<T extends GameObjectEventMap = GameObjectEventMap, K exte
     const material = new THREE.MeshBasicMaterial({
       color: 0x00ff00,
       wireframe: true,
-      opacity: 1
+      opacity: 1,
     });
 
     this._colliderDebugMesh = new THREE.Mesh(geometry, material);

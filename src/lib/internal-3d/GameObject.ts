@@ -6,8 +6,12 @@ import { Scene } from './Scene/Scene';
 import { SceneEventsMap } from './types/scene';
 import { logger } from '../internal-ui/utils/logger';
 
-export class GameObject<T extends GameObjectEventMap = GameObjectEventMap, K extends SceneEventsMap = SceneEventsMap> extends THREE.Object3D {
-
+export class GameObject<
+  T extends GameObjectEventMap = GameObjectEventMap,
+  K extends SceneEventsMap = SceneEventsMap,
+>
+  extends THREE.Object3D
+{
   private _gameObjectComponents: Map<string, GameObjectComponent<unknown, K, T>>;
   private _scene: Scene<K>;
   private _emitter: Emitter<T> = new Emitter<T>();
@@ -19,6 +23,9 @@ export class GameObject<T extends GameObjectEventMap = GameObjectEventMap, K ext
     this._scene = scene;
     this._object = object;
     this._gameObjectComponents = new Map<string, GameObjectComponent<unknown, K, T>>();
+
+    // TODO: Investigate this - can why is this necessary?
+    // Shouldn't we consider a separate component for renderering meshes inside GameObejct?
 
     // If object is a mesh, copy its geometry and material
     if (object instanceof THREE.Mesh) {
@@ -46,7 +53,10 @@ export class GameObject<T extends GameObjectEventMap = GameObjectEventMap, K ext
     if (this._object instanceof THREE.Mesh) {
       return this._object;
     } else {
-      logger({ message: `GameObject: ${this.name} this object 3D is not instance of a mesh.`, type: 'warn' });
+      logger({
+        message: `GameObject: ${this.name} this object 3D is not instance of a mesh.`,
+        type: 'warn',
+      });
       return null;
     }
   }
@@ -109,11 +119,11 @@ export class GameObject<T extends GameObjectEventMap = GameObjectEventMap, K ext
     this._isAwake = false;
   }
 
-  protected onAwake(): void { }
+  protected onAwake(): void {}
 
-  protected onUpdate(_deltaTime: number): void { }
+  protected onUpdate(_deltaTime: number): void {}
 
-  protected onDestroyed(): void { }
+  protected onDestroyed(): void {}
 
   private _onAwakeHandler = () => {
     this._isAwake = true;

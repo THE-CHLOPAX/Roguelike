@@ -4,8 +4,8 @@ import { Scene, useGraphicsStore } from '@tgdf';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useWebGLRenderer } from './useWebGLRenderer';
 import { ThreeDViewerDebugInfo } from './ThreeDViewerDebugInfo';
+import { useWebGLRenderer, UseWebGLRendererOptions } from './useWebGLRenderer';
 import { isPerspectiveOrOrtographicCamera } from '../utils/isPerspectiveOrOrtographicCamera';
 
 export type ThreeDViewerProps = {
@@ -34,9 +34,14 @@ export function ThreeDViewer({
 
   const { antialiasing, resolution } = useGraphicsStore();
 
-  const rendererOptionsMemo = useMemo<THREE.WebGLRendererParameters>(() => {
+  const rendererOptionsMemo = useMemo<UseWebGLRendererOptions>(() => {
     return {
       antialias: antialiasing,
+      // TODO: use from graphics settings
+      shadowMap: {
+        enabled: true,
+        type: THREE.PCFSoftShadowMap,
+      },
     };
   }, [antialiasing]);
 

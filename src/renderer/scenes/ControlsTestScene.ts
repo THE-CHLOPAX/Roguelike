@@ -2,13 +2,14 @@ import * as THREE from 'three';
 import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
 import { CHECKERBOARD_TEXTURE } from '../constants';
+import { CAMERA_POSITION_OFFSET } from '../3D/constants';
 import { pixelateTexture } from '../3D/utils/pixelateTexture';
 import { RigidPlane } from '../3D/classes/gameObjects/RigidPlane';
 import { ControlledBox } from '../3D/classes/gameObjects/ControlledBox';
-import { InertialOrtographicCameraWithControls } from '../3D/classes/cameras/InertialOrtographicCameraWithControls';
+import { OrtographicCameraWithControls } from '../3D/classes/cameras/OrtographicCameraWithControls';
 
 export class ControlsTestScene extends Scene {
-  public camera: InertialOrtographicCameraWithControls;
+  public camera: OrtographicCameraWithControls;
 
   constructor(options: SceneConstructorOptions) {
     super(options);
@@ -21,33 +22,29 @@ export class ControlsTestScene extends Scene {
     const aspectRatio = window.innerWidth / window.innerHeight;
     const frustumSize = 9;
 
-    this.camera = new InertialOrtographicCameraWithControls({
+    this.camera = new OrtographicCameraWithControls({
       options: {
         left: (-frustumSize * aspectRatio) / 2,
         right: (frustumSize * aspectRatio) / 2,
         top: frustumSize / 2,
-        bottom: -frustumSize / 5,
+        bottom: -frustumSize / 2,
         near: 0.1,
         far: 40,
       },
       scene: this,
     });
-    this.camera.position.set(6, 6, 6);
+    this.camera.position.set(1, 1, 1);
     this.camera.lookAt(0, 0, 0);
 
     this.background = new THREE.Color(0x151729);
 
-    const floorPlane = new RigidPlane(
-      this,
-      new THREE.Vector2(20, 20),
-      new THREE.MeshPhongMaterial({ map: checkerboardTexture })
-    );
+    const floorMaterial = new THREE.MeshPhongMaterial({ map: checkerboardTexture });
+    const floorPlane = new RigidPlane(this, new THREE.Vector2(20, 20), floorMaterial);
     floorPlane.rotation.x = -Math.PI / 2;
-    floorPlane.receiveShadow = true;
     this.add(floorPlane);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(100, 100, 100);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(10, 10, 10);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.set(2048, 2048);
     this.add(directionalLight);
