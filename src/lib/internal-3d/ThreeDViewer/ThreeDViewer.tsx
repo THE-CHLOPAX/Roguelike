@@ -4,13 +4,12 @@ import { Scene, useGraphicsStore } from '@tgdf';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useWebGLRenderer } from './useWebGLRenderer';
 import { ThreeDViewerDebugInfo } from './ThreeDViewerDebugInfo';
+import { useWebGLRenderer, UseWebGLRendererOptions } from './useWebGLRenderer';
 import { isPerspectiveOrOrtographicCamera } from '../utils/isPerspectiveOrOrtographicCamera';
 
 export type ThreeDViewerProps = {
   scene: Scene;
-  camera: THREE.Camera;
   resX?: number;
   resY?: number;
   width?: number;
@@ -22,7 +21,6 @@ export type ThreeDViewerProps = {
 
 export function ThreeDViewer({
   scene,
-  camera,
   resX,
   resY,
   width,
@@ -36,9 +34,14 @@ export function ThreeDViewer({
 
   const { antialiasing, resolution } = useGraphicsStore();
 
-  const rendererOptionsMemo = useMemo<THREE.WebGLRendererParameters>(() => {
+  const rendererOptionsMemo = useMemo<UseWebGLRendererOptions>(() => {
     return {
       antialias: antialiasing,
+      // TODO: use from graphics settings
+      shadowMap: {
+        enabled: true,
+        type: THREE.PCFSoftShadowMap,
+      },
     };
   }, [antialiasing]);
 
@@ -68,9 +71,9 @@ export function ThreeDViewer({
       composer.renderer.info.reset();
       composer.render();
     } else if (renderer) {
-      renderer.render(scene, camera);
+      renderer.render(scene, scene.camera);
     }
-  }, [scene, camera, composer, renderer]);
+  }, [scene, composer, renderer]);
 
   const rendererLoop = useCallback(() => {
     const deltaTime = clockRef.current.getDelta();
@@ -113,6 +116,7 @@ export function ThreeDViewer({
       renderFrame();
     }
 
+    const camera = scene.camera;
     if (!isPerspectiveOrOrtographicCamera(camera)) return;
 
     const aspect = resolution.width / resolution.height;

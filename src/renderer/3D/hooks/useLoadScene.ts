@@ -3,7 +3,7 @@ import { Scene, SceneConstructorOptions, useAssetStore, useKeyboard, useMouse } 
 
 export type UseLoadSceneProps = {
   sceneClass: new (options: SceneConstructorOptions) => Scene;
-  sceneParams?: object;
+  sceneParams?: Omit<SceneConstructorOptions, 'keyboardHandlers' | 'mouseHandlers'>;
   assetsToLoad?: Array<Promise<unknown>>;
 };
 
@@ -29,6 +29,10 @@ export function useLoadScene({
 
   // Load all assets
   useEffect(() => {
+    if (assetsToLoad.length === 0) {
+      setLoadingProgress(1);
+      return;
+    }
     loadWithProgress(assetsToLoad, setLoadingProgress);
   }, []);
 

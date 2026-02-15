@@ -1,13 +1,23 @@
-import { Scene, GameObject, SceneEventsMap, GameObjectEventMap, KeyboardInput, MouseInput } from '@tgdf';
+import {
+  Scene,
+  GameObject,
+  SceneEventsMap,
+  GameObjectEventMap,
+  KeyboardInput,
+  MouseInput,
+} from '@tgdf';
 
-export abstract class GameObjectComponent<T = unknown, K extends SceneEventsMap = SceneEventsMap, U extends GameObjectEventMap = GameObjectEventMap> {
-
+export abstract class GameObjectComponent<
+  T = unknown,
+  K extends SceneEventsMap = SceneEventsMap,
+  U extends GameObjectEventMap = GameObjectEventMap,
+> {
   private _gameObject: GameObject<U, K>;
-  protected options: T;
+  protected options: Partial<T>;
 
-  constructor(gameObject: GameObject<U, K>, options: T) {
+  constructor(gameObject: GameObject<U, K>, options?: Partial<T>) {
     this._gameObject = gameObject;
-    this.options = options;
+    this.options = options ?? {};
 
     if (this._gameObject.isAwake) {
       this.onAwake();
@@ -40,10 +50,9 @@ export abstract class GameObjectComponent<T = unknown, K extends SceneEventsMap 
     return this.gameObject.scene?.mouseInput;
   }
 
-  protected onUpdate(_deltaTime: number): void { }
+  protected onUpdate(_deltaTime: number): void {}
 
-  protected onAwake(): void { }
+  protected onAwake(): void {}
 
-  protected onDestroyed(): void { }
-
+  protected onDestroyed(): void {}
 }
