@@ -1,10 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
-  useViewsStore,
   useSoundsStore,
   useGraphicsStore,
   MAIN_SOUND_CHANNEL,
-  useKeyboard,
   AVAILABLE_RESOLUTIONS,
   InternalButton,
   InternalCheckbox,
@@ -14,9 +12,9 @@ import {
   InternalText,
 } from '@tgdf';
 
-export function SettingsView() {
-  const { goBack } = useViewsStore();
+import { BackToViewLayout } from '../layouts/BackToViewLayout';
 
+export function SettingsView() {
   const { soundChannels, setChannelVolume } = useSoundsStore();
 
   const mainVolumeChannel = useMemo(() => soundChannels.get(MAIN_SOUND_CHANNEL), [soundChannels]);
@@ -24,75 +22,70 @@ export function SettingsView() {
   const { fullscreen, resolution, antialiasing, setResolution, setFullscreen, setAntialiasing } =
     useGraphicsStore();
 
-  const { addKeyDownListener } = useKeyboard();
-
-  useEffect(() => {
-    addKeyDownListener('Escape', () => {
-      goBack();
-    });
-  }, []);
-
   return (
-    <InternalFlex
-      direction="column"
-      align="center"
-      justify="center"
-      style={{ gap: '20px', background: '#000', position: 'absolute', inset: 0 }}
-    >
-      <InternalText size="xl" weight="bold" color="white">
-        Settings
-      </InternalText>
-
-      {/* Resolution Selector */}
-      <InternalFlex direction="row" justify="between" gap={10} align="center">
-        <InternalText size="lg" color="white">
-          Resolution:
+    <BackToViewLayout backToView="menu">
+      <InternalFlex
+        direction="column"
+        align="center"
+        justify="center"
+        style={{ gap: '20px', background: '#000', height: '100vh' }}
+      >
+        <InternalText size="xl" weight="bold" color="white">
+          Settings
         </InternalText>
-        <InternalSelect
-          options={AVAILABLE_RESOLUTIONS.map((res) => ({
-            value: res,
-            label: `${res.width} x ${res.height}`,
-          }))}
-          value={resolution}
-          onChange={(value) => {
-            setResolution(value);
-          }}
-        />
-      </InternalFlex>
 
-      {/* Fullscreen Toggle */}
-      <InternalFlex direction="row" justify="between" gap={10} align="center">
-        <InternalText size="lg" color="white">
-          Fullscreen:
-        </InternalText>
-        <InternalCheckbox checked={fullscreen} onChange={() => setFullscreen(!fullscreen)} />
-      </InternalFlex>
+        {/* Resolution Selector */}
+        <InternalFlex direction="row" justify="between" gap={10} align="center">
+          <InternalText size="lg" color="white">
+            Resolution:
+          </InternalText>
+          <InternalSelect
+            options={AVAILABLE_RESOLUTIONS.map((res) => ({
+              value: res,
+              label: `${res.width} x ${res.height}`,
+            }))}
+            value={resolution}
+            onChange={(value) => {
+              setResolution(value);
+            }}
+          />
+        </InternalFlex>
 
-      {/* Antialiasing Toggle */}
-      <InternalFlex direction="row" justify="between" gap={10} align="center">
-        <InternalText size="lg" color="white">
-          Antialiasing:
-        </InternalText>
-        <InternalCheckbox checked={antialiasing} onChange={() => setAntialiasing(!antialiasing)} />
-      </InternalFlex>
+        {/* Fullscreen Toggle */}
+        <InternalFlex direction="row" justify="between" gap={10} align="center">
+          <InternalText size="lg" color="white">
+            Fullscreen:
+          </InternalText>
+          <InternalCheckbox checked={fullscreen} onChange={() => setFullscreen(!fullscreen)} />
+        </InternalFlex>
 
-      {/* Main volume slider */}
-      <InternalFlex direction="column" align="center" justify="center" style={{ width: '150px' }}>
-        <InternalText size="lg" color="white">
-          Main Volume: {mainVolumeChannel?.volume}
-        </InternalText>
-        <InternalSlider
-          value={mainVolumeChannel?.volume}
-          min={0}
-          max={1}
-          step={0.01}
-          onValueChange={(value) => {
-            setChannelVolume(MAIN_SOUND_CHANNEL, value);
-          }}
-        />
-      </InternalFlex>
+        {/* Antialiasing Toggle */}
+        <InternalFlex direction="row" justify="between" gap={10} align="center">
+          <InternalText size="lg" color="white">
+            Antialiasing:
+          </InternalText>
+          <InternalCheckbox
+            checked={antialiasing}
+            onChange={() => setAntialiasing(!antialiasing)}
+          />
+        </InternalFlex>
 
-      <InternalButton label="Back" onClick={() => goBack()} />
-    </InternalFlex>
+        {/* Main volume slider */}
+        <InternalFlex direction="column" align="center" justify="center" style={{ width: '150px' }}>
+          <InternalText size="lg" color="white">
+            Main Volume: {mainVolumeChannel?.volume}
+          </InternalText>
+          <InternalSlider
+            value={mainVolumeChannel?.volume}
+            min={0}
+            max={1}
+            step={0.01}
+            onValueChange={(value) => {
+              setChannelVolume(MAIN_SOUND_CHANNEL, value);
+            }}
+          />
+        </InternalFlex>
+      </InternalFlex>
+    </BackToViewLayout>
   );
 }
