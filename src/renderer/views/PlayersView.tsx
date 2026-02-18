@@ -14,10 +14,11 @@ export function PlayersView() {
   const {
     basePlayer,
     additionalPlayers,
-    activePlayers,
     enableAdditionalPlayers,
+    getActivePlayers,
     setEnableAdditionalPlayers,
     setAdditionalPlayers,
+    removeAdditionalPlayer,
     changePlayerControls,
     getKeyboardPlayers,
     getUnoccupiedGamepads,
@@ -25,20 +26,34 @@ export function PlayersView() {
 
   //debug:
   useEffect(() => {
-    console.log('Active players:', activePlayers);
-  }, [activePlayers]);
+    console.log('Active players:', getActivePlayers());
+  }, [getActivePlayers()]);
 
   useEffect(() => {
     console.log('Keyboard players:', getKeyboardPlayers());
     console.log('Unoccupied gamepads:', getUnoccupiedGamepads());
   }, [getKeyboardPlayers(), getUnoccupiedGamepads()]);
 
-  const handleRemovePlayer = (playerId: number) => {
-    console.log('Removing player with ID:', playerId);
-    setAdditionalPlayers(
-      new Set(Array.from(additionalPlayers).filter((player) => player.id !== playerId))
-    );
-  };
+  const handleRemovePlayer = useCallback(
+    (playerId: string) => {
+      console.log('Removing player with ID:', playerId);
+      removeAdditionalPlayer(playerId);
+    },
+    [additionalPlayers, setAdditionalPlayers]
+  );
+
+  const handleChangePlayerControls = useCallback(
+    (player: ActivePlayerState, value: ActivePlayerState['controls']) => {
+      const gamepadIndex =
+        value === 'gamepad'
+          ? getUnoccupiedGamepads().values().next().value?.gamepad.index
+          : undefined;
+
+      console.log('First unoccupied gamepad index:', gamepadIndex);
+      changePlayerControls(player.id, value, gamepadIndex);
+    },
+    [changePlayerControls, getUnoccupiedGamepads]
+  );
 
   const getAvailableControls = useCallback(
     (playerControls: ActivePlayerState['controls']) => [
@@ -53,7 +68,7 @@ export function PlayersView() {
         disabled: getUnoccupiedGamepads().size === 0 && playerControls !== 'gamepad',
       },
     ],
-    [getKeyboardPlayers(), getUnoccupiedGamepads()]
+    [getKeyboardPlayers, getUnoccupiedGamepads]
   );
 
   return (
@@ -68,7 +83,7 @@ export function PlayersView() {
           Players View
         </InternalText>
 
-        {Array.from(activePlayers).map((player) => (
+        {Array.from(getActivePlayers()).map((player) => (
           <InternalFlex
             key={player.id}
             direction="row"
@@ -83,13 +98,7 @@ export function PlayersView() {
               <InternalSelect
                 value={player.controls}
                 options={getAvailableControls(player.controls)}
-                onChange={(value) => {
-                  const gamepadIndex =
-                    value === 'gamepad'
-                      ? getUnoccupiedGamepads().values().next().value?.gamepad.index
-                      : undefined;
-                  changePlayerControls(player.id, value, gamepadIndex);
-                }}
+                onChange={(value) => handleChangePlayerControls(player, value)}
               />
             </InternalText>
             {player.id !== basePlayer.id && (
