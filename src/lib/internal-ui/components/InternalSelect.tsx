@@ -1,4 +1,3 @@
-import styled from 'styled-components';
 import { Select } from '@radix-ui/themes';
 
 type InternalSelectProps<T = string> = {

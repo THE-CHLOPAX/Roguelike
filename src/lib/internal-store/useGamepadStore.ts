@@ -31,7 +31,6 @@ export const useGamepadStore = create<GamepadState>()(
 );
 
 function handleGamepadConnected(e: GamepadEvent) {
-  console.log('Gamepad connected:', e.gamepad);
   const { gamepadEvents, connectedGamepads, setConnectedGamepads } = useGamepadStore.getState();
   gamepadEvents.trigger('gamepadconnected', { gamepad: new GamepadInstance(e.gamepad) });
   // Add to connected gamepads state
@@ -41,7 +40,6 @@ function handleGamepadConnected(e: GamepadEvent) {
 }
 
 function handleGamepadDisconnected(e: GamepadEvent) {
-  console.log('Gamepad disconnected:', e.gamepad);
   const { gamepadEvents, connectedGamepads, setConnectedGamepads } = useGamepadStore.getState();
   gamepadEvents.trigger('gamepaddisconnected', { gamepad: new GamepadInstance(e.gamepad) });
   // Remove from connected gamepads state
