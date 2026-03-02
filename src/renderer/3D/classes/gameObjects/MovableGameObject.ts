@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GameObject, RigidBody, Scene } from '@tgdf';
 
-export type MovablGameObjectOptions = {
+export type MovableGameObjectOptions = {
   speed: number;
   mass: number;
   friction: number;
@@ -12,7 +12,7 @@ export class MovableGameObject extends GameObject {
   private _speed: number;
   private _rigidBody: RigidBody;
 
-  constructor(scene: Scene, object: THREE.Object3D, options: MovablGameObjectOptions) {
+  constructor(scene: Scene, object: THREE.Object3D, options: MovableGameObjectOptions) {
     super({ scene, object });
 
     this._speed = options.speed;

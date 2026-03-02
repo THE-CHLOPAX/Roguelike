@@ -12,6 +12,8 @@ export type WSADControlsOptions = {
   cameraLerp?: number;
 };
 
+const SPRINT_MULTIPLIER = 1.75;
+
 export class WSADControls extends GameObjectComponent {
   private _lerp = 0.025;
   private _movableGameObject: MovableGameObject;
@@ -49,15 +51,14 @@ export class WSADControls extends GameObjectComponent {
       { key: 'd', axis: 'x' as const, value: 1 },
     ];
 
-    const defaultSpeed = this._movableGameObject.speed;
-    const sprintSpeed = defaultSpeed * 1.5;
-
     this._keyboardInput.addKeyDownListener('shift', () => {
+      const defaultSpeed = this._movableGameObject.speed;
+      const sprintSpeed = defaultSpeed * SPRINT_MULTIPLIER;
       this._movableGameObject.speed = sprintSpeed;
     });
 
     this._keyboardInput.addKeyUpListener('shift', () => {
-      this._movableGameObject.speed = defaultSpeed;
+      this._movableGameObject.speed /= SPRINT_MULTIPLIER;
     });
 
     for (const { key, axis, value } of keyMappings) {
