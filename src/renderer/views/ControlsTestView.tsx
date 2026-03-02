@@ -6,7 +6,7 @@ import { CHECKERBOARD_TEXTURE } from '../constants';
 import { useLoadScene } from '../3D/hooks/useLoadScene';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 import { ControlsTestScene } from '../scenes/ControlsTestScene';
-import { ThreeDViewerPixelated } from '../3D/components/ThreeDViewerPixelated';
+import { ThreeDViewerPixelated } from '../ui/ThreeDViewerPixelated';
 
 export function ControlsTestView() {
   const { loadTexture } = useAssetStore();
