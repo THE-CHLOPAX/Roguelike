@@ -58,8 +58,7 @@ export class WSADControls extends GameObjectComponent {
     });
 
     this._keyboardInput.addKeyUpListener('shift', () => {
-      const defaultSpeed = this._movableGameObject.speed;
-      this._movableGameObject.speed = defaultSpeed;
+      this._movableGameObject.speed /= SPRINT_MULTIPLIER;
     });
 
     for (const { key, axis, value } of keyMappings) {

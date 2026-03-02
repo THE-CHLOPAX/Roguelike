@@ -82,6 +82,5 @@ Promise.all([getInitialResolution(), getInitialFullscreenState()]).then(
 
 // Always listen for fullscreen state changes from main process
 ipc.on('set-fullscreen-response', (response) => {
-  console.log('Received fullscreen state change from main process:', response.fullscreen);
   useGraphicsStore.setState({ fullscreen: response.fullscreen });
 });
