@@ -1,13 +1,22 @@
 import * as THREE from 'three';
-import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
+import {
+  GamepadInstance,
+  Scene,
+  SceneConstructorOptions,
+  useAssetStore,
+  useGamepadStore,
+} from '@tgdf';
 
 import { CHECKERBOARD_TEXTURE } from '../constants';
 import { pixelateTexture } from '../3D/utils/pixelateTexture';
 import { RigidPlane } from '../3D/classes/gameObjects/RigidPlane';
 import { ControlledBox } from '../3D/classes/gameObjects/ControlledBox';
+import { ControlledGamepadBox } from '../3D/classes/gameObjects/ControlledGamepadBox';
 import { OrtographicCameraWithControls } from '../3D/classes/cameras/OrtographicCameraWithControls';
 
 export class ControlsTestScene extends Scene {
+  private _gamepadStoreEvents = useGamepadStore.getState().gamepadEvents;
+
   public camera: OrtographicCameraWithControls;
 
   constructor(options: SceneConstructorOptions) {
@@ -49,8 +58,20 @@ export class ControlsTestScene extends Scene {
     this.add(directionalLight);
 
     // Add test cube rigid body
-    const controlledBox = new ControlledBox(this);
+    /* const controlledBox = new ControlledBox(this);
     controlledBox.position.set(0, 1, 0);
-    this.add(controlledBox);
+    this.add(controlledBox); */
+
+    this._gamepadStoreEvents.on('gamepadconnected', this._onGamepadConnected);
+  }
+
+  private _onGamepadConnected = ({ gamepad }: { gamepad: GamepadInstance }) => {
+    const controlledGamepadBox = new ControlledGamepadBox(this, gamepad);
+    controlledGamepadBox.position.set(0, 1, 0);
+    this.add(controlledGamepadBox);
+  };
+
+  protected onDestroy(): void {
+    this._gamepadStoreEvents.off('gamepadconnected', this._onGamepadConnected);
   }
 }
