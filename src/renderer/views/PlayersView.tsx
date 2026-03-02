@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback } from 'react';
 import {
   InternalFlex,
   InternalText,
@@ -13,33 +13,20 @@ import { ActivePlayerState, useActivePlayersStore } from '../store/useActivePlay
 export function PlayersView() {
   const {
     basePlayer,
-    additionalPlayers,
     enableAdditionalPlayers,
     getActivePlayers,
     setEnableAdditionalPlayers,
-    setAdditionalPlayers,
     removeAdditionalPlayer,
     changePlayerControls,
     getKeyboardPlayers,
     getUnoccupiedGamepads,
   } = useActivePlayersStore();
 
-  //debug:
-  useEffect(() => {
-    console.log('Active players:', getActivePlayers());
-  }, [getActivePlayers()]);
-
-  useEffect(() => {
-    console.log('Keyboard players:', getKeyboardPlayers());
-    console.log('Unoccupied gamepads:', getUnoccupiedGamepads());
-  }, [getKeyboardPlayers(), getUnoccupiedGamepads()]);
-
   const handleRemovePlayer = useCallback(
     (playerId: string) => {
-      console.log('Removing player with ID:', playerId);
       removeAdditionalPlayer(playerId);
     },
-    [additionalPlayers, setAdditionalPlayers]
+    [removeAdditionalPlayer]
   );
 
   const handleChangePlayerControls = useCallback(
@@ -49,7 +36,6 @@ export function PlayersView() {
           ? getUnoccupiedGamepads().values().next().value?.gamepad.index
           : undefined;
 
-      console.log('First unoccupied gamepad index:', gamepadIndex);
       changePlayerControls(player.id, value, gamepadIndex);
     },
     [changePlayerControls, getUnoccupiedGamepads]

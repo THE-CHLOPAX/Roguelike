@@ -33,7 +33,7 @@ export function InternalSelect<T = string>({
 
   return (
     <Select.Root value={selectedKey} onValueChange={handleChange} size={size}>
-      <Select.Trigger placeholder={selectedKey ?? placeholder} />
+      <Select.Trigger placeholder={placeholder} />
       <Select.Content>
         {options.map((option, index) => (
           <Select.Item key={index} value={index.toString()} disabled={option.disabled}>

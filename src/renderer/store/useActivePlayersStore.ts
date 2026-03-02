@@ -44,10 +44,6 @@ export const useActivePlayersStore = create<ActivePlayersState>()(
       getActivePlayers: () => {
         const { basePlayer, additionalPlayers } = get();
 
-        if (additionalPlayers.size === undefined) {
-          return new Set([basePlayer]);
-        }
-
         return new Set([basePlayer, ...additionalPlayers]);
       },
 
@@ -76,7 +72,6 @@ export const useActivePlayersStore = create<ActivePlayersState>()(
       setEnableAdditionalPlayers: (enabled: boolean) => set({ enableAdditionalPlayers: enabled }),
 
       setAdditionalPlayers: (players: Set<ActivePlayerState>) => {
-        console.log('Setting additional players:', players);
         set({
           additionalPlayers: players,
         });
@@ -106,7 +101,7 @@ export const useActivePlayersStore = create<ActivePlayersState>()(
       },
 
       changePlayerControls: (playerId, controls, gamepadIndex) => {
-        const { basePlayer, additionalPlayers, getActivePlayers } = get();
+        const { basePlayer, additionalPlayers } = get();
         let updatedBasePlayer = basePlayer;
         const updatedAdditionalPlayers = new Set<ActivePlayerState>();
 
@@ -169,11 +164,6 @@ useGamepadStore.getState().gamepadEvents.on('gamepadconnected', ({ gamepad: game
     gamepadIndex: gamepadInstance.gamepad.index,
   };
 
-  if (additionalPlayers.size === undefined) {
-    useActivePlayersStore.setState({ additionalPlayers: new Set([newPlayer]) });
-    return;
-  }
-
   useActivePlayersStore.setState({ additionalPlayers: new Set([...additionalPlayers, newPlayer]) });
 });
 
@@ -182,7 +172,6 @@ useGamepadStore.getState().gamepadEvents.on('gamepadconnected', ({ gamepad: game
 useGamepadStore
   .getState()
   .gamepadEvents.on('gamepaddisconnected', ({ gamepad: gamepadInstance }) => {
-    console.log('Gamepad disconnected:', gamepadInstance);
     const { additionalPlayers, basePlayer, setBasePlayer, removeAdditionalPlayer } =
       useActivePlayersStore.getState();
 
