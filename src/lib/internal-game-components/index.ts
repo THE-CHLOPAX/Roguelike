@@ -1,5 +1,3 @@
 import { RigidBody } from './RigidBody';
 
-export {
-    RigidBody
-};
+export { RigidBody };

@@ -8,10 +8,7 @@ export const ipc = {
   /**
    * Send an event to the main process (no-op in web)
    */
-  send: <T extends keyof NativeEventRendererMap>(
-    channel: T,
-    data: NativeEventRendererMap[T]
-  ) => {
+  send: <T extends keyof NativeEventRendererMap>(channel: T, data: NativeEventRendererMap[T]) => {
     console.warn(`IPC send called in web mode: ${String(channel)}`, data);
   },
 

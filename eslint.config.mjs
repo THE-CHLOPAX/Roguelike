@@ -17,7 +17,16 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   {
-    ignores: ['.next/**', 'node_modules/**', 'dist/**', 'build/**', '*.min.js'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'scripts/**',
+      'dist/**',
+      'build/**',
+      'release/**',
+      '*.min.js',
+      'webpack.*.js',
+    ],
   },
   ...compat.extends('prettier'),
   {

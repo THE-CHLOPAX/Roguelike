@@ -8,10 +8,7 @@ export const ipc = {
   /**
    * Send an event to the main process
    */
-  send: <T extends keyof NativeEventRendererMap>(
-    channel: T,
-    data: NativeEventRendererMap[T]
-  ) => {
+  send: <T extends keyof NativeEventRendererMap>(channel: T, data: NativeEventRendererMap[T]) => {
     ipcRenderer.send(channel, data);
   },
 

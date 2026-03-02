@@ -12,19 +12,29 @@ export type SoundsState = {
     sound: string | HTMLAudioElement,
     options: Partial<HTMLAudioElement>
   ) => void;
-  playSoundInChannel: (channelId: string, sound: string | HTMLAudioElement, options?: Partial<HTMLAudioElement>) => void;
+  playSoundInChannel: (
+    channelId: string,
+    sound: string | HTMLAudioElement,
+    options?: Partial<HTMLAudioElement>
+  ) => void;
   pauseSoundInChannel: (channelId: string, sound: string | HTMLAudioElement) => void;
   stopSoundInChannel: (channelId: string, sound: string | HTMLAudioElement) => void;
   addSoundChannel: (id: string, volume: number, muted: boolean) => void;
   removeSoundChannel: (id: string) => void;
   setChannelVolume: (id: string, volume: number) => void;
   setChannelMuted: (id: string, muted: boolean) => void;
-}
+};
 
 export const useSoundsStore = create<SoundsState>((set) => ({
-  soundChannels: new Map<string, SoundChannel>([[MAIN_SOUND_CHANNEL, new SoundChannel(MAIN_SOUND_CHANNEL, 50, false)]]),
+  soundChannels: new Map<string, SoundChannel>([
+    [MAIN_SOUND_CHANNEL, new SoundChannel(MAIN_SOUND_CHANNEL, 50, false)],
+  ]),
 
-  playSoundInChannel: (channelId: string, sound: string | HTMLAudioElement, options?: Partial<HTMLAudioElement>) => {
+  playSoundInChannel: (
+    channelId: string,
+    sound: string | HTMLAudioElement,
+    options?: Partial<HTMLAudioElement>
+  ) => {
     const channel = useSoundsStore.getState().soundChannels.get(channelId);
     const { audioCache } = useAssetStore.getState();
     const soundElement = typeof sound === 'string' ? audioCache.get(sound) : sound;
