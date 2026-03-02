@@ -4,7 +4,7 @@ import { Resolution } from '@tgdf/internal-ui/types/graphics';
 export function getZoomFactorForResolution(
   resolution: Resolution,
   mainWindow: BrowserWindow,
-  relativeToMonitor: boolean = false,
+  relativeToMonitor: boolean = false
 ): number {
   if (!mainWindow) {
     console.error('Main window is not initialized.');

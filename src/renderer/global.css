@@ -24,7 +24,7 @@ body {
 /* Re-enable text selection for inputs and contenteditable */
 input,
 textarea,
-[contenteditable="true"] {
+[contenteditable='true'] {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
@@ -32,8 +32,8 @@ textarea,
 }
 
 button,
-input[type="button"],
-input[type="checkbox"] {
+input[type='button'],
+input[type='checkbox'] {
   cursor: pointer !important;
 }
 
@@ -41,7 +41,7 @@ input[type="checkbox"] {
   width: 100vw;
   height: 100vh;
 
-  >.radix-themes {
+  > .radix-themes {
     background: #000;
   }
 }

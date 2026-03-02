@@ -1,6 +1,6 @@
+import { screen } from 'electron';
 import { Resolution } from '@tgdf/internal-ui/types/graphics';
 
-import { screen } from 'electron';
 import { mainWindow, main } from './main';
 import { getZoomFactorForResolution } from './utils/getZoomFactorForResolution';
 
