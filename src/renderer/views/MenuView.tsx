@@ -21,6 +21,8 @@ export function MenuView() {
 
         <InternalButton label="Controls test" onClick={() => setView('controlsTest')} />
 
+        <InternalButton label="Players View" onClick={() => setView('playersView')} />
+
         <InternalButton
           label="Quit"
           onClick={() => {
