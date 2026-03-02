@@ -36,58 +36,56 @@ const initialBasePlayer: ActivePlayerState = {
 
 export const useActivePlayersStore = create<ActivePlayersState>()(
   devtools(
-      (set, get) => ({
-        enableAdditionalPlayers: false,
-        basePlayer: initialBasePlayer,
-        additionalPlayers: new Set([]),
+    (set, get) => ({
+      enableAdditionalPlayers: false,
+      basePlayer: initialBasePlayer,
+      additionalPlayers: new Set([]),
 
-        getActivePlayers: () => {
-          const { basePlayer, additionalPlayers } = get();
+      getActivePlayers: () => {
+        const { basePlayer, additionalPlayers } = get();
 
-          if (additionalPlayers.size === undefined) {
-            return new Set([basePlayer]);
-          }
+        if (additionalPlayers.size === undefined) {
+          return new Set([basePlayer]);
+        }
 
-          return new Set([basePlayer, ...additionalPlayers]);
-        },
+        return new Set([basePlayer, ...additionalPlayers]);
+      },
 
-        getKeyboardPlayers: () => {
-          const { getActivePlayers } = get();
-          return new Set(
-            Array.from(getActivePlayers()).filter((player) => player.controls === 'keyboard')
-          );
-        },
+      getKeyboardPlayers: () => {
+        const { getActivePlayers } = get();
+        return new Set(
+          Array.from(getActivePlayers()).filter((player) => player.controls === 'keyboard')
+        );
+      },
 
-        getUnoccupiedGamepads: () => {
-          const { connectedGamepads } = useGamepadStore.getState();
-          const occupiedGamepadIndices = new Set(
-            Array.from(get().getActivePlayers())
-              .filter(
-                (player) => player.controls === 'gamepad' && player.gamepadIndex !== undefined
-              )
-              .map((player) => player.gamepadIndex!)
-          );
+      getUnoccupiedGamepads: () => {
+        const { connectedGamepads } = useGamepadStore.getState();
+        const occupiedGamepadIndices = new Set(
+          Array.from(get().getActivePlayers())
+            .filter((player) => player.controls === 'gamepad' && player.gamepadIndex !== undefined)
+            .map((player) => player.gamepadIndex!)
+        );
 
-          return new Set(
-            Array.from(connectedGamepads.values()).filter(
-              (gamepad) => !occupiedGamepadIndices.has(gamepad.gamepad.index)
-            )
-          );
-        },
+        return new Set(
+          Array.from(connectedGamepads.values()).filter(
+            (gamepad) => !occupiedGamepadIndices.has(gamepad.gamepad.index)
+          )
+        );
+      },
 
-        setEnableAdditionalPlayers: (enabled: boolean) => set({ enableAdditionalPlayers: enabled }),
+      setEnableAdditionalPlayers: (enabled: boolean) => set({ enableAdditionalPlayers: enabled }),
 
-        setAdditionalPlayers: (players: Set<ActivePlayerState>) => {
-          console.log('Setting additional players:', players);
-          set({
-            additionalPlayers: players,
-          });
-        },
+      setAdditionalPlayers: (players: Set<ActivePlayerState>) => {
+        console.log('Setting additional players:', players);
+        set({
+          additionalPlayers: players,
+        });
+      },
 
-        removeAdditionalPlayer: (playerId: string) => {
-          const { additionalPlayers } = get();
-          const updatedPlayers = new Set(
-            Array.from(additionalPlayers)
+      removeAdditionalPlayer: (playerId: string) => {
+        const { additionalPlayers } = get();
+        const updatedPlayers = new Set(
+          Array.from(additionalPlayers)
             // Remove the player with the specified ID
             .filter((player) => player.id !== playerId)
             // Reassign player names based on their new position in the set
@@ -95,70 +93,43 @@ export const useActivePlayersStore = create<ActivePlayersState>()(
               ...player,
               name: `Player ${index + 2}`,
             }))
-          );
-          set({
-            additionalPlayers: updatedPlayers,
-          });
-        },
+        );
+        set({
+          additionalPlayers: updatedPlayers,
+        });
+      },
 
-        setBasePlayer: (player: ActivePlayerState) => {
-          set({
-            basePlayer: player,
-          });
-        },
+      setBasePlayer: (player: ActivePlayerState) => {
+        set({
+          basePlayer: player,
+        });
+      },
 
-        changePlayerControls: (playerId, controls, gamepadIndex) => {
-          const { basePlayer, additionalPlayers, getActivePlayers } = get();
-          let updatedBasePlayer = basePlayer;
-          const updatedAdditionalPlayers = new Set<ActivePlayerState>();
+      changePlayerControls: (playerId, controls, gamepadIndex) => {
+        const { basePlayer, additionalPlayers, getActivePlayers } = get();
+        let updatedBasePlayer = basePlayer;
+        const updatedAdditionalPlayers = new Set<ActivePlayerState>();
 
-          if (basePlayer.id === playerId) {
-            updatedBasePlayer = { ...basePlayer, controls, gamepadIndex };
-            additionalPlayers.forEach((player) => updatedAdditionalPlayers.add(player));
-          } else {
-            updatedBasePlayer = { ...basePlayer };
-            additionalPlayers.forEach((player) => {
-              if (player.id === playerId) {
-                updatedAdditionalPlayers.add({ ...player, controls, gamepadIndex });
-              } else {
-                updatedAdditionalPlayers.add(player);
-              }
-            });
-          }
-
-          const duplicateGamepadPlayer = Array.from(getActivePlayers()).find(
-            (player) =>
-              player.id !== playerId &&
-              player.controls === 'gamepad' &&
-              player.gamepadIndex === gamepadIndex
-          );
-
-          if (duplicateGamepadPlayer && controls === 'gamepad') {
-            if (duplicateGamepadPlayer.id === basePlayer.id) {
-              updatedBasePlayer = { ...updatedBasePlayer, controls: 'keyboard', gamepadIndex: undefined };
+        if (basePlayer.id === playerId) {
+          updatedBasePlayer = { ...basePlayer, controls, gamepadIndex };
+          additionalPlayers.forEach((player) => updatedAdditionalPlayers.add(player));
+        } else {
+          updatedBasePlayer = { ...basePlayer };
+          additionalPlayers.forEach((player) => {
+            if (player.id === playerId) {
+              updatedAdditionalPlayers.add({ ...player, controls, gamepadIndex });
             } else {
-              const tempAdditionalPlayers = new Set<ActivePlayerState>();
-              updatedAdditionalPlayers.forEach((player) => {
-                if (player.id === duplicateGamepadPlayer.id) {
-                  tempAdditionalPlayers.add({ ...player, controls: 'keyboard', gamepadIndex: undefined });
-                } else {
-                  tempAdditionalPlayers.add(player);
-                }
-              });
-              updatedAdditionalPlayers.clear();
-              tempAdditionalPlayers.forEach((player) => updatedAdditionalPlayers.add(player));
+              updatedAdditionalPlayers.add(player);
             }
-          }
-
-          console.log('Changing player controls. Updated base player:', updatedBasePlayer);
-          console.log('Updated additional players:', updatedAdditionalPlayers);
-
-          set({
-            basePlayer: updatedBasePlayer,
-            additionalPlayers: updatedAdditionalPlayers,
           });
-        },
-      }),
+        }
+
+        set({
+          basePlayer: updatedBasePlayer,
+          additionalPlayers: updatedAdditionalPlayers,
+        });
+      },
+    }),
     {
       name: 'active-players-store',
     }
@@ -173,7 +144,7 @@ useGamepadStore.getState().gamepadEvents.on('gamepadconnected', ({ gamepad: game
     basePlayer,
     additionalPlayers,
     setBasePlayer,
-    getActivePlayers
+    getActivePlayers,
   } = useActivePlayersStore.getState();
 
   if (!enableAdditionalPlayers) {
@@ -212,12 +183,8 @@ useGamepadStore
   .getState()
   .gamepadEvents.on('gamepaddisconnected', ({ gamepad: gamepadInstance }) => {
     console.log('Gamepad disconnected:', gamepadInstance);
-    const {
-      additionalPlayers,
-      basePlayer,
-      setBasePlayer,
-      removeAdditionalPlayer
-    } = useActivePlayersStore.getState();
+    const { additionalPlayers, basePlayer, setBasePlayer, removeAdditionalPlayer } =
+      useActivePlayersStore.getState();
 
     // Check if it's the base player's gamepad.
     // If so, just change their controls to keyboard instead of removing them
