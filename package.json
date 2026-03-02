@@ -1,6 +1,6 @@
 {
   "name": "roguelike",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
   "main": "main.js",
   "homepage": "./",
@@ -21,7 +21,7 @@
     "dist-win": "npm run build-app && electron-builder --win",
     "dist-all": "npm run build-app && electron-builder -mw",
     "pack": "npm run build-app && electron-builder --dir",
-    "postinstall": "node -e \"const fs=require('fs');if(process.env.CI!=='true'&&fs.existsSync('.git/hooks'))fs.copyFileSync('scripts/pre-commit','.git/hooks/pre-commit')\"",
+    "postinstall": "node -e \"const fs=require('fs');if(process.env.CI!=='true'&&fs.existsSync('.git/hooks')){fs.copyFileSync('scripts/pre-commit','.git/hooks/pre-commit');try{fs.chmodSync('.git/hooks/pre-commit',0o755)}catch(e){}}\"",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "type-check": "tsc --noEmit",
