@@ -1,31 +1,32 @@
 import * as THREE from 'three';
-import { GameObject, GameObjectComponent, KeyboardInput, MouseInput, RigidBody } from '@tgdf';
+import { GameObjectComponent, KeyboardInput, RigidBody } from '@tgdf';
 
 import { CAMERA_POSITION_OFFSET } from '../../constants';
+import { MovableGameObject } from '../gameObjects/MovableGameObject';
 import { OrtographicCameraWithControls } from '../cameras/OrtographicCameraWithControls';
 
 export type WSADControlsOptions = {
-  gameObject: GameObject;
+  gameObject: MovableGameObject;
   camera: OrtographicCameraWithControls;
-  rigidBody: RigidBody;
   keyboardInput: KeyboardInput;
   cameraLerp?: number;
 };
 
+const SPRINT_MULTIPLIER = 1.75;
+
 export class WSADControls extends GameObjectComponent {
-  private _speed = 3;
   private _lerp = 0.025;
+  private _movableGameObject: MovableGameObject;
   private _camera: OrtographicCameraWithControls;
-  private _rigidBody: RigidBody;
   private _keyboardInput: KeyboardInput;
   private _direction = new THREE.Vector3();
 
-  constructor({ gameObject, camera, rigidBody, keyboardInput, cameraLerp }: WSADControlsOptions) {
+  constructor({ gameObject, camera, keyboardInput, cameraLerp }: WSADControlsOptions) {
     super(gameObject);
 
     this._camera = camera;
-    this._rigidBody = rigidBody;
     this._keyboardInput = keyboardInput;
+    this._movableGameObject = gameObject;
 
     if (cameraLerp !== undefined) {
       this._lerp = cameraLerp;
@@ -49,6 +50,16 @@ export class WSADControls extends GameObjectComponent {
       { key: 's', axis: 'z' as const, value: 1 },
       { key: 'd', axis: 'x' as const, value: 1 },
     ];
+
+    this._keyboardInput.addKeyDownListener('shift', () => {
+      const defaultSpeed = this._movableGameObject.speed;
+      const sprintSpeed = defaultSpeed * SPRINT_MULTIPLIER;
+      this._movableGameObject.speed = sprintSpeed;
+    });
+
+    this._keyboardInput.addKeyUpListener('shift', () => {
+      this._movableGameObject.speed /= SPRINT_MULTIPLIER;
+    });
 
     for (const { key, axis, value } of keyMappings) {
       this._keyboardInput.addKeyPressListener(
@@ -100,14 +111,7 @@ export class WSADControls extends GameObjectComponent {
     const rotatedMove = new THREE.Vector3();
     rotatedMove.addScaledVector(cameraRight, moveVector.x);
     rotatedMove.addScaledVector(cameraForward, -moveVector.z);
-    rotatedMove.multiplyScalar(this._speed);
 
-    // Get current velocity and preserve Y component (gravity)
-    const currentVelocity = this._rigidBody.getLinearVelocity();
-    if (currentVelocity) {
-      rotatedMove.y = currentVelocity.y;
-    }
-
-    this._rigidBody.setLinearVelocity(rotatedMove);
+    this._movableGameObject.move(rotatedMove);
   }
 }
