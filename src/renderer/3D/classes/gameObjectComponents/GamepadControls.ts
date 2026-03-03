@@ -27,13 +27,8 @@ export class GamepadControls extends BaseControls {
     this._gamepadInput.addAxisMoveListener('LEFT_STICK_X', this._handleLeftStickXMove);
     this._gamepadInput.addAxisMoveListener('LEFT_STICK_Y', this._handleLeftStickYMove);
 
-    this._gamepadInput.addAxisMoveListener('RIGHT_STICK_Y', (value: number) => {
-      this._zoomIncrement = value;
-    });
-
-    this._gamepadInput.addAxisMoveListener('RIGHT_STICK_X', (value: number) => {
-      this._rotationIncrement = value;
-    });
+    this._gamepadInput.addAxisMoveListener('RIGHT_STICK_Y', this._handleRightStickYMove);
+    this._gamepadInput.addAxisMoveListener('RIGHT_STICK_X', this._handleRightStickXMove);
 
     this._gamepadInput.addButtonDownListener('RT', this._handleSprintButtonDown);
     this._gamepadInput.addButtonUpListener('RT', this._handleSprintButtonUp);
@@ -45,6 +40,14 @@ export class GamepadControls extends BaseControls {
 
   private _handleLeftStickYMove = (value: number): void => {
     this.direction.z = value;
+  };
+
+  private _handleRightStickYMove = (value: number): void => {
+    this._zoomIncrement = value;
+  };
+
+  private _handleRightStickXMove = (value: number): void => {
+    this._rotationIncrement = value;
   };
 
   private _handleSprintButtonDown = (): void => {
@@ -81,6 +84,10 @@ export class GamepadControls extends BaseControls {
 
     this._gamepadInput.removeAxisMoveListener('LEFT_STICK_X', this._handleLeftStickXMove);
     this._gamepadInput.removeAxisMoveListener('LEFT_STICK_Y', this._handleLeftStickYMove);
+
+    this._gamepadInput.removeAxisMoveListener('RIGHT_STICK_Y', this._handleRightStickYMove);
+    this._gamepadInput.removeAxisMoveListener('RIGHT_STICK_X', this._handleRightStickXMove);
+
     this._gamepadInput.removeButtonDownListener('RT', this._handleSprintButtonDown);
     this._gamepadInput.removeButtonUpListener('RT', this._handleSprintButtonUp);
   }
