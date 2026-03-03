@@ -11,13 +11,13 @@ import { CHECKERBOARD_TEXTURE } from '../constants';
 import { pixelateTexture } from '../3D/utils/pixelateTexture';
 import { RigidPlane } from '../3D/classes/gameObjects/RigidPlane';
 import { ControlledBox } from '../3D/classes/gameObjects/ControlledBox';
+import { OrtographicCamera } from '../3D/classes/cameras/OrtographicCamera';
 import { ControlledGamepadBox } from '../3D/classes/gameObjects/ControlledGamepadBox';
-import { OrtographicCameraWithControls } from '../3D/classes/cameras/OrtographicCameraWithControls';
 
 export class ControlsTestScene extends Scene {
   private _gamepadStoreEvents = useGamepadStore.getState().gamepadEvents;
 
-  public camera: OrtographicCameraWithControls;
+  public camera: OrtographicCamera;
 
   constructor(options: SceneConstructorOptions) {
     super(options);
@@ -30,7 +30,7 @@ export class ControlsTestScene extends Scene {
     const aspectRatio = window.innerWidth / window.innerHeight;
     const frustumSize = 9;
 
-    this.camera = new OrtographicCameraWithControls({
+    this.camera = new OrtographicCamera({
       options: {
         left: (-frustumSize * aspectRatio) / 2,
         right: (frustumSize * aspectRatio) / 2,
@@ -39,7 +39,6 @@ export class ControlsTestScene extends Scene {
         near: 0.1,
         far: 40,
       },
-      scene: this,
     });
     this.camera.position.set(6, 6, 6);
     this.camera.lookAt(0, 0, 0);

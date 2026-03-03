@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GamepadInput, logger } from '@tgdf';
+import { GamepadInput } from '@tgdf';
 import { ControlsTestScene } from 'src/renderer/scenes/ControlsTestScene';
 
 import { MovableGameObject } from './MovableGameObject';
@@ -16,15 +16,6 @@ export class ControlledGamepadBox extends MovableGameObject {
       mass: 1,
       friction: 1,
     });
-
-    if (!scene.mouseInput || !scene.keyboardInput) {
-      logger({
-        message:
-          'Mouse or keyboard input not available in scene. WSADControls component will not function.',
-        type: 'error',
-      });
-      return;
-    }
 
     this.addComponent(
       'GamepadControls',

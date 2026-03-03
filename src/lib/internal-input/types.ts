@@ -101,6 +101,7 @@ export type GamepadInput = {
     button: GamepadButtonName,
     handler: (pressed: boolean, value: number) => void
   ) => void;
+  removeButtonUpListener: (button: GamepadButtonName, handler: () => void) => void;
   removeAxisMoveListener: (
     axis: GamepadAxisName | number,
     callback: (value: number) => void

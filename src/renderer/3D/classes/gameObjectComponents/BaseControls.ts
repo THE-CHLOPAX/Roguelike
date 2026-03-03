@@ -1,52 +1,50 @@
 import * as THREE from 'three';
-import { GameObjectComponent, KeyboardInput, RigidBody } from '@tgdf';
+import { GameObjectComponent } from '@tgdf';
 
 import { CAMERA_POSITION_OFFSET } from '../../constants';
+import { OrtographicCamera } from '../cameras/OrtographicCamera';
 import { MovableGameObject } from '../gameObjects/MovableGameObject';
-import { OrtographicCameraWithControls } from '../cameras/OrtographicCameraWithControls';
 
 export type BaseControlsOptions = {
   gameObject: MovableGameObject;
-  camera: OrtographicCameraWithControls;
+  camera: OrtographicCamera;
   cameraLerp?: number;
 };
 
-const SPRINT_MULTIPLIER = 1.75;
-
+/**
+ * BaseControls class for handling common control logic like body movement,
+ * camera movement and sprint toggling. Specific input handling (keyboard, gamepad, etc.)
+ * should be implemented in its subclasses.
+ */
 export class BaseControls extends GameObjectComponent {
   private _lerp = 0.025;
-  private _camera: OrtographicCameraWithControls;
-  private _direction = new THREE.Vector3();
 
+  protected direction = new THREE.Vector3();
+  protected camera: OrtographicCamera;
   protected movableGameObject: MovableGameObject;
+
+  protected static ROTATION_SENSITIVITY = 0.002;
+  protected static ZOOM_SENSITIVITY = 0.001;
+  protected static SPRINT_MULTIPLIER = 1.75;
 
   constructor({ gameObject, camera, cameraLerp }: BaseControlsOptions) {
     super(gameObject);
 
-    this._camera = camera;
+    this.camera = camera;
     this.movableGameObject = gameObject;
 
     if (cameraLerp !== undefined) {
       this._lerp = cameraLerp;
     }
 
-    this._camera.pivotPoint = this.gameObject.position;
-    this._camera.toggleKeyboardControls(false); // Disable camera's own keyboard controls
-  }
-
-  protected set direction(vector: THREE.Vector3) {
-    this._direction.copy(vector);
-  }
-
-  protected get direction(): THREE.Vector3 {
-    return this._direction;
+    this.camera.pivotPoint = this.gameObject.position;
   }
 
   protected toggleSprint(enabled: boolean): void {
     if (enabled) {
-      this.movableGameObject.speed *= SPRINT_MULTIPLIER;
+      this.movableGameObject.speed *= BaseControls.SPRINT_MULTIPLIER;
     } else {
-      this.movableGameObject.speed /= SPRINT_MULTIPLIER;
+      this.movableGameObject.speed /= BaseControls.SPRINT_MULTIPLIER;
     }
   }
 
@@ -64,25 +62,25 @@ export class BaseControls extends GameObjectComponent {
     );
 
     // Update pivot point to follow the player
-    this._camera.pivotPoint.copy(playerPosition);
+    this.camera.pivotPoint.copy(playerPosition);
 
     // Rotate offset by camera's Y rotation around the pivot point
     const rotatedOffset = CAMERA_POSITION_OFFSET.clone().applyAxisAngle(
       new THREE.Vector3(0, 1, 0),
-      this._camera.rotation.y
+      this.camera.rotation.y
     );
     // Move camera to the rotated offset position
-    this._camera.moveTo(playerPosition, { offset: rotatedOffset, lerp: this._lerp });
+    this.camera.moveTo(playerPosition, { offset: rotatedOffset, lerp: this._lerp });
   }
 
   private _moveRigidBody() {
-    const moveVector = this._direction.clone();
+    const moveVector = this.direction.clone();
 
     moveVector.normalize();
 
     // Apply only Y-axis rotation from camera using forward/right vectors
     const cameraForward = new THREE.Vector3();
-    this._camera.getWorldDirection(cameraForward);
+    this.camera.getWorldDirection(cameraForward);
     cameraForward.y = 0;
     cameraForward.normalize();
 

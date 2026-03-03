@@ -1,20 +1,27 @@
-import { KeyboardInput } from '@tgdf';
+import * as THREE from 'three';
+import { KeyboardInput, MouseInput } from '@tgdf';
 
 import { BaseControls, BaseControlsOptions } from './BaseControls';
 
 export type WSADControlsOptions = BaseControlsOptions & {
+  mouseInput: MouseInput;
   keyboardInput: KeyboardInput;
 };
 
 export class WSADControls extends BaseControls {
   private _keyboardInput: KeyboardInput;
+  private _mouseInput: MouseInput;
 
-  constructor({ gameObject, camera, keyboardInput, cameraLerp }: WSADControlsOptions) {
+  private _isDragging: boolean = false;
+
+  constructor({ gameObject, camera, keyboardInput, mouseInput, cameraLerp }: WSADControlsOptions) {
     super({ gameObject, camera, cameraLerp });
 
     this._keyboardInput = keyboardInput;
+    this._mouseInput = mouseInput;
 
     this._handleKeyboardInput();
+    this._handleMouseInput();
   }
 
   private _handleKeyboardInput(): void {
@@ -45,5 +52,37 @@ export class WSADControls extends BaseControls {
         this.direction[axis] = 0;
       });
     }
+  }
+
+  private _handleMouseInput(): void {
+    this._mouseInput.addMouseClickListener('left', () => {
+      document.body.style.cursor = 'grabbing';
+      this._isDragging = true;
+    });
+
+    this._mouseInput.addMouseUpListener('left', () => {
+      document.body.style.cursor = 'grab';
+      this._isDragging = false;
+    });
+
+    this._mouseInput.addMouseScrollListener((e: WheelEvent) => {
+      this.camera.setZoom(this.camera.zoom + e.deltaY * -BaseControls.ZOOM_SENSITIVITY);
+    });
+
+    this._mouseInput.addMouseMoveListener((e: MouseEvent) => {
+      if (this._isDragging) {
+        const movementX = e.movementX || 0;
+        // Rotate around pivot point
+        const angle = -movementX * BaseControls.ROTATION_SENSITIVITY;
+        // Get vector from pivot to camera
+        const offset = new THREE.Vector3().subVectors(this.camera.position, this.camera.pivotPoint);
+        // Rotate offset around Y axis
+        offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+        // Set new camera position
+        this.camera.position.copy(this.camera.pivotPoint).add(offset);
+        // Update camera rotation to match
+        this.camera.rotation.y += angle;
+      }
+    });
   }
 }

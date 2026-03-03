@@ -32,6 +32,7 @@ export class ControlledBox extends MovableGameObject {
         gameObject: this,
         camera: scene.camera,
         keyboardInput: scene.keyboardInput,
+        mouseInput: scene.mouseInput,
       })
     );
   }
