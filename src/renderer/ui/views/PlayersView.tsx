@@ -7,8 +7,8 @@ import {
   InternalCheckbox,
 } from '@tgdf';
 
-import { BackToViewLayout } from '../layouts/BackToViewLayout';
-import { ActivePlayerState, useActivePlayersStore } from '../store/useActivePlayersStore';
+import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { ActivePlayerState, useActivePlayersStore } from '../../store/useActivePlayersStore';
 
 export function PlayersView() {
   const {

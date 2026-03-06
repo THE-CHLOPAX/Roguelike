@@ -11,6 +11,10 @@ export type OrtographicCameraOptions = {
     near?: number | undefined;
     far?: number | undefined;
   };
+  zoom?: {
+    min: number;
+    max: number;
+  };
 };
 
 /**
@@ -19,9 +23,10 @@ export type OrtographicCameraOptions = {
  * @param {OrtographicCameraOptions} options - The options for the ortographic camera.
  */
 export class OrtographicCamera extends THREE.OrthographicCamera {
+  private _zoom: { min: number; max: number } = { min: 0.1, max: 1 };
   private _pivotPoint: THREE.Vector3 | null = null;
 
-  constructor({ options = {} }: OrtographicCameraOptions) {
+  constructor({ options = {}, zoom }: OrtographicCameraOptions) {
     super(
       options.left ?? -1,
       options.right ?? 1,
@@ -30,6 +35,10 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
       options.near ?? 0.1,
       options.far ?? 1000
     );
+
+    if (zoom) {
+      this._zoom = zoom;
+    }
 
     this.rotation.order = 'YXZ';
     this.up.set(0, 1, 0);
@@ -46,6 +55,11 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
       this._pivotPoint = new THREE.Vector3();
     }
     this._pivotPoint.copy(point);
+  }
+
+  public setZoom(zoom: number): void {
+    this.zoom = THREE.MathUtils.clamp(zoom, this._zoom.min, this._zoom.max);
+    this.updateProjectionMatrix();
   }
 
   public moveTo(position: THREE.Vector3, options?: CameraMoveToOptions): void {

@@ -4,16 +4,18 @@ import React from 'react';
 import { Theme } from '@radix-ui/themes';
 import { useGamepadStore, ViewManager } from '@tgdf';
 
-import { MenuView } from './views/MenuView';
-import { PlayersView } from './views/PlayersView';
-import { SettingsView } from './views/SettingsView';
-import { ControlsTestView } from './views/ControlsTestView';
+import { MenuView } from './ui/views/MenuView';
+import { PlayersView } from './ui/views/PlayersView';
+import { SettingsView } from './ui/views/SettingsView';
 import { useActivePlayersStore } from './store/useActivePlayersStore';
+import { WSADControlsTestView } from './ui/views/WSADControlsTestView';
+import { GamepadControlsTestView } from './ui/views/GamepadControlsTestView';
 
 export const views = {
   menu: MenuView,
   settings: SettingsView,
-  controlsTest: ControlsTestView,
+  wsadControlsTest: WSADControlsTestView,
+  gamepadControlsTest: GamepadControlsTestView,
   playersView: PlayersView,
 };
 

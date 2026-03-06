@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { logger } from '@tgdf';
-import { ControlsTestScene } from 'src/renderer/scenes/ControlsTestScene';
+import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
 import { MovableGameObject } from './MovableGameObject';
 import { WSADControls } from '../gameObjectComponents/WSADControls';
 
 export class ControlledBox extends MovableGameObject {
-  constructor(scene: ControlsTestScene) {
+  constructor(scene: TestScene) {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const mesh = new THREE.Mesh(geometry, material);
@@ -32,6 +32,7 @@ export class ControlledBox extends MovableGameObject {
         gameObject: this,
         camera: scene.camera,
         keyboardInput: scene.keyboardInput,
+        mouseInput: scene.mouseInput,
       })
     );
   }

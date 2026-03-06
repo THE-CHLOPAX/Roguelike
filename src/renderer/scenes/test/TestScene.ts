@@ -1,14 +1,13 @@
 import * as THREE from 'three';
 import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
-import { CHECKERBOARD_TEXTURE } from '../constants';
-import { pixelateTexture } from '../3D/utils/pixelateTexture';
-import { RigidPlane } from '../3D/classes/gameObjects/RigidPlane';
-import { ControlledBox } from '../3D/classes/gameObjects/ControlledBox';
-import { OrtographicCameraWithControls } from '../3D/classes/cameras/OrtographicCameraWithControls';
+import { CHECKERBOARD_TEXTURE } from '../../constants';
+import { pixelateTexture } from '../../3D/utils/pixelateTexture';
+import { RigidPlane } from '../../3D/classes/gameObjects/RigidPlane';
+import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
 
-export class ControlsTestScene extends Scene {
-  public camera: OrtographicCameraWithControls;
+export class TestScene extends Scene {
+  public camera: OrtographicCamera;
 
   constructor(options: SceneConstructorOptions) {
     super(options);
@@ -21,7 +20,7 @@ export class ControlsTestScene extends Scene {
     const aspectRatio = window.innerWidth / window.innerHeight;
     const frustumSize = 9;
 
-    this.camera = new OrtographicCameraWithControls({
+    this.camera = new OrtographicCamera({
       options: {
         left: (-frustumSize * aspectRatio) / 2,
         right: (frustumSize * aspectRatio) / 2,
@@ -30,7 +29,6 @@ export class ControlsTestScene extends Scene {
         near: 0.1,
         far: 40,
       },
-      scene: this,
     });
     this.camera.position.set(6, 6, 6);
     this.camera.lookAt(0, 0, 0);
@@ -47,10 +45,5 @@ export class ControlsTestScene extends Scene {
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.set(2048, 2048);
     this.add(directionalLight);
-
-    // Add test cube rigid body
-    const controlledBox = new ControlledBox(this);
-    controlledBox.position.set(0, 1, 0);
-    this.add(controlledBox);
   }
 }
