@@ -55,11 +55,7 @@ export class BaseControls extends GameObjectComponent {
 
   private _moveCamera(): void {
     // Keep camera positioned above the player
-    const playerPosition = new THREE.Vector3(
-      this.gameObject.position.x,
-      this.gameObject.position.y,
-      this.gameObject.position.z
-    );
+    const playerPosition = this.gameObject.position.clone();
 
     // Update pivot point to follow the player
     this.camera.pivotPoint.copy(playerPosition);

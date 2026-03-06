@@ -85,4 +85,9 @@ export class WSADControls extends BaseControls {
       }
     });
   }
+
+  protected override onDestroyed(): void {
+    super.onDestroyed();
+    document.body.style.cursor = 'default';
+  }
 }
