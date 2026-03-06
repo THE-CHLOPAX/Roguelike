@@ -2,17 +2,17 @@ import * as THREE from 'three';
 import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
-import { CHECKERBOARD_TEXTURE } from '../constants';
-import { useLoadScene } from '../3D/hooks/useLoadScene';
-import { BackToViewLayout } from '../layouts/BackToViewLayout';
-import { ControlsTestScene } from '../scenes/ControlsTestScene';
-import { ThreeDViewerPixelated } from '../ui/ThreeDViewerPixelated';
+import { CHECKERBOARD_TEXTURE } from '../../constants';
+import { useLoadScene } from '../../3D/hooks/useLoadScene';
+import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
+import { GamepadControlsTestScene } from '../../scenes/test/GamepadControlsTestScene';
 
-export function ControlsTestView() {
+export function GamepadControlsTestView() {
   const { loadTexture } = useAssetStore();
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
-    sceneClass: ControlsTestScene,
+    sceneClass: GamepadControlsTestScene,
     assetsToLoad: [loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png')],
     sceneParams: {
       physics: {

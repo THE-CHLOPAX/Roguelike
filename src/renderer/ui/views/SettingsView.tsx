@@ -4,7 +4,6 @@ import {
   useGraphicsStore,
   MAIN_SOUND_CHANNEL,
   AVAILABLE_RESOLUTIONS,
-  InternalButton,
   InternalCheckbox,
   InternalFlex,
   InternalSelect,
@@ -12,7 +11,7 @@ import {
   InternalText,
 } from '@tgdf';
 
-import { BackToViewLayout } from '../layouts/BackToViewLayout';
+import { BackToViewLayout } from '../../layouts/BackToViewLayout';
 
 export function SettingsView() {
   const { soundChannels, setChannelVolume } = useSoundsStore();
