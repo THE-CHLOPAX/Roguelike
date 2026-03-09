@@ -3,7 +3,7 @@ import { logger } from '@tgdf';
 import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
 import { MovableGameObject } from './MovableGameObject';
-import { WSADControls } from '../gameObjectComponents/WSADControls';
+import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
 
 export class ControlledBox extends MovableGameObject {
   constructor(scene: TestScene) {
