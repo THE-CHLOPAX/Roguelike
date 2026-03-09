@@ -1,7 +1,7 @@
 import { GamepadInstance, SceneConstructorOptions, useGamepadStore } from '@tgdf';
+import { ControlledGamepadBox } from '@3D/classes/gameObjects/ControlledGamepadBox';
 
 import { TestScene } from './TestScene';
-import { ControlledGamepadBox } from '../../3D/classes/gameObjects/ControlledGamepadBox';
 
 export class GamepadControlsTestScene extends TestScene {
   private _gamepadStoreEvents = useGamepadStore.getState().gamepadEvents;

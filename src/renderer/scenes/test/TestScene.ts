@@ -1,16 +1,21 @@
 import * as THREE from 'three';
+import { RigidPlane } from '@3D/classes/gameObjects/RigidPlane';
 import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
 import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { pixelateTexture } from '../../3D/utils/pixelateTexture';
-import { RigidPlane } from '../../3D/classes/gameObjects/RigidPlane';
 import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
 
 export class TestScene extends Scene {
   public camera: OrtographicCamera;
 
   constructor(options?: SceneConstructorOptions) {
-    super(options);
+    super({
+      ...options,
+      physics: {
+        gravity: new THREE.Vector3(0, -9.81, 0),
+      },
+    });
 
     const checkerboardTexture = pixelateTexture(
       useAssetStore.getState().textureCache.get(CHECKERBOARD_TEXTURE)

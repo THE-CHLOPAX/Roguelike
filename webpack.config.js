@@ -61,6 +61,7 @@ module.exports = {
     alias: {
       '@tgdf': path.resolve(__dirname, 'src/lib'),
       '@tgdf/*': path.resolve(__dirname, 'src/lib/*'),
+      '@3D/*': path.resolve(__dirname, 'src/renderer/3D/*'),
     },
   },
   devServer: {

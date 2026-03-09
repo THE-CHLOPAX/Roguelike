@@ -10,7 +10,5 @@ export class ModelRendererTestObject extends GameObject {
     const mesh = new THREE.Mesh(geometry, material);
 
     this.add(mesh);
-
-    this.remove(mesh);
   }
 }

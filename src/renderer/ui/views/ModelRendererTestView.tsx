@@ -1,24 +1,21 @@
-import * as THREE from 'three';
 import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
-import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { CHECKERBOARD_TEXTURE, MODEL_MONK } from '../../constants';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 import { ModelRendererTestScene } from '../../scenes/test/ModelRendererTestScene';
 
 export function ModelRendererTestView() {
-  const { loadTexture } = useAssetStore();
+  const { loadTexture, loadModelGLTF } = useAssetStore();
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
     sceneClass: ModelRendererTestScene,
-    assetsToLoad: [loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png')],
-    sceneParams: {
-      physics: {
-        gravity: new THREE.Vector3(0, -9.81, 0),
-      },
-    },
+    assetsToLoad: [
+      loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
+      loadModelGLTF(MODEL_MONK, './assets/monk.glb'),
+    ],
   });
   const [loadingFinished, setLoadingFinished] = useState(false);
 
