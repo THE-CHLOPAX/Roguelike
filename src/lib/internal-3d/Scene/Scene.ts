@@ -4,7 +4,6 @@ import { logger, KeyboardInput, MouseInput } from '@tgdf';
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
 import { PhysicsManager } from '../PhysicsManager';
-import { processChildRecursive } from '../utils/processChildRecursive';
 import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
 
 export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends THREE.Scene {
@@ -109,13 +108,6 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   public enableInput(): void {
     this._keyboardInput?.enable();
     this._mouseInput?.enable();
-  }
-
-  public addAndConvertChildrenRecursive(children: THREE.Object3D[]): void {
-    const clonedChildren = [...children];
-    clonedChildren.forEach((child) => {
-      processChildRecursive(child, this, this);
-    });
   }
 
   protected onUpdate(_deltaTime: number): void {}

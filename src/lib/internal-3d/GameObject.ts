@@ -15,54 +15,12 @@ export class GameObject<
   private _gameObjectComponents: Map<string, GameObjectComponent<unknown, K, T>>;
   private _scene: Scene<K>;
   private _emitter: Emitter<T> = new Emitter<T>();
-  private _object: THREE.Object3D;
   private _isAwake: boolean = false;
 
-  constructor({ scene, object }: GameObjectConstructorOptions<K>) {
+  constructor({ scene }: GameObjectConstructorOptions<K>) {
     super();
     this._scene = scene;
-    this._object = object;
     this._gameObjectComponents = new Map<string, GameObjectComponent<unknown, K, T>>();
-
-    // TODO: Investigate this - can why is this necessary?
-    // Shouldn't we consider a separate component for renderering meshes inside GameObejct?
-
-    // If object is a mesh, copy its geometry and material
-    if (object instanceof THREE.Mesh) {
-      const meshCopy = new THREE.Mesh();
-      meshCopy.copy(object, true);
-
-      // Copy shadow properties explicitly
-      meshCopy.castShadow = object.castShadow;
-      meshCopy.receiveShadow = object.receiveShadow;
-
-      // Reset transform on the mesh copy since parent GameObject has the transform
-      meshCopy.position.set(0, 0, 0);
-      meshCopy.rotation.set(0, 0, 0);
-      meshCopy.scale.set(1, 1, 1);
-      meshCopy.quaternion.identity();
-
-      this.add(meshCopy);
-    }
-
-    // copy entire object (without children) into this GameObject
-    this.copy(object, false);
-  }
-
-  public get mesh(): THREE.Mesh | null {
-    if (this._object instanceof THREE.Mesh) {
-      return this._object;
-    } else {
-      logger({
-        message: `GameObject: ${this.name} this object 3D is not instance of a mesh.`,
-        type: 'warn',
-      });
-      return null;
-    }
-  }
-
-  public get object(): THREE.Object3D {
-    return this._object;
   }
 
   public get scene(): Scene<K> | undefined {
