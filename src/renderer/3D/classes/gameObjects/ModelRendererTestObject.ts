@@ -1,14 +1,46 @@
-import * as THREE from 'three';
-import { GameObject, Scene } from '@tgdf';
+import { TestScene } from 'src/renderer/scenes/test/TestScene';
+import { GameObject, RigidBody, Scene, useAssetStore } from '@tgdf';
 
-export class ModelRendererTestObject extends GameObject {
-  constructor(scene: Scene) {
-    super({ scene });
+import { MODEL_MONK } from '../../../constants';
+import { MovableGameObject } from './MovableGameObject';
+import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
+import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-    const mesh = new THREE.Mesh(geometry, material);
+export class ModelRendererTestObject extends MovableGameObject {
+  constructor(scene: TestScene) {
+    super(scene, {
+      speed: 3,
+      mass: 1,
+      friction: 1,
+      physicsBodyType: 'dynamic',
+      colliderShape: RigidBody.ShapeType.Cylinder,
+    });
 
-    this.add(mesh);
+    const monkModel = useAssetStore.getState().modelCacheGLTF.get(MODEL_MONK);
+    if (!monkModel) {
+      console.error(`Model not found in cache: ${MODEL_MONK}`);
+      return;
+    }
+
+    this.addComponent('ModelRenderer', new ModelRenderer(this, { model: monkModel }));
+
+    this.rigidBody.toggleVisible(true);
+
+    if (!scene.mouseInput || !scene.keyboardInput) {
+      console.error(
+        'Mouse or keyboard input not available in scene. WSADControls component will not function.'
+      );
+      return;
+    }
+
+    this.addComponent(
+      'WSADControls',
+      new WSADControls({
+        gameObject: this,
+        camera: scene.camera,
+        keyboardInput: scene.keyboardInput,
+        mouseInput: scene.mouseInput,
+      })
+    );
   }
 }

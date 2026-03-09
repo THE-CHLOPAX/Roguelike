@@ -14,7 +14,7 @@ export function ModelRendererTestView() {
     sceneClass: ModelRendererTestScene,
     assetsToLoad: [
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
-      loadModelGLTF(MODEL_MONK, './assets/monk.glb'),
+      loadModelGLTF(MODEL_MONK, './assets/monk.glb', 'Monk'),
     ],
   });
   const [loadingFinished, setLoadingFinished] = useState(false);

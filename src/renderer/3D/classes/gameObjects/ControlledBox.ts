@@ -19,6 +19,8 @@ export class ControlledBox extends MovableGameObject {
 
     this.add(mesh);
 
+    this.rigidBody.toggleVisible(true);
+
     if (!scene.mouseInput || !scene.keyboardInput) {
       logger({
         message:

@@ -6,6 +6,7 @@ export type MovableGameObjectOptions = {
   mass: number;
   friction: number;
   physicsBodyType?: RigidBody['options']['type'];
+  colliderShape?: RigidBody['options']['colliderShape'];
 };
 
 export class MovableGameObject extends GameObject {
@@ -23,6 +24,7 @@ export class MovableGameObject extends GameObject {
         mass: options.mass,
         friction: options.friction,
         type: options.physicsBodyType ?? 'dynamic',
+        colliderShape: options.colliderShape ?? RigidBody.ShapeType.Cuboid,
       })
     );
   }

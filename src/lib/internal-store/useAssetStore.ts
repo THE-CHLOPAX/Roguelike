@@ -202,6 +202,9 @@ export const useAssetStore = create<AssetState>((set, get) => ({
             object = foundObject || gltf.scene;
           }
 
+          // Pass animations
+          object.animations = gltf.animations; // Attach animations to the object for easier access
+
           set((state) => ({
             modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, object),
           }));
