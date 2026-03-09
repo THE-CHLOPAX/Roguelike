@@ -9,7 +9,7 @@ import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
 export class TestScene extends Scene {
   public camera: OrtographicCamera;
 
-  constructor(options: SceneConstructorOptions) {
+  constructor(options?: SceneConstructorOptions) {
     super(options);
 
     const checkerboardTexture = pixelateTexture(

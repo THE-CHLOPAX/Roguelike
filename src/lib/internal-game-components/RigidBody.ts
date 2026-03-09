@@ -36,6 +36,7 @@ export class RigidBody<
   private _body?: RAPIER.RigidBody;
   private _collider?: RAPIER.Collider;
   private _colliderDebugMesh?: THREE.Mesh;
+  private _meshVisible: boolean = false;
 
   constructor(gameObject: GameObject<T, K>, options: RigidBodyOptions = {}) {
     super(gameObject, options);
@@ -102,6 +103,10 @@ export class RigidBody<
     }
   }
 
+  public getDebugMesh(): THREE.Mesh | undefined {
+    return this._colliderDebugMesh;
+  }
+
   public getVelocity(): THREE.Vector3 {
     if (this._body) {
       const vel = this._body.linvel();
@@ -128,12 +133,14 @@ export class RigidBody<
         this._colliderDebugMesh.material.dispose();
       }
       this._colliderDebugMesh = undefined;
+      this._meshVisible = false;
     }
 
     super.destroy();
   }
 
   public toggleVisible(visible: boolean): void {
+    this._meshVisible = visible;
     if (this._colliderDebugMesh) {
       this._colliderDebugMesh.visible = visible;
     }
@@ -402,7 +409,7 @@ export class RigidBody<
 
     this._colliderDebugMesh = new THREE.Mesh(geometry, material);
     this._colliderDebugMesh.name = 'ColliderDebug';
-    this._colliderDebugMesh.visible = false;
+    this._colliderDebugMesh.visible = this._meshVisible;
 
     // CRITICAL: The size passed to this function already includes GameObject.scale
     // But when we add the mesh as a child of GameObject, it will inherit scale again

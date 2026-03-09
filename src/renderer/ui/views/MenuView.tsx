@@ -26,6 +26,8 @@ export function MenuView() {
           onClick={() => setView('gamepadControlsTest')}
         />
 
+        <InternalButton label="Model Renderer Test" onClick={() => setView('modelRendererTest')} />
+
         <InternalButton label="Players View" onClick={() => setView('playersView')} />
 
         <InternalButton

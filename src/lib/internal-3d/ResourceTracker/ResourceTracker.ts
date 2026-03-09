@@ -39,8 +39,6 @@ export class ResourceTracker {
     }
 
     if (resource instanceof THREE.Object3D) {
-      this.resources.add(resource);
-
       // If it's a Mesh, we also want to track its geometry and material
       if (resource instanceof THREE.Mesh) {
         this.track(resource.geometry);
@@ -81,19 +79,20 @@ export class ResourceTracker {
 
   public dispose() {
     console.groupCollapsed(`ResourceTracker: Disposing of ${this.resources.size} resources`);
-    for (const resource of this.resources) {
-      if (resource instanceof THREE.Object3D) {
-        if (resource.parent) {
-          resource.parent.remove(resource);
-        }
-      }
 
+    for (const resource of this.resources) {
       if (resource && 'dispose' in resource && typeof resource.dispose === 'function') {
         logger({
           type: 'info',
           message: `ResourceTracker: Disposing of ${resource.constructor.name}.`,
         });
         resource.dispose();
+      } else {
+        logger({
+          type: 'warn',
+          message: `ResourceTracker: Resource of type ${resource?.constructor.name}
+          does not have a dispose method.`,
+        });
       }
     }
 

@@ -70,7 +70,13 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   public dispose(): void {
     this._emitter.removeAll();
     this._physicsManager?.dispose();
-    this._resourceTrackerMap.forEach((tracker) => tracker.dispose());
+
+    const childrenToRemove = [...this.children];
+
+    childrenToRemove.forEach((child) => {
+      this.remove(child);
+    });
+
     this._resourceTrackerMap.clear();
   }
 

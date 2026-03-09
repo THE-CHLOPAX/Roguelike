@@ -9,6 +9,7 @@ import { PlayersView } from './ui/views/PlayersView';
 import { SettingsView } from './ui/views/SettingsView';
 import { useActivePlayersStore } from './store/useActivePlayersStore';
 import { WSADControlsTestView } from './ui/views/WSADControlsTestView';
+import { ModelRendererTestView } from './ui/views/ModelRendererTestView';
 import { GamepadControlsTestView } from './ui/views/GamepadControlsTestView';
 
 export const views = {
@@ -17,6 +18,7 @@ export const views = {
   wsadControlsTest: WSADControlsTestView,
   gamepadControlsTest: GamepadControlsTestView,
   playersView: PlayersView,
+  modelRendererTest: ModelRendererTestView,
 };
 
 const App: React.FC = () => {
