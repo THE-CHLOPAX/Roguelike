@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { logger } from '@tgdf/internal-ui/utils/logger';
 
 export type ResourceType =
   | THREE.Object3D
@@ -79,20 +80,25 @@ export class ResourceTracker {
   }
 
   public dispose() {
+    console.groupCollapsed(`ResourceTracker: Disposing of ${this.resources.size} resources`);
     for (const resource of this.resources) {
-      if (!resource || !('dispose' in resource)) continue;
-
-      resource.dispose();
-
       if (resource instanceof THREE.Object3D) {
         if (resource.parent) {
           resource.parent.remove(resource);
         }
       }
-      if (resource.dispose) {
+
+      if (resource && 'dispose' in resource && typeof resource.dispose === 'function') {
+        logger({
+          type: 'info',
+          message: `ResourceTracker: Disposing of ${resource.constructor.name}.`,
+        });
         resource.dispose();
       }
     }
+
+    console.groupEnd();
+
     this.resources.clear();
   }
 }

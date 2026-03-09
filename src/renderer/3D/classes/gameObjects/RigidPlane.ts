@@ -8,8 +8,9 @@ export class RigidPlane extends GameObject {
 
     super({
       scene,
-      object: mesh,
     });
+
+    this.add(mesh);
 
     this.addComponent(
       'RigidBodyComponent',

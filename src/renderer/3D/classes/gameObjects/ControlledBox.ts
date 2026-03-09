@@ -11,11 +11,13 @@ export class ControlledBox extends MovableGameObject {
     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const mesh = new THREE.Mesh(geometry, material);
 
-    super(scene, mesh, {
+    super(scene, {
       speed: 3,
       mass: 1,
       friction: 1,
     });
+
+    this.add(mesh);
 
     if (!scene.mouseInput || !scene.keyboardInput) {
       logger({

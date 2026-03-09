@@ -10,7 +10,6 @@ export type GameObjectComponentTemplate = {
 
 export type GameObjectConstructorOptions<K extends SceneEventsMap = SceneEventsMap> = {
   scene: Scene<K>;
-  object: THREE.Object3D;
 };
 
 export type GameObjectEventMap = {

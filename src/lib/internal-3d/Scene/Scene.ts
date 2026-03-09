@@ -4,6 +4,7 @@ import { logger, KeyboardInput, MouseInput } from '@tgdf';
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
 import { PhysicsManager } from '../PhysicsManager';
+import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
 import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
 
 export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends THREE.Scene {
@@ -15,6 +16,7 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   private _mouseInput?: MouseInput;
 
   private _physicsManager?: PhysicsManager;
+  private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
   constructor(options?: SceneConstructorOptions) {
     super();
@@ -66,38 +68,44 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   }
 
   public dispose(): void {
-    // Safety check: ensure scene has children before traversing
-    if (!this.children || this.children.length === 0) {
-      logger({ message: 'Scene: No children to dispose of in the scene.', type: 'warn' });
-    } else {
-      try {
-        // Create a copy of children array to avoid modification during iteration
-        const childrenCopy = [...this.children];
-
-        childrenCopy.forEach((child) => {
-          if (child instanceof GameObject) {
-            child.destroy();
-          } else if (child instanceof THREE.Mesh) {
-            if (child.geometry) {
-              child.geometry.dispose();
-            }
-            if (child.material) {
-              if (Array.isArray(child.material)) {
-                child.material.forEach((mat) => mat?.dispose());
-              } else {
-                child.material.dispose();
-              }
-            }
-          }
-        });
-
-        this._emitter.removeAll();
-      } catch (error) {
-        logger({ message: 'Scene: Error during disposal:', type: 'error' });
-      }
-    }
-
+    this._emitter.removeAll();
     this._physicsManager?.dispose();
+    this._resourceTrackerMap.forEach((tracker) => tracker.dispose());
+    this._resourceTrackerMap.clear();
+  }
+
+  public override add(...objects: THREE.Object3D[]): this {
+    objects.forEach((object) => {
+      logger({
+        message: `Scene: Adding object to scene: ${object.name || object.type}`,
+        type: 'info',
+      });
+      super.add(object);
+
+      const resourceTracker = new ResourceTracker();
+      resourceTracker.track(object);
+      this._resourceTrackerMap.set(object.uuid, resourceTracker);
+    });
+
+    return this;
+  }
+
+  public override remove(...objects: THREE.Object3D[]): this {
+    objects.forEach((object) => {
+      logger({
+        message: `Scene: Removing object from scene: ${object.name || object.type}`,
+        type: 'info',
+      });
+      super.remove(object);
+
+      const resourceTracker = this._resourceTrackerMap.get(object.uuid);
+      if (resourceTracker) {
+        resourceTracker.dispose();
+        this._resourceTrackerMap.delete(object.uuid);
+      }
+    });
+
+    return this;
   }
 
   public disableInput(): void {
@@ -115,6 +123,6 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
   private async _initializePhysicsWorld(gravity: THREE.Vector3): Promise<void> {
     this._physicsManager = new PhysicsManager();
     await this._physicsManager.init(gravity);
-    logger({ message: 'Physics world initialized', type: 'info' });
+    logger({ message: 'Scene: Physics world initialized', type: 'info' });
   }
 }

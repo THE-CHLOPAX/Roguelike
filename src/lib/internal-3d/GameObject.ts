@@ -4,7 +4,6 @@ import { GameObjectComponent, GameObjectConstructorOptions, GameObjectEventMap }
 import { Emitter } from './Emitter';
 import { Scene } from './Scene/Scene';
 import { SceneEventsMap } from './types/scene';
-import { logger } from '../internal-ui/utils/logger';
 
 export class GameObject<
   T extends GameObjectEventMap = GameObjectEventMap,
