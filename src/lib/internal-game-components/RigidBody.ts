@@ -241,6 +241,10 @@ export class RigidBody<
     const size = new THREE.Vector3();
     bbox.getSize(size);
 
+    // Calculate bounding box center to properly offset collider
+    const bboxCenter = new THREE.Vector3();
+    bbox.getCenter(bboxCenter);
+
     // For certain flat geometries, adjust size calculation
     if (mesh.geometry.type === 'PlaneGeometry' || mesh.geometry.type === 'RingGeometry') {
       size.z = Math.max(0.01, size.z);
@@ -275,6 +279,10 @@ export class RigidBody<
     // Create collider based on specified shape
     const colliderDesc = this._getColliderDesc(shapeType, size);
 
+    // Set collider translation to match the bounding box center
+    // This ensures the collider is positioned correctly relative to the model's geometry
+    colliderDesc.setTranslation(bboxCenter.x, bboxCenter.y, bboxCenter.z);
+
     // Set material properties
     colliderDesc.setFriction(this.options.friction!);
     colliderDesc.setRestitution(this.options.restitution!);
@@ -283,7 +291,7 @@ export class RigidBody<
     this._collider = world.createCollider(colliderDesc, this._body);
 
     // Create debug visualization mesh
-    this._createColliderVisualization(shapeType, size);
+    this._createColliderVisualization(shapeType, size, bboxCenter);
 
     this._events.trigger('colliderready');
   }
@@ -349,7 +357,11 @@ export class RigidBody<
     }
   }
 
-  private _createColliderVisualization(shapeType: RAPIER.ShapeType, size: THREE.Vector3): void {
+  private _createColliderVisualization(
+    shapeType: RAPIER.ShapeType,
+    size: THREE.Vector3,
+    bboxCenter: THREE.Vector3
+  ): void {
     let geometry: THREE.BufferGeometry;
 
     switch (shapeType) {
@@ -421,8 +433,8 @@ export class RigidBody<
     );
     this._colliderDebugMesh.scale.copy(inverseScale);
 
-    // Position at center of GameObject
-    this._colliderDebugMesh.position.set(0, 0, 0);
+    // Position at the bounding box center to match collider offset
+    this._colliderDebugMesh.position.copy(bboxCenter);
 
     // Add to GameObject
     this.gameObject.add(this._colliderDebugMesh);

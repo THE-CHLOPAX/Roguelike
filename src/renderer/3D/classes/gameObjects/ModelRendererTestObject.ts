@@ -24,7 +24,7 @@ export class ModelRendererTestObject extends MovableGameObject {
 
     this.addComponent('ModelRenderer', new ModelRenderer(this, { model: monkModel }));
 
-    this.rigidBody.toggleVisible(true);
+    // this.rigidBody.toggleVisible(true);
 
     if (!scene.mouseInput || !scene.keyboardInput) {
       console.error(

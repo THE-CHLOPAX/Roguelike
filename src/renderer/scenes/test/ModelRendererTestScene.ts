@@ -11,9 +11,5 @@ export class ModelRendererTestScene extends TestScene {
     const modelRendererTestObject = new ModelRendererTestObject(this);
 
     this.add(modelRendererTestObject);
-
-    const controlledBox = new ControlledBox(this);
-    controlledBox.position.set(0, 1, 0);
-    this.add(controlledBox);
   }
 }
