@@ -25,7 +25,6 @@ export class BaseControls extends GameObjectComponent {
 
   protected static ROTATION_SENSITIVITY = 0.002;
   protected static ZOOM_SENSITIVITY = 0.001;
-  protected static SPRINT_MULTIPLIER = 1.75;
 
   constructor({ gameObject, camera, cameraLerp }: BaseControlsOptions) {
     super(gameObject);
@@ -38,14 +37,6 @@ export class BaseControls extends GameObjectComponent {
     }
 
     this.camera.pivotPoint = this.gameObject.position;
-  }
-
-  protected toggleSprint(enabled: boolean): void {
-    if (enabled) {
-      this.movableGameObject.speed *= BaseControls.SPRINT_MULTIPLIER;
-    } else {
-      this.movableGameObject.speed /= BaseControls.SPRINT_MULTIPLIER;
-    }
   }
 
   protected onUpdate(_deltaTime: number): void {

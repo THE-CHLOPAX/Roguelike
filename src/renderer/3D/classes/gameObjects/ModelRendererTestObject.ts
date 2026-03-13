@@ -10,6 +10,7 @@ export class ModelRendererTestObject extends MovableGameObject {
   constructor(scene: TestScene) {
     super(scene, {
       speed: 3,
+      sprintSpeed: 5,
       mass: 1,
       friction: 1,
       physicsBodyType: 'dynamic',
