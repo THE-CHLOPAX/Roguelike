@@ -6,6 +6,7 @@ type InternalButtonProps = {
   onClick: () => void;
   disabled?: boolean;
   style?: React.CSSProperties;
+  className?: string;
 };
 
 export function InternalButton({
@@ -14,9 +15,16 @@ export function InternalButton({
   variant = 'solid',
   disabled,
   style,
+  className,
 }: InternalButtonProps) {
   return (
-    <Button variant={variant} onClick={onClick} disabled={disabled} style={style}>
+    <Button
+      variant={variant}
+      onClick={onClick}
+      disabled={disabled}
+      style={style}
+      className={className}
+    >
       {label}
     </Button>
   );
