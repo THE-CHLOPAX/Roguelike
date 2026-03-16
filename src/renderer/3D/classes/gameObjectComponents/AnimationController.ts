@@ -10,6 +10,11 @@ export class AnimationController extends GameObjectComponent {
   constructor(gameObject: GameObject, modelRenderer: ModelRenderer) {
     super(gameObject);
 
+    const currentModel = modelRenderer.getModel();
+    if (currentModel) {
+      this._initializeAnimations(currentModel);
+    }
+
     modelRenderer.onModelChange = this._initializeAnimations.bind(this);
   }
 
@@ -71,6 +76,12 @@ export class AnimationController extends GameObjectComponent {
       this._animationMixer.stopAllAction();
       this._animationMixer.uncacheRoot(this._animationMixer.getRoot());
       this._animationMixer = null;
+    }
+  }
+
+  protected override onUpdate(deltaTime: number): void {
+    if (this._animationMixer) {
+      this._animationMixer.update(deltaTime);
     }
   }
 

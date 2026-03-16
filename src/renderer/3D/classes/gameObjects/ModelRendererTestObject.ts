@@ -1,12 +1,17 @@
+import * as THREE from 'three';
+import { RigidBody, useAssetStore } from '@tgdf';
 import { TestScene } from 'src/renderer/scenes/test/TestScene';
-import { GameObject, RigidBody, Scene, useAssetStore } from '@tgdf';
 
-import { MODEL_MONK } from '../../../constants';
 import { MovableGameObject } from './MovableGameObject';
+import { HUMANOID_ANIMATIONS, MODEL_MONK } from '../../../constants';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
+import { AnimationController } from '../gameObjectComponents/AnimationController';
 
 export class ModelRendererTestObject extends MovableGameObject {
+  private _modelRenderer: ModelRenderer | null = null;
+  private _animationController: AnimationController | null = null;
+
   constructor(scene: TestScene) {
     super(scene, {
       speed: 3,
@@ -23,7 +28,15 @@ export class ModelRendererTestObject extends MovableGameObject {
       return;
     }
 
-    this.addComponent('ModelRenderer', new ModelRenderer(this, { model: monkModel }));
+    this._modelRenderer = this.addComponent(
+      'ModelRenderer',
+      new ModelRenderer(this, { model: monkModel })
+    );
+
+    this._animationController = this.addComponent(
+      'AnimationController',
+      new AnimationController(this, this._modelRenderer)
+    );
 
     // this.rigidBody.toggleVisible(true);
 
@@ -43,5 +56,10 @@ export class ModelRendererTestObject extends MovableGameObject {
         mouseInput: scene.mouseInput,
       })
     );
+  }
+
+  public setModel(model: THREE.Object3D | null): void {
+    if (!this._modelRenderer) return;
+    this._modelRenderer.setModel(model);
   }
 }

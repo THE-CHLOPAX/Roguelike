@@ -15,6 +15,10 @@ export class ModelRenderer extends GameObjectComponent {
     }
   }
 
+  public getModel(): THREE.Object3D | null {
+    return this._model;
+  }
+
   public setModel(model: THREE.Object3D | null): void {
     if (model === this._model) return;
 
