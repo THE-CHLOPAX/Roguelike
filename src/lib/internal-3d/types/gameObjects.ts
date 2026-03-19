@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 import { Scene } from '../Scene/Scene';
 import { SceneEventsMap } from './scene';
 
