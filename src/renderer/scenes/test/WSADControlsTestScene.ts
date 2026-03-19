@@ -1,7 +1,7 @@
 import { SceneConstructorOptions } from '@tgdf';
-import { ControlledBox } from '@3D/classes/gameObjects/ControlledBox';
 
 import { TestScene } from './TestScene';
+import { ControlledBox } from '../../3D/classes/gameObjects/ControlledBox';
 
 export class WSADControlsTestScene extends TestScene {
   constructor(options: SceneConstructorOptions) {

@@ -1,8 +1,8 @@
 import { SceneConstructorOptions, useAssetStore } from '@tgdf';
-import { ModelRendererTestObject } from '@3D/classes/gameObjects/ModelRendererTestObject';
 
 import { TestScene } from './TestScene';
 import { useModelTestStore } from '../../store/useModelTestStore';
+import { ModelRendererTestObject } from '../../3D/classes/gameObjects/ModelRendererTestObject';
 
 export class ModelRendererTestScene extends TestScene {
   constructor(options: SceneConstructorOptions) {

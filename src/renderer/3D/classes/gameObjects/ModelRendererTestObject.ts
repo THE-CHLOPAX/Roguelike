@@ -2,15 +2,18 @@ import * as THREE from 'three';
 import { RigidBody, useAssetStore } from '@tgdf';
 import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
+import { HUMANOID_STATES } from '../../types';
 import { MODEL_MONK } from '../../../constants';
 import { MovableGameObject } from './MovableGameObject';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
+import { StateController } from '../gameObjectComponents/StateController';
 import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
 import { AnimationController } from '../gameObjectComponents/AnimationController';
 
 export class ModelRendererTestObject extends MovableGameObject {
   private _modelRenderer: ModelRenderer | null = null;
   private _animationController: AnimationController | null = null;
+  private _stateController: StateController<HUMANOID_STATES> | null = null;
 
   constructor(scene: TestScene) {
     super(scene, {
@@ -38,6 +41,13 @@ export class ModelRendererTestObject extends MovableGameObject {
       new AnimationController(this, this._modelRenderer)
     );
 
+    this._stateController = this.addComponent(
+      'StateController',
+      new StateController<HUMANOID_STATES>(this, {
+        initialState: HUMANOID_STATES.IDLE,
+      })
+    );
+
     // this.rigidBody.toggleVisible(true);
 
     if (!scene.mouseInput || !scene.keyboardInput) {
@@ -54,6 +64,7 @@ export class ModelRendererTestObject extends MovableGameObject {
         camera: scene.camera,
         keyboardInput: scene.keyboardInput,
         mouseInput: scene.mouseInput,
+        stateController: this._stateController,
       })
     );
   }

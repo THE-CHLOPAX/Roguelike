@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { GameObjectComponent } from '@tgdf';
-import { MovableGameObject } from '@3D/classes/gameObjects/MovableGameObject';
 
 import { CAMERA_POSITION_OFFSET } from '../../../constants';
 import { OrtographicCamera } from '../../cameras/OrtographicCamera';
+import { MovableGameObject } from '../../../classes/gameObjects/MovableGameObject';
 
 export type BaseControlsOptions = {
   gameObject: MovableGameObject;

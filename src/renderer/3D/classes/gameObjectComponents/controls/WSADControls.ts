@@ -1,24 +1,36 @@
 import * as THREE from 'three';
 import { KeyboardInput, MouseInput } from '@tgdf';
 
+import { HUMANOID_STATES } from '../../../types';
+import { StateController } from '../StateController';
 import { BaseControls, BaseControlsOptions } from './BaseControls';
 
 export type WSADControlsOptions = BaseControlsOptions & {
   mouseInput: MouseInput;
   keyboardInput: KeyboardInput;
+  stateController: StateController<HUMANOID_STATES>;
 };
 
 export class WSADControls extends BaseControls {
   private _keyboardInput: KeyboardInput;
   private _mouseInput: MouseInput;
+  private _stateController: StateController<HUMANOID_STATES>;
 
   private _isDragging: boolean = false;
 
-  constructor({ gameObject, camera, keyboardInput, mouseInput, cameraLerp }: WSADControlsOptions) {
+  constructor({
+    gameObject,
+    camera,
+    keyboardInput,
+    mouseInput,
+    cameraLerp,
+    stateController,
+  }: WSADControlsOptions) {
     super({ gameObject, camera, cameraLerp });
 
     this._keyboardInput = keyboardInput;
     this._mouseInput = mouseInput;
+    this._stateController = stateController;
 
     this._handleKeyboardInput();
     this._handleMouseInput();
