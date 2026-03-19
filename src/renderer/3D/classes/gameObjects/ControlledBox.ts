@@ -3,7 +3,7 @@ import { logger } from '@tgdf';
 import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
 import { MovableGameObject } from './MovableGameObject';
-import { WSADControls } from '../gameObjectComponents/WSADControls';
+import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
 
 export class ControlledBox extends MovableGameObject {
   constructor(scene: TestScene) {
@@ -11,11 +11,15 @@ export class ControlledBox extends MovableGameObject {
     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const mesh = new THREE.Mesh(geometry, material);
 
-    super(scene, mesh, {
+    super(scene, {
       speed: 3,
       mass: 1,
       friction: 1,
     });
+
+    this.add(mesh);
+
+    this.rigidBody.toggleVisible(true);
 
     if (!scene.mouseInput || !scene.keyboardInput) {
       logger({

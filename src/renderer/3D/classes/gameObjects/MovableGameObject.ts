@@ -3,19 +3,27 @@ import { GameObject, RigidBody, Scene } from '@tgdf';
 
 export type MovableGameObjectOptions = {
   speed: number;
+  sprintSpeed?: number;
   mass: number;
   friction: number;
   physicsBodyType?: RigidBody['options']['type'];
+  colliderShape?: RigidBody['options']['colliderShape'];
 };
 
 export class MovableGameObject extends GameObject {
-  private _speed: number;
+  public defaultSpeed: number;
+  public sprintSpeed: number;
+
+  private _currentSpeed: number;
   private _rigidBody: RigidBody;
 
-  constructor(scene: Scene, object: THREE.Object3D, options: MovableGameObjectOptions) {
-    super({ scene, object });
+  constructor(scene: Scene, options: MovableGameObjectOptions) {
+    super({ scene });
 
-    this._speed = options.speed;
+    this.defaultSpeed = options.speed;
+    this.sprintSpeed = options.sprintSpeed ?? options.speed;
+
+    this._currentSpeed = this.defaultSpeed;
 
     this._rigidBody = this.addComponent(
       'RigidBodyComponent',
@@ -23,16 +31,13 @@ export class MovableGameObject extends GameObject {
         mass: options.mass,
         friction: options.friction,
         type: options.physicsBodyType ?? 'dynamic',
+        colliderShape: options.colliderShape ?? RigidBody.ShapeType.Cuboid,
       })
     );
   }
 
-  public set speed(value: number) {
-    this._speed = value;
-  }
-
   public get speed(): number {
-    return this._speed;
+    return this._currentSpeed;
   }
 
   public get velocity(): THREE.Vector3 | null {
@@ -43,8 +48,12 @@ export class MovableGameObject extends GameObject {
     return this._rigidBody;
   }
 
+  public toggleSprint(enabled: boolean): void {
+    this._currentSpeed = enabled ? this.sprintSpeed : this.defaultSpeed;
+  }
+
   public move(direction: THREE.Vector3): void {
-    const velocity = direction.clone().multiplyScalar(this._speed);
+    const velocity = direction.clone().multiplyScalar(this._currentSpeed);
 
     // Preserve Y velocity (gravity)
     const currentVelocity = this._rigidBody.getLinearVelocity();

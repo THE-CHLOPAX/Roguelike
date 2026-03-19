@@ -14,11 +14,6 @@ export function GamepadControlsTestView() {
   const { scene, loadingProgress } = useLoadScene({
     sceneClass: GamepadControlsTestScene,
     assetsToLoad: [loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png')],
-    sceneParams: {
-      physics: {
-        gravity: new THREE.Vector3(0, -9.81, 0),
-      },
-    },
   });
   const [loadingFinished, setLoadingFinished] = useState(false);
 

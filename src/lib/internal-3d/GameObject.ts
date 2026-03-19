@@ -1,10 +1,15 @@
 import * as THREE from 'three';
-import { GameObjectComponent, GameObjectConstructorOptions, GameObjectEventMap } from '@tgdf';
+import {
+  GameObjectComponent,
+  GameObjectConstructorOptions,
+  GameObjectEventMap,
+  logger,
+} from '@tgdf';
 
 import { Emitter } from './Emitter';
 import { Scene } from './Scene/Scene';
 import { SceneEventsMap } from './types/scene';
-import { logger } from '../internal-ui/utils/logger';
+import { ResourceTracker } from './ResourceTracker/ResourceTracker';
 
 export class GameObject<
   T extends GameObjectEventMap = GameObjectEventMap,
@@ -15,54 +20,13 @@ export class GameObject<
   private _gameObjectComponents: Map<string, GameObjectComponent<unknown, K, T>>;
   private _scene: Scene<K>;
   private _emitter: Emitter<T> = new Emitter<T>();
-  private _object: THREE.Object3D;
   private _isAwake: boolean = false;
+  private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
-  constructor({ scene, object }: GameObjectConstructorOptions<K>) {
+  constructor({ scene }: GameObjectConstructorOptions<K>) {
     super();
     this._scene = scene;
-    this._object = object;
     this._gameObjectComponents = new Map<string, GameObjectComponent<unknown, K, T>>();
-
-    // TODO: Investigate this - can why is this necessary?
-    // Shouldn't we consider a separate component for renderering meshes inside GameObejct?
-
-    // If object is a mesh, copy its geometry and material
-    if (object instanceof THREE.Mesh) {
-      const meshCopy = new THREE.Mesh();
-      meshCopy.copy(object, true);
-
-      // Copy shadow properties explicitly
-      meshCopy.castShadow = object.castShadow;
-      meshCopy.receiveShadow = object.receiveShadow;
-
-      // Reset transform on the mesh copy since parent GameObject has the transform
-      meshCopy.position.set(0, 0, 0);
-      meshCopy.rotation.set(0, 0, 0);
-      meshCopy.scale.set(1, 1, 1);
-      meshCopy.quaternion.identity();
-
-      this.add(meshCopy);
-    }
-
-    // copy entire object (without children) into this GameObject
-    this.copy(object, false);
-  }
-
-  public get mesh(): THREE.Mesh | null {
-    if (this._object instanceof THREE.Mesh) {
-      return this._object;
-    } else {
-      logger({
-        message: `GameObject: ${this.name} this object 3D is not instance of a mesh.`,
-        type: 'warn',
-      });
-      return null;
-    }
-  }
-
-  public get object(): THREE.Object3D {
-    return this._object;
   }
 
   public get scene(): Scene<K> | undefined {
@@ -117,6 +81,40 @@ export class GameObject<
     this._emitter.trigger('destroyed');
     this.onDestroyed();
     this._isAwake = false;
+  }
+
+  public override add(...objects: THREE.Object3D[]): this {
+    super.add(...objects);
+
+    objects.forEach((object) => {
+      logger({
+        message: `GameObject: Adding object to GameObject: ${object.name || object.type}`,
+        type: 'info',
+      });
+      const resourceTracker = new ResourceTracker();
+      resourceTracker.track(object);
+      this._resourceTrackerMap.set(object.uuid, resourceTracker);
+    });
+
+    return this;
+  }
+
+  public override remove(...objects: THREE.Object3D[]): this {
+    super.remove(...objects);
+
+    objects.forEach((object) => {
+      logger({
+        message: `GameObject: Removing object from GameObject: ${object.name || object.type}`,
+        type: 'info',
+      });
+      const resourceTracker = this._resourceTrackerMap.get(object.uuid);
+      if (resourceTracker) {
+        resourceTracker.dispose();
+        this._resourceTrackerMap.delete(object.uuid);
+      }
+    });
+
+    return this;
   }
 
   protected onAwake(): void {}

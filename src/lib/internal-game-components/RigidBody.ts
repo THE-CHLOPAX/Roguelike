@@ -36,6 +36,7 @@ export class RigidBody<
   private _body?: RAPIER.RigidBody;
   private _collider?: RAPIER.Collider;
   private _colliderDebugMesh?: THREE.Mesh;
+  private _meshVisible: boolean = false;
 
   constructor(gameObject: GameObject<T, K>, options: RigidBodyOptions = {}) {
     super(gameObject, options);
@@ -102,6 +103,10 @@ export class RigidBody<
     }
   }
 
+  public getDebugMesh(): THREE.Mesh | undefined {
+    return this._colliderDebugMesh;
+  }
+
   public getVelocity(): THREE.Vector3 {
     if (this._body) {
       const vel = this._body.linvel();
@@ -128,12 +133,14 @@ export class RigidBody<
         this._colliderDebugMesh.material.dispose();
       }
       this._colliderDebugMesh = undefined;
+      this._meshVisible = false;
     }
 
     super.destroy();
   }
 
   public toggleVisible(visible: boolean): void {
+    this._meshVisible = visible;
     if (this._colliderDebugMesh) {
       this._colliderDebugMesh.visible = visible;
     }
@@ -234,6 +241,10 @@ export class RigidBody<
     const size = new THREE.Vector3();
     bbox.getSize(size);
 
+    // Calculate bounding box center to properly offset collider
+    const bboxCenter = new THREE.Vector3();
+    bbox.getCenter(bboxCenter);
+
     // For certain flat geometries, adjust size calculation
     if (mesh.geometry.type === 'PlaneGeometry' || mesh.geometry.type === 'RingGeometry') {
       size.z = Math.max(0.01, size.z);
@@ -268,6 +279,10 @@ export class RigidBody<
     // Create collider based on specified shape
     const colliderDesc = this._getColliderDesc(shapeType, size);
 
+    // Set collider translation to match the bounding box center
+    // This ensures the collider is positioned correctly relative to the model's geometry
+    colliderDesc.setTranslation(bboxCenter.x, bboxCenter.y, bboxCenter.z);
+
     // Set material properties
     colliderDesc.setFriction(this.options.friction!);
     colliderDesc.setRestitution(this.options.restitution!);
@@ -276,7 +291,7 @@ export class RigidBody<
     this._collider = world.createCollider(colliderDesc, this._body);
 
     // Create debug visualization mesh
-    this._createColliderVisualization(shapeType, size);
+    this._createColliderVisualization(shapeType, size, bboxCenter);
 
     this._events.trigger('colliderready');
   }
@@ -342,7 +357,11 @@ export class RigidBody<
     }
   }
 
-  private _createColliderVisualization(shapeType: RAPIER.ShapeType, size: THREE.Vector3): void {
+  private _createColliderVisualization(
+    shapeType: RAPIER.ShapeType,
+    size: THREE.Vector3,
+    bboxCenter: THREE.Vector3
+  ): void {
     let geometry: THREE.BufferGeometry;
 
     switch (shapeType) {
@@ -402,7 +421,7 @@ export class RigidBody<
 
     this._colliderDebugMesh = new THREE.Mesh(geometry, material);
     this._colliderDebugMesh.name = 'ColliderDebug';
-    this._colliderDebugMesh.visible = false;
+    this._colliderDebugMesh.visible = this._meshVisible;
 
     // CRITICAL: The size passed to this function already includes GameObject.scale
     // But when we add the mesh as a child of GameObject, it will inherit scale again
@@ -414,8 +433,8 @@ export class RigidBody<
     );
     this._colliderDebugMesh.scale.copy(inverseScale);
 
-    // Position at center of GameObject
-    this._colliderDebugMesh.position.set(0, 0, 0);
+    // Position at the bounding box center to match collider offset
+    this._colliderDebugMesh.position.copy(bboxCenter);
 
     // Add to GameObject
     this.gameObject.add(this._colliderDebugMesh);

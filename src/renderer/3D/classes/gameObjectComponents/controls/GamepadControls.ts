@@ -51,11 +51,11 @@ export class GamepadControls extends BaseControls {
   };
 
   private _handleSprintButtonDown = (): void => {
-    this.toggleSprint(true);
+    this.movableGameObject.toggleSprint(true);
   };
 
   private _handleSprintButtonUp = (): void => {
-    this.toggleSprint(false);
+    this.movableGameObject.toggleSprint(false);
   };
 
   private _handleCameraMovement(): void {

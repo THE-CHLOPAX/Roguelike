@@ -33,11 +33,11 @@ export class WSADControls extends BaseControls {
     ];
 
     this._keyboardInput.addKeyDownListener('shift', () => {
-      this.toggleSprint(true);
+      this.movableGameObject.toggleSprint(true);
     });
 
     this._keyboardInput.addKeyUpListener('shift', () => {
-      this.toggleSprint(false);
+      this.movableGameObject.toggleSprint(false);
     });
 
     for (const { key, axis, value } of keyMappings) {

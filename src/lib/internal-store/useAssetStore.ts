@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { create } from 'zustand';
-/* import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'; */
 import { traverseFind, logger } from '@tgdf';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export type AssetState = {
   imageCache: Map<string, HTMLImageElement>;
@@ -9,18 +9,20 @@ export type AssetState = {
   audioCache: Map<string, HTMLAudioElement>;
   fontCache: Map<string, FontFace>;
   modelCacheJSON: Map<string, THREE.Object3D>;
+  modelCacheGLTF: Map<string, THREE.Object3D>;
   loadImage: (id: string, url: string) => Promise<HTMLImageElement>;
   loadTexture: (id: string, url: string) => Promise<THREE.Texture>;
   loadAudio: (id: string, url: string, volume?: number) => Promise<HTMLAudioElement>;
   loadFont: (id: string, url: string) => Promise<FontFace>;
   loadModelJSON: (id: string, url: string, nameExtractor?: string) => Promise<THREE.Object3D>;
+  loadModelGLTF: (id: string, url: string, nameExtractor?: string) => Promise<THREE.Object3D>;
   loadWithProgress: <T extends readonly unknown[]>(
     promises: { [K in keyof T]: Promise<T[K]> },
     onProgress: (progress: number) => void
   ) => Promise<T>;
 };
 
-/* const gltfLoader = new GLTFLoader(); */
+const gltfLoader = new GLTFLoader();
 const jsonLoader = new THREE.ObjectLoader();
 const textureLoader = new THREE.TextureLoader();
 
@@ -32,6 +34,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
   audioCache: new Map<string, HTMLAudioElement>(),
   fontCache: new Map<string, FontFace>(),
   modelCacheJSON: new Map<string, THREE.Object3D>(),
+  modelCacheGLTF: new Map<string, THREE.Object3D>(),
 
   loadImage: (id: string, url: string): Promise<HTMLImageElement> => {
     // Check cache first
@@ -168,6 +171,50 @@ export const useAssetStore = create<AssetState>((set, get) => ({
         .catch((error) => {
           reject(new Error(`Failed to load model JSON: ${url}, ${error}.\n\n${COPY_ASSETS_NOTE}`));
         });
+    });
+  },
+
+  loadModelGLTF: (id: string, url: string, nameExtractor?: string): Promise<THREE.Object3D> => {
+    // Check cache first
+    const cached = get().modelCacheGLTF.get(id);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+
+    return new Promise((resolve, reject) => {
+      gltfLoader.load(
+        url,
+        (gltf) => {
+          let object: THREE.Object3D = gltf.scene;
+
+          if (nameExtractor) {
+            const foundObject = traverseFind(
+              gltf.scene,
+              (obj) => obj.name === nameExtractor && obj instanceof THREE.Object3D
+            );
+            if (!foundObject) {
+              logger({
+                message: `AssetStore: Object with name '${nameExtractor}' not found
+                in GLTF model: ${url}. Using entire scene as fallback.`,
+                type: 'warn',
+              });
+            }
+            object = foundObject || gltf.scene;
+          }
+
+          // Pass animations
+          object.animations = gltf.animations; // Attach animations to the object for easier access
+
+          set((state) => ({
+            modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, object),
+          }));
+          resolve(object);
+        },
+        undefined,
+        (error) => {
+          reject(new Error(`Failed to load GLTF model: ${url}, ${error}.\n\n${COPY_ASSETS_NOTE}`));
+        }
+      );
     });
   },
 
