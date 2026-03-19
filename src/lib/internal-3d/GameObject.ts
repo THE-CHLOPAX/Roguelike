@@ -8,36 +8,30 @@ import {
 
 import { Emitter } from './Emitter';
 import { Scene } from './Scene/Scene';
-import { SceneEventsMap } from './types/scene';
 import { ResourceTracker } from './ResourceTracker/ResourceTracker';
 
-export class GameObject<
-  T extends GameObjectEventMap = GameObjectEventMap,
-  K extends SceneEventsMap = SceneEventsMap,
->
-  extends THREE.Object3D
-{
-  private _gameObjectComponents: Map<string, GameObjectComponent<unknown, K, T>>;
-  private _scene: Scene<K>;
-  private _emitter: Emitter<T> = new Emitter<T>();
+export class GameObject extends THREE.Object3D {
+  private _gameObjectComponents: Map<string, GameObjectComponent>;
+  private _scene: Scene;
+  private _emitter: Emitter<GameObjectEventMap> = new Emitter<GameObjectEventMap>();
   private _isAwake: boolean = false;
   private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
-  constructor({ scene }: GameObjectConstructorOptions<K>) {
+  constructor({ scene }: GameObjectConstructorOptions) {
     super();
     this._scene = scene;
-    this._gameObjectComponents = new Map<string, GameObjectComponent<unknown, K, T>>();
+    this._gameObjectComponents = new Map<string, GameObjectComponent>();
   }
 
-  public get scene(): Scene<K> | undefined {
+  public get scene(): Scene | undefined {
     return this._scene;
   }
 
-  public get gameObjectComponents(): Map<string, GameObjectComponent<unknown, K, T>> {
+  public get gameObjectComponents(): Map<string, GameObjectComponent> {
     return this._gameObjectComponents;
   }
 
-  public get events(): Emitter<T> {
+  public get events(): Emitter<GameObjectEventMap> {
     return this._emitter;
   }
 
@@ -59,7 +53,7 @@ export class GameObject<
     this.onUpdate(deltaTime);
   }
 
-  public addComponent<C extends GameObjectComponent<unknown, K, T>>(name: string, component: C): C {
+  public addComponent<C extends GameObjectComponent>(name: string, component: C): C {
     this._gameObjectComponents.set(name, component);
     return component;
   }

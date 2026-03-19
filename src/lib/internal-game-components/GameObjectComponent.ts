@@ -1,21 +1,10 @@
-import {
-  Scene,
-  GameObject,
-  SceneEventsMap,
-  GameObjectEventMap,
-  KeyboardInput,
-  MouseInput,
-} from '@tgdf';
+import { Scene, GameObject, KeyboardInput, MouseInput } from '@tgdf';
 
-export abstract class GameObjectComponent<
-  T = unknown,
-  K extends SceneEventsMap = SceneEventsMap,
-  U extends GameObjectEventMap = GameObjectEventMap,
-> {
-  private _gameObject: GameObject<U, K>;
+export abstract class GameObjectComponent<T = unknown> {
+  private _gameObject: GameObject;
   protected options: Partial<T>;
 
-  constructor(gameObject: GameObject<U, K>, options?: Partial<T>) {
+  constructor(gameObject: GameObject, options?: Partial<T>) {
     this._gameObject = gameObject;
     this.options = options ?? {};
 
@@ -26,7 +15,7 @@ export abstract class GameObjectComponent<
     }
   }
 
-  public get gameObject(): GameObject<U, K> {
+  public get gameObject(): GameObject {
     return this._gameObject;
   }
 
@@ -38,7 +27,7 @@ export abstract class GameObjectComponent<
     this.onUpdate(deltaTime);
   }
 
-  public get scene(): Scene<K> | undefined {
+  public get scene(): Scene | undefined {
     return this.gameObject.scene;
   }
 
