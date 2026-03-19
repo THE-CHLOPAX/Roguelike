@@ -9,8 +9,23 @@ export type GameObjectConstructorOptions = {
   scene: Scene;
 };
 
-export type GameObjectEventMap = {
+/**
+ * Base event map for GameObject.
+ * Can be extended via declaration merging to add component-specific events.
+ *
+ * @example
+ * ```typescript
+ * // In your component file or a .d.ts file:
+ * declare module '@tgdf' {
+ *   interface GameObjectEventMap {
+ *     'animationController:complete': { animationName: string };
+ *     'animationController:start': { animationName: string };
+ *   }
+ * }
+ * ```
+ */
+export interface GameObjectEventMap {
   awake: void;
   destroyed: void;
   update: { deltaTime: number };
-};
+}

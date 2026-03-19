@@ -1,13 +1,10 @@
-import { Scene, GameObject, GameObjectEventMap, KeyboardInput, MouseInput } from '@tgdf';
+import { Scene, GameObject, KeyboardInput, MouseInput } from '@tgdf';
 
-export abstract class GameObjectComponent<
-  T = unknown,
-  U extends GameObjectEventMap = GameObjectEventMap,
-> {
-  private _gameObject: GameObject<U>;
+export abstract class GameObjectComponent<T = unknown> {
+  private _gameObject: GameObject;
   protected options: Partial<T>;
 
-  constructor(gameObject: GameObject<U>, options?: Partial<T>) {
+  constructor(gameObject: GameObject, options?: Partial<T>) {
     this._gameObject = gameObject;
     this.options = options ?? {};
 
@@ -18,7 +15,7 @@ export abstract class GameObjectComponent<
     }
   }
 
-  public get gameObject(): GameObject<U> {
+  public get gameObject(): GameObject {
     return this._gameObject;
   }
 

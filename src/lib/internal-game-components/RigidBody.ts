@@ -2,10 +2,14 @@ import * as THREE from 'three';
 import { logger, GameObject } from '@tgdf';
 import RAPIER from '@dimforge/rapier3d-compat';
 
-import { Emitter } from '../internal-3d/Emitter';
 import { GameObjectComponent } from './GameObjectComponent';
-import { GameObjectEventMap } from '../internal-3d/types/gameObjects';
 import { PhysicsCollisionCallback } from '../internal-3d/types/physics';
+
+declare module '@tgdf' {
+  export interface GameObjectEventMap {
+    colliderready: void;
+  }
+}
 
 export type RigidBodyEventsMap = {
   colliderready: void;
@@ -23,20 +27,17 @@ export type RigidBodyOptions = {
   enableCollisionDetection?: boolean;
 };
 
-export class RigidBody<
-  T extends GameObjectEventMap = GameObjectEventMap,
-> extends GameObjectComponent<RigidBodyOptions, T> {
+export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   public static BodyType = RAPIER.RigidBodyType;
   public static ShapeType = RAPIER.ShapeType;
   public static ActiveEvents = RAPIER.ActiveEvents;
 
-  private _events: Emitter<RigidBodyEventsMap> = new Emitter<RigidBodyEventsMap>();
   private _body?: RAPIER.RigidBody;
   private _collider?: RAPIER.Collider;
   private _colliderDebugMesh?: THREE.Mesh;
   private _meshVisible: boolean = false;
 
-  constructor(gameObject: GameObject<T>, options: RigidBodyOptions = {}) {
+  constructor(gameObject: GameObject, options: RigidBodyOptions = {}) {
     super(gameObject, options);
 
     // Override options with defaults
@@ -77,10 +78,6 @@ export class RigidBody<
 
   public get body(): RAPIER.RigidBody | undefined {
     return this._body;
-  }
-
-  public get events(): Emitter<RigidBodyEventsMap> {
-    return this._events;
   }
 
   public applyForce(force: THREE.Vector3): void {
@@ -291,7 +288,7 @@ export class RigidBody<
     // Create debug visualization mesh
     this._createColliderVisualization(shapeType, size, bboxCenter);
 
-    this._events.trigger('colliderready');
+    this.gameObject.events.trigger('colliderready');
   }
 
   private _getColliderDesc(shapeType: RAPIER.ShapeType, size: THREE.Vector3): RAPIER.ColliderDesc {
