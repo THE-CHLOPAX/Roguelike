@@ -1,3 +1,5 @@
+// To be removed when no longer needed.
+
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
