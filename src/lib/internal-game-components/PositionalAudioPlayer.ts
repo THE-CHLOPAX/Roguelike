@@ -1,12 +1,5 @@
 import * as THREE from 'three';
-import {
-  logger,
-  GameObject,
-  SoundChannel,
-  SceneEventsMap,
-  useSoundsStore,
-  GameObjectEventMap,
-} from '@tgdf';
+import { logger, GameObject, SoundChannel, useSoundsStore, GameObjectEventMap } from '@tgdf';
 
 import { GameObjectComponent } from './GameObjectComponent';
 
@@ -20,8 +13,7 @@ export type PositionalAudioPlayerOptions = {
 
 export class PositionalAudioPlayer<
   T extends GameObjectEventMap = GameObjectEventMap,
-  K extends SceneEventsMap = SceneEventsMap,
-> extends GameObjectComponent<PositionalAudioPlayerOptions, K, T> {
+> extends GameObjectComponent<PositionalAudioPlayerOptions, T> {
   private _listener: THREE.AudioListener;
   private _positionalAudio: THREE.PositionalAudio;
   private _audioBuffer: AudioBuffer | null = null;
@@ -36,7 +28,7 @@ export class PositionalAudioPlayer<
     }
   };
 
-  constructor(gameObject: GameObject<T, K>, options: PositionalAudioPlayerOptions = {}) {
+  constructor(gameObject: GameObject<T>, options: PositionalAudioPlayerOptions = {}) {
     super(gameObject, options);
     this._listener = new THREE.AudioListener();
     this._positionalAudio = new THREE.PositionalAudio(this._listener);

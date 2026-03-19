@@ -4,7 +4,6 @@ import RAPIER from '@dimforge/rapier3d-compat';
 
 import { Emitter } from '../internal-3d/Emitter';
 import { GameObjectComponent } from './GameObjectComponent';
-import { SceneEventsMap } from '../internal-3d/types/scene';
 import { GameObjectEventMap } from '../internal-3d/types/gameObjects';
 import { PhysicsCollisionCallback } from '../internal-3d/types/physics';
 
@@ -26,8 +25,7 @@ export type RigidBodyOptions = {
 
 export class RigidBody<
   T extends GameObjectEventMap = GameObjectEventMap,
-  K extends SceneEventsMap = SceneEventsMap,
-> extends GameObjectComponent<RigidBodyOptions, K, T> {
+> extends GameObjectComponent<RigidBodyOptions, T> {
   public static BodyType = RAPIER.RigidBodyType;
   public static ShapeType = RAPIER.ShapeType;
   public static ActiveEvents = RAPIER.ActiveEvents;
@@ -38,7 +36,7 @@ export class RigidBody<
   private _colliderDebugMesh?: THREE.Mesh;
   private _meshVisible: boolean = false;
 
-  constructor(gameObject: GameObject<T, K>, options: RigidBodyOptions = {}) {
+  constructor(gameObject: GameObject<T>, options: RigidBodyOptions = {}) {
     super(gameObject, options);
 
     // Override options with defaults

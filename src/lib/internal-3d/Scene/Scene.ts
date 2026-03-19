@@ -7,10 +7,10 @@ import { PhysicsManager } from '../PhysicsManager';
 import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
 import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
 
-export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends THREE.Scene {
+export abstract class Scene extends THREE.Scene {
   public abstract camera: THREE.Camera;
 
-  private _emitter = new Emitter<T>();
+  private _emitter = new Emitter<SceneEventsMap>();
   private _renderer: THREE.WebGLRenderer | null = null;
   private _keyboardInput?: KeyboardInput;
   private _mouseInput?: MouseInput;
@@ -35,7 +35,7 @@ export abstract class Scene<T extends SceneEventsMap = SceneEventsMap> extends T
     return this._mouseInput;
   }
 
-  public get events(): Emitter<T> {
+  public get events(): Emitter<SceneEventsMap> {
     return this._emitter;
   }
 

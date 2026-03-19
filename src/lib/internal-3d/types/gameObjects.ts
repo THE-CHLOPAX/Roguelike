@@ -1,13 +1,12 @@
 import { Scene } from '../Scene/Scene';
-import { SceneEventsMap } from './scene';
 
 export type GameObjectComponentTemplate = {
   name: string;
   options?: unknown;
 };
 
-export type GameObjectConstructorOptions<K extends SceneEventsMap = SceneEventsMap> = {
-  scene: Scene<K>;
+export type GameObjectConstructorOptions = {
+  scene: Scene;
 };
 
 export type GameObjectEventMap = {
