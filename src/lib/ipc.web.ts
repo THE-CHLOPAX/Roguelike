@@ -17,7 +17,7 @@ export const ipc = {
    */
   on: <T extends keyof NativeEventMainMap>(
     channel: T,
-    func: (data: NativeEventMainMap[T]) => void
+    _func: (data: NativeEventMainMap[T]) => void
   ) => {
     console.warn(`IPC on called in web mode: ${String(channel)}`);
     return () => {}; // Return a no-op cleanup function
@@ -28,7 +28,7 @@ export const ipc = {
    */
   once: <T extends keyof NativeEventMainMap>(
     channel: T,
-    func: (data: NativeEventMainMap[T]) => void
+    _func: (data: NativeEventMainMap[T]) => void
   ) => {
     console.warn(`IPC once called in web mode: ${String(channel)}`);
   },

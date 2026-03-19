@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { RigidBody, useAssetStore } from '@tgdf';
 import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
+import { MODEL_MONK } from '../../../constants';
 import { MovableGameObject } from './MovableGameObject';
-import { HUMANOID_ANIMATIONS, MODEL_MONK } from '../../../constants';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
 import { AnimationController } from '../gameObjectComponents/AnimationController';

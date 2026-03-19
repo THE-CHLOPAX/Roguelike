@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
