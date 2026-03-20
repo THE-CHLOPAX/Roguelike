@@ -1,13 +1,10 @@
 import * as THREE from 'three';
-import { GameObject, RigidBody, Scene } from '@tgdf';
+import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 export type MovableGameObjectOptions = {
   speed: number;
   sprintSpeed?: number;
-  mass: number;
-  friction: number;
-  physicsBodyType?: RigidBody['options']['type'];
-  colliderShape?: RigidBody['options']['colliderShape'];
+  rigidBodyOptions?: RigidBodyOptions;
 };
 
 export class MovableGameObject extends GameObject {
@@ -27,12 +24,7 @@ export class MovableGameObject extends GameObject {
 
     this._rigidBody = this.addComponent(
       'RigidBodyComponent',
-      new RigidBody(this, {
-        mass: options.mass,
-        friction: options.friction,
-        type: options.physicsBodyType ?? 'dynamic',
-        colliderShape: options.colliderShape ?? RigidBody.ShapeType.Cuboid,
-      })
+      new RigidBody(this, options.rigidBodyOptions)
     );
   }
 
@@ -59,6 +51,13 @@ export class MovableGameObject extends GameObject {
     const currentVelocity = this._rigidBody.getLinearVelocity();
     if (currentVelocity) {
       velocity.y = currentVelocity.y;
+    }
+
+    // Rotate the object to face the movement direction (only if moving)
+    if (direction.x !== 0 || direction.z !== 0) {
+      const targetRotation = Math.atan2(direction.x, direction.z);
+      // Sync rotation to physics body so it's not overwritten
+      this._rigidBody.setEulerRotation(new THREE.Euler(0, targetRotation, 0));
     }
 
     this._rigidBody.setLinearVelocity(velocity);

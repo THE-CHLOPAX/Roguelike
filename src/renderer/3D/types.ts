@@ -1,7 +1,8 @@
-export enum HUMANOID_STATES {
+export enum HumanoidStates {
   IDLE = 'idle',
   WALKING = 'walk',
   RUNNING = 'run',
+  SPRINTING = 'sprint',
   JUMPING = 'jump',
   ATTACKING_1 = 'attack-1',
   ATTACKING_2 = 'attack-2',

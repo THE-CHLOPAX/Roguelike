@@ -13,8 +13,10 @@ export class ControlledBox extends MovableGameObject {
 
     super(scene, {
       speed: 3,
-      mass: 1,
-      friction: 1,
+      sprintSpeed: 5,
+      rigidBodyOptions: {
+        mass: 1,
+      },
     });
 
     this.add(mesh);

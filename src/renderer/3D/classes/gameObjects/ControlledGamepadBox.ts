@@ -13,8 +13,10 @@ export class ControlledGamepadBox extends MovableGameObject {
 
     super(scene, {
       speed: 3,
-      mass: 1,
-      friction: 1,
+      rigidBodyOptions: {
+        mass: 1,
+        friction: 1,
+      },
     });
 
     this.add(mesh);

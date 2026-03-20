@@ -1,3 +1,3 @@
-import { RigidBody } from './RigidBody';
+import { RigidBody, RigidBodyOptions } from './RigidBody';
 
-export { RigidBody };
+export { RigidBody, type RigidBodyOptions };

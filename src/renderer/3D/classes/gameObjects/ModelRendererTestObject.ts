@@ -2,53 +2,31 @@ import * as THREE from 'three';
 import { RigidBody, useAssetStore } from '@tgdf';
 import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
-import { HUMANOID_STATES } from '../../types';
+import { Humanoid } from './Humanoid';
 import { MODEL_MONK } from '../../../constants';
-import { MovableGameObject } from './MovableGameObject';
-import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
-import { StateController } from '../gameObjectComponents/StateController';
 import { WSADControls } from '../gameObjectComponents/controls/WSADControls';
-import { AnimationController } from '../gameObjectComponents/AnimationController';
 
-export class ModelRendererTestObject extends MovableGameObject {
-  private _modelRenderer: ModelRenderer | null = null;
-  private _animationController: AnimationController | null = null;
-  private _stateController: StateController<HUMANOID_STATES> | null = null;
-
+export class ModelRendererTestObject extends Humanoid {
   constructor(scene: TestScene) {
-    super(scene, {
-      speed: 3,
-      sprintSpeed: 5,
-      mass: 1,
-      friction: 1,
-      physicsBodyType: 'dynamic',
-      colliderShape: RigidBody.ShapeType.Cylinder,
-    });
-
     const monkModel = useAssetStore.getState().modelCacheGLTF.get(MODEL_MONK);
+
     if (!monkModel) {
       console.error(`Model not found in cache: ${MODEL_MONK}`);
       return;
     }
 
-    this._modelRenderer = this.addComponent(
-      'ModelRenderer',
-      new ModelRenderer(this, { model: monkModel })
-    );
-
-    this._animationController = this.addComponent(
-      'AnimationController',
-      new AnimationController(this, this._modelRenderer)
-    );
-
-    this._stateController = this.addComponent(
-      'StateController',
-      new StateController<HUMANOID_STATES>(this, {
-        initialState: HUMANOID_STATES.IDLE,
-      })
-    );
-
-    // this.rigidBody.toggleVisible(true);
+    super(scene, {
+      model: monkModel,
+      speed: 3,
+      sprintSpeed: 5,
+      rigidBodyOptions: {
+        mass: 0.1,
+        friction: 0,
+        linearDamping: 0,
+        lockRotation: true,
+        colliderShape: RigidBody.ShapeType.Cylinder,
+      },
+    });
 
     if (!scene.mouseInput || !scene.keyboardInput) {
       console.error(
@@ -64,13 +42,12 @@ export class ModelRendererTestObject extends MovableGameObject {
         camera: scene.camera,
         keyboardInput: scene.keyboardInput,
         mouseInput: scene.mouseInput,
-        stateController: this._stateController,
       })
     );
   }
 
   public setModel(model: THREE.Object3D | null): void {
-    if (!this._modelRenderer) return;
-    this._modelRenderer.setModel(model);
+    if (!this.modelRenderer) return;
+    this.modelRenderer.setModel(model);
   }
 }

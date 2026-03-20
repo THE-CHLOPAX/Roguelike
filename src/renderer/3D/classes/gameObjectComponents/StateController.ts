@@ -1,8 +1,8 @@
 import { GameObject, GameObjectComponent } from '@tgdf';
 
 declare module '@tgdf' {
-  export interface GameObjectEventMap {
-    'state:statechange': { newState: unknown; previousState: unknown };
+  export interface GameObjectEventMap<T = unknown> {
+    'state:statechange': { newState: T; previousState: T };
   }
 }
 
@@ -12,7 +12,7 @@ export class StateController<T> extends GameObjectComponent {
 
   constructor(gameObject: GameObject, options: { initialState: T }) {
     super(gameObject);
-    this._currentState = options.initialState;
+    this.setState(options.initialState);
   }
 
   public setState(newState: T): void {
@@ -24,5 +24,13 @@ export class StateController<T> extends GameObjectComponent {
       newState,
       previousState: this._previousState,
     });
+  }
+
+  public get currentState(): T | null {
+    return this._currentState;
+  }
+
+  public get previousState(): T | null {
+    return this._previousState;
   }
 }

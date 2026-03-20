@@ -23,6 +23,7 @@ export type RigidBodyOptions = {
   restitution?: number; // Bounciness (0 = no bounce, 1 = perfect bounce)
   linearDamping?: number; // Air resistance
   angularDamping?: number; // Rotation resistance
+  lockRotation?: boolean;
   colliderShape?: RAPIER.ShapeType;
   enableCollisionDetection?: boolean;
 };
@@ -48,6 +49,9 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       restitution: 0.3,
       linearDamping: 0.5,
       angularDamping: 0.1,
+      lockRotation: false,
+      enableCollisionDetection: false,
+      colliderShape: RAPIER.ShapeType.Cuboid,
       ...options,
     };
 
@@ -95,6 +99,13 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   public setVelocity(velocity: THREE.Vector3): void {
     if (this._body) {
       this._body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
+    }
+  }
+
+  public setEulerRotation(euler: THREE.Euler): void {
+    if (this._body) {
+      const quat = new THREE.Quaternion().setFromEuler(euler);
+      this._body.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }, true);
     }
   }
 
@@ -206,6 +217,8 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
     // Create the body
     this._body = physicsWorld.createRigidBody(bodyDesc);
+
+    this._body.lockRotations(!!this.options.lockRotation, false);
 
     // Create collider from mesh geometry
     this._createCollider(physicsWorld);
