@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { GameObjectComponent } from '@tgdf';
 
+import { Humanoid } from '../../gameObjects/Humanoid';
 import { CAMERA_POSITION_OFFSET } from '../../../constants';
 import { OrtographicCamera } from '../../cameras/OrtographicCamera';
-import { MovableGameObject } from '../../../classes/gameObjects/MovableGameObject';
 
 export type BaseControlsOptions = {
-  gameObject: MovableGameObject;
+  gameObject: Humanoid;
   camera: OrtographicCamera;
   cameraLerp?: number;
 };
@@ -21,7 +21,6 @@ export class BaseControls extends GameObjectComponent {
 
   protected direction = new THREE.Vector3();
   protected camera: OrtographicCamera;
-  protected movableGameObject: MovableGameObject;
 
   protected static ROTATION_SENSITIVITY = 0.002;
   protected static ZOOM_SENSITIVITY = 0.001;
@@ -30,13 +29,16 @@ export class BaseControls extends GameObjectComponent {
     super(gameObject);
 
     this.camera = camera;
-    this.movableGameObject = gameObject;
 
     if (cameraLerp !== undefined) {
       this._lerp = cameraLerp;
     }
 
     this.camera.pivotPoint = this.gameObject.position;
+  }
+
+  public override get gameObject(): Humanoid {
+    return super.gameObject as Humanoid;
   }
 
   protected onUpdate(_deltaTime: number): void {
@@ -77,6 +79,6 @@ export class BaseControls extends GameObjectComponent {
     rotatedMove.addScaledVector(cameraRight, moveVector.x);
     rotatedMove.addScaledVector(cameraForward, -moveVector.z);
 
-    this.movableGameObject.move(rotatedMove);
+    this.gameObject.move(rotatedMove);
   }
 }

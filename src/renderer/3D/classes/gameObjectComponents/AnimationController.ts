@@ -3,6 +3,16 @@ import { GameObject, GameObjectComponent, logger } from '@tgdf';
 
 import { ModelRenderer } from './ModelRenderer';
 
+export type AnimationEvent = {
+  type: string;
+  action: THREE.AnimationAction;
+  direction: number;
+};
+
+export type AnimationPlayOptions = {
+  playbackRate?: number;
+  onComplete?: () => void;
+};
 export class AnimationController extends GameObjectComponent {
   private _currentAction: THREE.AnimationAction | null = null;
   private _animations: THREE.AnimationClip[] = [];
@@ -24,7 +34,7 @@ export class AnimationController extends GameObjectComponent {
     return this._animations;
   }
 
-  public playAnimation(animationName: string): void {
+  public playAnimation(animationName: string, options?: AnimationPlayOptions): void {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
 
@@ -36,6 +46,12 @@ export class AnimationController extends GameObjectComponent {
     // Fade out and stop the previous action
     if (this._currentAction && this._currentAction !== action) {
       this._currentAction.fadeOut(0.2);
+    }
+
+    // Apply playback rate if specified
+    if (options?.playbackRate !== undefined) {
+      const baseDuration = action.getClip().duration;
+      action.setDuration(baseDuration / options.playbackRate);
     }
 
     // Reset and play the new action

@@ -41,12 +41,18 @@ export class WSADControls extends BaseControls {
       { key: 'd', axis: 'x' as const, value: 1 },
     ];
 
+    // Attack
+    this._keyboardInput.addKeyDownListener('arrowup', () => {
+      this.gameObject.attack('1');
+    });
+
+    // Sprint
     this._keyboardInput.addKeyDownListener('shift', () => {
-      this.movableGameObject.toggleSprint(true);
+      this.gameObject.toggleSprint(true);
     });
 
     this._keyboardInput.addKeyUpListener('shift', () => {
-      this.movableGameObject.toggleSprint(false);
+      this.gameObject.toggleSprint(false);
     });
 
     for (const { key, axis, value } of keyMappings) {

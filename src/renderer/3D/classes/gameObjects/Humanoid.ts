@@ -78,7 +78,15 @@ export class Humanoid extends MovableGameObject {
       this.stateController.setState(HumanoidStates.RUNNING);
     } else if (compareFloats(velocity, '>=', this.sprintSpeed, velocityEpsilon)) {
       this.stateController.setState(HumanoidStates.SPRINTING);
-    } else {
+    } else if (
+      this.stateController.currentState !== HumanoidStates.ATTACKING_1 &&
+      this.stateController.currentState !== HumanoidStates.ATTACKING_2 &&
+      this.stateController.currentState !== HumanoidStates.ATTACKING_3 &&
+      this.stateController.currentState !== HumanoidStates.ATTACKING_4 &&
+      this.stateController.currentState !== HumanoidStates.JUMPING &&
+      this.stateController.currentState !== HumanoidStates.FALLING &&
+      this.stateController.currentState !== HumanoidStates.DYING
+    ) {
       this.stateController.setState(HumanoidStates.IDLE);
     }
   }
