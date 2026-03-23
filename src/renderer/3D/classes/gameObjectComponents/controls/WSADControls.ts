@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { KeyboardInput, MouseInput } from '@tgdf';
+import { KeyboardInput, logger, MouseInput } from '@tgdf';
 
 import { BaseControls, BaseControlsOptions } from './BaseControls';
 
 export type WSADControlsOptions = BaseControlsOptions & {
-  mouseInput: MouseInput;
-  keyboardInput: KeyboardInput;
+  mouseInput?: MouseInput;
+  keyboardInput?: KeyboardInput;
 };
 
 export class WSADControls extends BaseControls {
@@ -17,8 +17,17 @@ export class WSADControls extends BaseControls {
   constructor({ gameObject, camera, keyboardInput, mouseInput, cameraLerp }: WSADControlsOptions) {
     super({ gameObject, camera, cameraLerp });
 
-    this._keyboardInput = keyboardInput;
-    this._mouseInput = mouseInput;
+    this._keyboardInput = keyboardInput!;
+    this._mouseInput = mouseInput!;
+
+    if (!keyboardInput || !mouseInput) {
+      logger({
+        message:
+          'Mouse or keyboard input not provided. WSADControls component requires both to function.',
+        type: 'error',
+      });
+      return;
+    }
 
     this._handleKeyboardInput();
     this._handleMouseInput();
