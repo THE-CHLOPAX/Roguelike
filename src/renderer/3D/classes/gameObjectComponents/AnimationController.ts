@@ -11,6 +11,7 @@ export type AnimationEvent = {
 
 export type AnimationPlayOptions = {
   playbackRate?: number;
+  loop?: boolean;
   onComplete?: () => void;
 };
 export class AnimationController extends GameObjectComponent {
@@ -52,6 +53,11 @@ export class AnimationController extends GameObjectComponent {
     if (options?.playbackRate !== undefined) {
       const baseDuration = action.getClip().duration;
       action.setDuration(baseDuration / options.playbackRate);
+    }
+
+    if (options?.loop === false) {
+      action.setLoop(THREE.LoopOnce, 0);
+      action.clampWhenFinished = true;
     }
 
     // Reset and play the new action

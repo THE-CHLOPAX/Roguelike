@@ -1,8 +1,8 @@
 import { logger, RigidBody, useAssetStore } from '@tgdf';
-import { TestScene } from 'src/renderer/scenes/test/TestScene';
 
-import { Humanoid } from '../Humanoid';
+import { Humanoid } from '../Humanoid/Humanoid';
 import { MODEL_MONK } from '../../../../constants';
+import { TestScene } from '../../../../scenes/test/TestScene';
 import { WSADControls } from '../../gameObjectComponents/controls/WSADControls';
 
 export class Monk extends Humanoid {

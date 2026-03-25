@@ -11,3 +11,16 @@ export enum HumanoidStates {
   FALLING = 'fall',
   DEAD = 'dead',
 }
+
+export enum StateGroup {
+  MOVEMENT = 'movement',
+  ACTION = 'action',
+  PHYSICS = 'physics',
+  DEAD = 'dead',
+}
+
+export type StateConfig<T> = {
+  allowedTransitions: T[];
+  stateGroup: StateGroup;
+  interruptible: boolean;
+};

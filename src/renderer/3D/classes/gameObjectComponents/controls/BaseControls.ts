@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { GameObjectComponent } from '@tgdf';
 
-import { Humanoid } from '../../gameObjects/Humanoid';
 import { CAMERA_POSITION_OFFSET } from '../../../constants';
+import { Humanoid } from '../../gameObjects/Humanoid/Humanoid';
 import { OrtographicCamera } from '../../cameras/OrtographicCamera';
 
 export type BaseControlsOptions = {
@@ -18,6 +18,7 @@ export type BaseControlsOptions = {
  */
 export class BaseControls extends GameObjectComponent {
   private _lerp = 0.025;
+  private _hasStopped = false;
 
   protected direction = new THREE.Vector3();
   protected camera: OrtographicCamera;
@@ -79,6 +80,16 @@ export class BaseControls extends GameObjectComponent {
     rotatedMove.addScaledVector(cameraRight, moveVector.x);
     rotatedMove.addScaledVector(cameraForward, -moveVector.z);
 
-    this.gameObject.move(rotatedMove);
+    if (rotatedMove.lengthSq() > 0 && this._hasStopped) {
+      this._hasStopped = false;
+    } else if (rotatedMove.lengthSq() === 0 && !this._hasStopped) {
+      this._hasStopped = true;
+      this.gameObject.move(rotatedMove);
+      return;
+    }
+
+    if (!this._hasStopped) {
+      this.gameObject.move(rotatedMove);
+    }
   }
 }
