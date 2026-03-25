@@ -63,7 +63,10 @@ export class Humanoid extends MovableGameObject {
   public attack(variant: '1' | '2' | '3' | '4'): void {
     this.stateController.setState(HumanoidStates[`ATTACKING_${variant}`]);
     this.animationController.playAnimation(HumanoidStates[`ATTACKING_${variant}`], {
-      loop: false,
+      clampWhenFinished: true,
+      onComplete: () => {
+        this.stateController.setState(HumanoidStates.IDLE);
+      },
     });
   }
 
@@ -86,7 +89,7 @@ export class Humanoid extends MovableGameObject {
     const currentStateConfig = this.stateController.getStateConfig(newState);
 
     if (currentStateConfig?.stateGroup === StateGroup.MOVEMENT) {
-      this.animationController.playAnimation(newState);
+      this.animationController.playAnimation(newState, { loop: true });
     }
   }
 
