@@ -85,7 +85,7 @@ export class Humanoid extends MovableGameObject {
       this.stateController.currentState !== HumanoidStates.ATTACKING_4 &&
       this.stateController.currentState !== HumanoidStates.JUMPING &&
       this.stateController.currentState !== HumanoidStates.FALLING &&
-      this.stateController.currentState !== HumanoidStates.DYING
+      this.stateController.currentState !== HumanoidStates.DEAD
     ) {
       this.stateController.setState(HumanoidStates.IDLE);
     }

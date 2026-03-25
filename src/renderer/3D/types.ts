@@ -9,5 +9,5 @@ export enum HumanoidStates {
   ATTACKING_3 = 'attack-3',
   ATTACKING_4 = 'attack-4',
   FALLING = 'fall',
-  DYING = 'die',
+  DEAD = 'dead',
 }

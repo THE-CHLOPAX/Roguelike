@@ -19,13 +19,6 @@ export function MenuView() {
       <InternalFlex direction="column" align="center" gap={10}>
         <InternalButton label="Settings" onClick={() => setView('settings')} />
 
-        <InternalButton label="WSAD Controls Test" onClick={() => setView('wsadControlsTest')} />
-
-        <InternalButton
-          label="Gamepad Controls Test"
-          onClick={() => setView('gamepadControlsTest')}
-        />
-
         <InternalButton label="Model Renderer Test" onClick={() => setView('modelRendererTest')} />
 
         <InternalButton label="Players View" onClick={() => setView('playersView')} />
