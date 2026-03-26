@@ -21,27 +21,17 @@ const actionStates = [
 // Physics states can transition to any movement state or action state
 const physicsStates = [HumanoidStates.JUMPING, HumanoidStates.FALLING];
 
+const sharedMovementConfig: StateConfig<HumanoidStates> = {
+  allowedTransitions: [...movementStates, ...actionStates, ...physicsStates, HumanoidStates.DEAD],
+  stateGroup: StateGroup.MOVEMENT,
+  interruptible: true,
+};
+
 export const HUMANOID_STATE_MACHINE: HumanoidStateConfig = {
-  [HumanoidStates.IDLE]: {
-    allowedTransitions: [...movementStates, ...actionStates, ...physicsStates, HumanoidStates.DEAD],
-    stateGroup: StateGroup.MOVEMENT,
-    interruptible: true,
-  },
-  [HumanoidStates.WALKING]: {
-    allowedTransitions: [...movementStates, ...actionStates, ...physicsStates, HumanoidStates.DEAD],
-    stateGroup: StateGroup.MOVEMENT,
-    interruptible: true,
-  },
-  [HumanoidStates.RUNNING]: {
-    allowedTransitions: [...movementStates, ...actionStates, ...physicsStates, HumanoidStates.DEAD],
-    stateGroup: StateGroup.MOVEMENT,
-    interruptible: true,
-  },
-  [HumanoidStates.SPRINTING]: {
-    allowedTransitions: [...movementStates, ...actionStates, ...physicsStates, HumanoidStates.DEAD],
-    stateGroup: StateGroup.MOVEMENT,
-    interruptible: true,
-  },
+  [HumanoidStates.IDLE]: sharedMovementConfig,
+  [HumanoidStates.WALKING]: sharedMovementConfig,
+  [HumanoidStates.RUNNING]: sharedMovementConfig,
+  [HumanoidStates.SPRINTING]: sharedMovementConfig,
   [HumanoidStates.JUMPING]: {
     allowedTransitions: [
       ...movementStates,
