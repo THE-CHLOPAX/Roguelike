@@ -1,4 +1,4 @@
-import { logger, RigidBody, useAssetStore } from '@tgdf';
+import { RigidBody, useAssetStore } from '@tgdf';
 
 import { Humanoid } from '../Humanoid/Humanoid';
 import { MODEL_MONK } from '../../../../constants';
@@ -10,8 +10,7 @@ export class Monk extends Humanoid {
     const monkModel = useAssetStore.getState().modelCacheGLTF.get(MODEL_MONK);
 
     if (!monkModel) {
-      logger({ message: `Model not found in cache: ${MODEL_MONK}`, type: 'error' });
-      return;
+      throw new Error(`Model not found in cache: ${MODEL_MONK}`);
     }
 
     super(scene, {

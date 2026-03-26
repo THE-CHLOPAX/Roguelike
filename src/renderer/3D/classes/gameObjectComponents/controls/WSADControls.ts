@@ -26,7 +26,7 @@ export class WSADControls extends BaseControls {
           'Mouse or keyboard input not provided. WSADControls component requires both to function.',
         type: 'error',
       });
-      return;
+      throw new Error('Mouse or keyboard input not provided for WSADControls');
     }
 
     this._handleKeyboardInput();

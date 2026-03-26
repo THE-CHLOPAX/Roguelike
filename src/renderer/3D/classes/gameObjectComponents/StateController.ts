@@ -1,4 +1,4 @@
-import { GameObject, GameObjectComponent } from '@tgdf';
+import { GameObject, GameObjectComponent, logger } from '@tgdf';
 
 import { StateConfig } from '../../types';
 
@@ -28,10 +28,12 @@ export class StateController<T extends string | number | symbol> extends GameObj
     // Validate transition if state machine is configured
     if (this._stateConfig && this._currentState !== null) {
       if (!this.canTransition(this._currentState, newState)) {
-        console.warn(
-          '[StateController] Invalid state transition: ' +
-            `${String(this._currentState)} -> ${String(newState)}`
-        );
+        logger({
+          message:
+            '[StateController] Invalid state transition: ' +
+            `${String(this._currentState)} -> ${String(newState)}`,
+          type: 'warn',
+        });
         return;
       }
     }

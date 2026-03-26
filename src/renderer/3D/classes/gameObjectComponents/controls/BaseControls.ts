@@ -80,16 +80,14 @@ export class BaseControls extends GameObjectComponent {
     rotatedMove.addScaledVector(cameraRight, moveVector.x);
     rotatedMove.addScaledVector(cameraForward, -moveVector.z);
 
-    if (rotatedMove.lengthSq() > 0 && this._hasStopped) {
-      this._hasStopped = false;
-    } else if (rotatedMove.lengthSq() === 0 && !this._hasStopped) {
-      this._hasStopped = true;
-      this.gameObject.move(rotatedMove);
-      return;
-    }
+    const isMoving = rotatedMove.lengthSq() > 0;
 
-    if (!this._hasStopped) {
+    if (isMoving) {
       this.gameObject.move(rotatedMove);
+      this._hasStopped = false;
+    } else if (!this._hasStopped) {
+      this.gameObject.move(rotatedMove);
+      this._hasStopped = true;
     }
   }
 }

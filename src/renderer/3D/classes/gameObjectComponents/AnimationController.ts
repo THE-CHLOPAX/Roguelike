@@ -125,8 +125,10 @@ export class AnimationController extends GameObjectComponent {
     this._animationMixer = new THREE.AnimationMixer(model);
 
     this._animationMixer.addEventListener('finished', (event) => {
-      this._currentActionOnComplete?.(event);
-      this._currentActionOnComplete = null;
+      if (event.action === this._currentAction) {
+        this._currentActionOnComplete?.(event);
+        this._currentActionOnComplete = null;
+      }
     });
 
     this._actions.clear(); // Clear cached actions
