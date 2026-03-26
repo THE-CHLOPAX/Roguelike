@@ -17,8 +17,8 @@ const MAX_HISTORY_SIZE = 5;
 export const useViewsStore = create<ViewsState>()(
   devtools(
     (set, get) => ({
-      currentView: 'menu',
-      viewHistory: new Set<string>(['menu']),
+      currentView: 'MenuView',
+      viewHistory: new Set<string>(['MenuView']),
       viewPaused: false,
       views: [],
 

@@ -22,7 +22,7 @@ export function SettingsView() {
     useGraphicsStore();
 
   return (
-    <BackToViewLayout backToView="menu">
+    <BackToViewLayout backToView="MenuView">
       <InternalFlex
         direction="column"
         align="center"

@@ -1,6 +1,6 @@
 import { useViewsStore, InternalButton, InternalFlex, InternalText, ipc } from '@tgdf';
 
-import { views } from '../../App';
+import * as views from '../views';
 
 export function MenuView() {
   const { setView } = useViewsStore();
@@ -20,7 +20,7 @@ export function MenuView() {
 
       <InternalFlex direction="column" align="center" gap={10}>
         {Object.keys(views).map((viewName) => {
-          if (viewName === 'menu') return null; // Skip the menu view
+          if (viewName === 'MenuView') return null; // Skip the menu view
 
           return (
             <InternalButton key={viewName} label={viewName} onClick={() => setView(viewName)} />

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { init as initializeRecastNavigation } from 'recast-navigation';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
@@ -16,13 +17,14 @@ export function PathfindingTestView() {
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
       loadModelGLTF(MODEL_MONK, './assets/playerModels/monk.glb', 'Monk'),
       loadModelGLTF(MODEL_KNIGHT, './assets/playerModels/knight.glb', 'Knight'),
+      initializeRecastNavigation(),
     ],
   });
 
   const [loadingFinished, setLoadingFinished] = useState(false);
 
   return (
-    <BackToViewLayout backToView="menu">
+    <BackToViewLayout backToView="MenuView">
       {!loadingFinished ? (
         <InternalLoader
           progress={loadingProgress * 100}

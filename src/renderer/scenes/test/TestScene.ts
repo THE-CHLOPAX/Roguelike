@@ -9,10 +9,13 @@ import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
 export type TestSceneConstructorOptions = SceneConstructorOptions & {
   width?: number;
   height?: number;
+  checkerboardRepeat?: number;
 };
 
 const DEFAULT_WIDTH = 20;
 const DEFAULT_HEIGHT = 20;
+
+const DEFAULT_CHECKERBOARD_REPEAT = 3;
 
 export class TestScene extends Scene {
   public camera: OrtographicCamera;
@@ -28,7 +31,12 @@ export class TestScene extends Scene {
     const checkerboardTexture = pixelateTexture(
       useAssetStore.getState().textureCache.get(CHECKERBOARD_TEXTURE)
     );
-    checkerboardTexture?.repeat.set(3, 3);
+
+    const planeWidth = options?.width ?? DEFAULT_WIDTH;
+    const planeHeight = options?.height ?? DEFAULT_HEIGHT;
+    const checkerboardRepeat = options?.checkerboardRepeat ?? DEFAULT_CHECKERBOARD_REPEAT;
+
+    checkerboardTexture?.repeat.set(checkerboardRepeat, checkerboardRepeat);
 
     const aspectRatio = window.innerWidth / window.innerHeight;
     const frustumSize = 9;
@@ -51,7 +59,7 @@ export class TestScene extends Scene {
     const floorMaterial = new THREE.MeshPhongMaterial({ map: checkerboardTexture });
     const floorPlane = new RigidPlane(
       this,
-      new THREE.Vector2(options?.width ?? DEFAULT_WIDTH, options?.height ?? DEFAULT_HEIGHT),
+      new THREE.Vector2(planeWidth, planeHeight),
       floorMaterial
     );
     floorPlane.rotation.x = -Math.PI / 2;

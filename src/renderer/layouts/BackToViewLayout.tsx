@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { InternalButton, useKeyboard, useViewsStore } from '@tgdf';
 
-import { views } from '../App';
+import * as views from '../ui/views';
 
 export type BackToViewLayoutProps = {
   backToView: keyof typeof views;
