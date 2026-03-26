@@ -3,9 +3,24 @@ import { GameObject, GameObjectComponent, logger } from '@tgdf';
 
 import { ModelRenderer } from './ModelRenderer';
 
+export type AnimationEvent = {
+  type: string;
+  action: THREE.AnimationAction;
+  direction: number;
+};
+
+export type AnimationPlayOptions = {
+  playbackRate?: number;
+  loop?: boolean;
+  clampWhenFinished?: boolean;
+  onComplete?: () => void;
+};
 export class AnimationController extends GameObjectComponent {
+  private _currentAction: THREE.AnimationAction | null = null;
+  private _currentActionOnComplete: ((event: THREE.Event) => void) | null = null;
   private _animations: THREE.AnimationClip[] = [];
   private _animationMixer: THREE.AnimationMixer | null = null;
+  private _actions: Map<string, THREE.AnimationAction> = new Map();
 
   constructor(gameObject: GameObject, modelRenderer: ModelRenderer) {
     super(gameObject);
@@ -22,9 +37,41 @@ export class AnimationController extends GameObjectComponent {
     return this._animations;
   }
 
-  public playAnimation(animationName: string): void {
+  public playAnimation(animationName: string, options?: AnimationPlayOptions): void {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
+
+    // If already playing this animation, don't restart it
+    if (this._currentAction === action && action.isRunning()) {
+      return;
+    }
+
+    // Fade out and stop the previous action
+    if (this._currentAction && this._currentAction !== action) {
+      this._currentAction.fadeOut(0.2);
+    }
+
+    // Apply playback rate if specified
+    if (options?.playbackRate !== undefined) {
+      const baseDuration = action.getClip().duration;
+      action.setDuration(baseDuration / options.playbackRate);
+    }
+
+    if (options?.loop === true) {
+      action.setLoop(THREE.LoopRepeat, Infinity);
+    } else {
+      action.setLoop(THREE.LoopOnce, 0);
+    }
+
+    action.clampWhenFinished = options?.clampWhenFinished ?? false;
+
+    // Reset and play the new action
+    this._currentAction = action;
+
+    this._currentActionOnComplete = options?.onComplete ?? null;
+
+    action.reset();
+    action.fadeIn(0.2);
     action.play();
   }
 
@@ -37,6 +84,7 @@ export class AnimationController extends GameObjectComponent {
   public stopAnimation(animationName: string): void {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
+    this._currentAction = null;
     action.stop();
   }
 
@@ -49,6 +97,11 @@ export class AnimationController extends GameObjectComponent {
       return null;
     }
 
+    // Return cached action if it exists
+    if (this._actions.has(animationName)) {
+      return this._actions.get(animationName)!;
+    }
+
     const clip = this._animations.find((anim) => anim.name === animationName);
     if (!clip) {
       logger({
@@ -58,7 +111,10 @@ export class AnimationController extends GameObjectComponent {
       return null;
     }
 
-    return this._animationMixer.clipAction(clip);
+    // Create and cache the action
+    const action = this._animationMixer.clipAction(clip);
+    this._actions.set(animationName, action);
+    return action;
   }
 
   private _initializeAnimations(model: THREE.Object3D): void {
@@ -68,7 +124,14 @@ export class AnimationController extends GameObjectComponent {
     this._animations = [...model.animations];
     this._animationMixer = new THREE.AnimationMixer(model);
 
-    console.log('NEW ANIMATIONS', this._animations);
+    this._animationMixer.addEventListener('finished', (event) => {
+      if (event.action === this._currentAction) {
+        this._currentActionOnComplete?.(event);
+        this._currentActionOnComplete = null;
+      }
+    });
+
+    this._actions.clear(); // Clear cached actions
   }
 
   private _disposeAnimationMixer(): void {

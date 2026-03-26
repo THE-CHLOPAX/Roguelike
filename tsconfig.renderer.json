@@ -8,8 +8,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@tgdf": ["src/lib/index.ts"],
-      "@tgdf/*": ["src/lib/*"],
-      "@3D/*": ["src/renderer/3D/*"]
+      "@tgdf/*": ["src/lib/*"]
     }
   },
   "include": ["src/renderer/**/*"],

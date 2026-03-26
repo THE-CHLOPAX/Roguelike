@@ -1,14 +1,13 @@
 import * as THREE from 'three';
-import { GameObject, RigidBody, Scene } from '@tgdf';
+import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 export type MovableGameObjectOptions = {
   speed: number;
   sprintSpeed?: number;
-  mass: number;
-  friction: number;
-  physicsBodyType?: RigidBody['options']['type'];
-  colliderShape?: RigidBody['options']['colliderShape'];
+  rigidBodyOptions?: RigidBodyOptions;
 };
+
+const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
 
 export class MovableGameObject extends GameObject {
   public defaultSpeed: number;
@@ -16,6 +15,8 @@ export class MovableGameObject extends GameObject {
 
   private _currentSpeed: number;
   private _rigidBody: RigidBody;
+  private _currentRotation: number = 0;
+  private _movementDisabled: boolean = false;
 
   constructor(scene: Scene, options: MovableGameObjectOptions) {
     super({ scene });
@@ -27,12 +28,7 @@ export class MovableGameObject extends GameObject {
 
     this._rigidBody = this.addComponent(
       'RigidBodyComponent',
-      new RigidBody(this, {
-        mass: options.mass,
-        friction: options.friction,
-        type: options.physicsBodyType ?? 'dynamic',
-        colliderShape: options.colliderShape ?? RigidBody.ShapeType.Cuboid,
-      })
+      new RigidBody(this, options.rigidBodyOptions)
     );
   }
 
@@ -48,17 +44,41 @@ export class MovableGameObject extends GameObject {
     return this._rigidBody;
   }
 
+  public get movementDisabled(): boolean {
+    return this._movementDisabled;
+  }
+
   public toggleSprint(enabled: boolean): void {
     this._currentSpeed = enabled ? this.sprintSpeed : this.defaultSpeed;
   }
 
+  public toggleMovementDisabled(disabled: boolean): void {
+    this._movementDisabled = disabled;
+  }
+
   public move(direction: THREE.Vector3): void {
+    if (this._movementDisabled) return;
+
     const velocity = direction.clone().multiplyScalar(this._currentSpeed);
 
     // Preserve Y velocity (gravity)
     const currentVelocity = this._rigidBody.getLinearVelocity();
     if (currentVelocity) {
       velocity.y = currentVelocity.y;
+    }
+
+    // Rotate the object to face the movement direction (only if moving)
+    if (direction.x !== 0 || direction.z !== 0) {
+      const targetRotation = Math.atan2(direction.x, direction.z);
+
+      // Lerp rotation for smooth turning
+      const delta = targetRotation - this._currentRotation;
+      // Find the shortest angle difference and normalize to [-PI, PI]
+      const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
+      this._currentRotation += shortestAngle * ROTATION_LERP_FACTOR;
+
+      // Sync rotation to physics body so it's not overwritten
+      this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
     }
 
     this._rigidBody.setLinearVelocity(velocity);

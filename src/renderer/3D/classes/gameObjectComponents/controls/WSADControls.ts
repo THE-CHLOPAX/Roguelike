@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { KeyboardInput, MouseInput } from '@tgdf';
+import { KeyboardInput, logger, MouseInput } from '@tgdf';
 
 import { BaseControls, BaseControlsOptions } from './BaseControls';
 
 export type WSADControlsOptions = BaseControlsOptions & {
-  mouseInput: MouseInput;
-  keyboardInput: KeyboardInput;
+  mouseInput?: MouseInput;
+  keyboardInput?: KeyboardInput;
 };
 
 export class WSADControls extends BaseControls {
@@ -17,8 +17,17 @@ export class WSADControls extends BaseControls {
   constructor({ gameObject, camera, keyboardInput, mouseInput, cameraLerp }: WSADControlsOptions) {
     super({ gameObject, camera, cameraLerp });
 
-    this._keyboardInput = keyboardInput;
-    this._mouseInput = mouseInput;
+    this._keyboardInput = keyboardInput!;
+    this._mouseInput = mouseInput!;
+
+    if (!keyboardInput || !mouseInput) {
+      logger({
+        message:
+          'Mouse or keyboard input not provided. WSADControls component requires both to function.',
+        type: 'error',
+      });
+      throw new Error('Mouse or keyboard input not provided for WSADControls');
+    }
 
     this._handleKeyboardInput();
     this._handleMouseInput();
@@ -32,12 +41,18 @@ export class WSADControls extends BaseControls {
       { key: 'd', axis: 'x' as const, value: 1 },
     ];
 
+    // Attack
+    this._keyboardInput.addKeyDownListener('arrowup', () => {
+      this.gameObject.attack('1');
+    });
+
+    // Sprint
     this._keyboardInput.addKeyDownListener('shift', () => {
-      this.movableGameObject.toggleSprint(true);
+      this.gameObject.toggleSprint(true);
     });
 
     this._keyboardInput.addKeyUpListener('shift', () => {
-      this.movableGameObject.toggleSprint(false);
+      this.gameObject.toggleSprint(false);
     });
 
     for (const { key, axis, value } of keyMappings) {

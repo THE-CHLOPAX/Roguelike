@@ -1,10 +1,4 @@
-type ComparisonType =
-  | 'equals'
-  | 'not-equals'
-  | 'less-than'
-  | 'less-than-or-equals'
-  | 'greater-than'
-  | 'greater-than-or-equals';
+type ComparisonType = '===' | '!==' | '<' | '<=' | '>' | '>=';
 
 export function compareFloats(
   a: number,
@@ -17,17 +11,17 @@ export function compareFloats(
   const scale = Math.max(1, Math.abs(a), Math.abs(b));
 
   switch (comparison) {
-    case 'equals':
+    case '===':
       return absDiff < epsilon * scale;
-    case 'not-equals':
+    case '!==':
       return absDiff >= epsilon * scale;
-    case 'less-than':
+    case '<':
       return diff < -epsilon * scale;
-    case 'less-than-or-equals':
+    case '<=':
       return diff < epsilon * scale;
-    case 'greater-than':
+    case '>':
       return diff > epsilon * scale;
-    case 'greater-than-or-equals':
+    case '>=':
       return diff > -epsilon * scale;
     default:
       throw new Error(`Unknown comparison type: ${comparison}`);
