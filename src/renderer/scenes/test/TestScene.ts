@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
-import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { pixelateTexture } from '../../3D/utils/pixelateTexture';
 import { RigidPlane } from '../../3D/classes/gameObjects/RigidPlane';
 import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
+import { CHECKERBOARD_TEXTURE, TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
 
 export type TestSceneConstructorOptions = SceneConstructorOptions & {
   width?: number;
@@ -60,8 +60,10 @@ export class TestScene extends Scene {
     const floorPlane = new RigidPlane(
       this,
       new THREE.Vector2(planeWidth, planeHeight),
-      floorMaterial
+      floorMaterial,
+      TEST_FLOOR_PLANE_MESH_NAME
     );
+
     floorPlane.rotation.x = -Math.PI / 2;
     this.add(floorPlane);
 

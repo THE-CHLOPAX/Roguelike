@@ -36,6 +36,7 @@ export * from './internal-3d/types/gameObjects';
 export * from './internal-3d/types/physics';
 export * from './internal-3d/types/scene';
 export * from './internal-3d/utils/traverseFind';
+export * from './internal-3d/utils/isMesh';
 
 // Internal Game Components
 export * from './internal-game-components';

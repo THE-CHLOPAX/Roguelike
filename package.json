@@ -1,6 +1,6 @@
 {
   "name": "roguelike",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
   "main": "main.js",
   "homepage": "./",
@@ -106,6 +106,8 @@
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",
     "@radix-ui/themes": "^3.2.1",
+    "@recast-navigation/core": "^0.43.0",
+    "@recast-navigation/three": "^0.43.0",
     "cross-env": "^10.1.0",
     "electron-is-dev": "^3.0.1",
     "gsap": "^3.14.2",
@@ -113,7 +115,6 @@
     "moq.ts": "^10.0.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "recast-navigation": "^0.42.0",
     "stats.js": "^0.17.0",
     "styled-components": "^6.3.9",
     "three": "^0.181.0",

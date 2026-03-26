@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { init as initializeRecastNavigation } from 'recast-navigation';
+import { init } from '@recast-navigation/core';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
@@ -17,7 +17,7 @@ export function PathfindingTestView() {
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
       loadModelGLTF(MODEL_MONK, './assets/playerModels/monk.glb', 'Monk'),
       loadModelGLTF(MODEL_KNIGHT, './assets/playerModels/knight.glb', 'Knight'),
-      initializeRecastNavigation(),
+      init(),
     ],
   });
 
