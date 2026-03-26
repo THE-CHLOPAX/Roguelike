@@ -6,10 +6,18 @@ import { pixelateTexture } from '../../3D/utils/pixelateTexture';
 import { RigidPlane } from '../../3D/classes/gameObjects/RigidPlane';
 import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
 
+export type TestSceneConstructorOptions = SceneConstructorOptions & {
+  width?: number;
+  height?: number;
+};
+
+const DEFAULT_WIDTH = 20;
+const DEFAULT_HEIGHT = 20;
+
 export class TestScene extends Scene {
   public camera: OrtographicCamera;
 
-  constructor(options?: SceneConstructorOptions) {
+  constructor(options?: TestSceneConstructorOptions) {
     super({
       ...options,
       physics: {
@@ -41,7 +49,11 @@ export class TestScene extends Scene {
     this.background = new THREE.Color(0x151729);
 
     const floorMaterial = new THREE.MeshPhongMaterial({ map: checkerboardTexture });
-    const floorPlane = new RigidPlane(this, new THREE.Vector2(20, 20), floorMaterial);
+    const floorPlane = new RigidPlane(
+      this,
+      new THREE.Vector2(options?.width ?? DEFAULT_WIDTH, options?.height ?? DEFAULT_HEIGHT),
+      floorMaterial
+    );
     floorPlane.rotation.x = -Math.PI / 2;
     this.add(floorPlane);
 

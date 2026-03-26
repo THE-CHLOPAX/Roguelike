@@ -3,7 +3,7 @@ import { SceneConstructorOptions } from '@tgdf';
 import { TestScene } from './TestScene';
 import { Monk } from '../../3D/classes/gameObjects/players/Monk';
 
-export class ModelRendererTestScene extends TestScene {
+export class PathfindingTestScene extends TestScene {
   constructor(options: SceneConstructorOptions) {
     super(options);
 

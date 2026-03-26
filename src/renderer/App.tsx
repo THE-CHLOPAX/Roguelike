@@ -7,14 +7,14 @@ import { useGamepadStore, ViewManager } from '@tgdf';
 import { MenuView } from './ui/views/MenuView';
 import { PlayersView } from './ui/views/PlayersView';
 import { SettingsView } from './ui/views/SettingsView';
+import { PathfindingTestView } from './ui/views/PathfindingTestView';
 import { useActivePlayersStore } from './store/useActivePlayersStore';
-import { ModelRendererTestView } from './ui/views/ModelRendererTestView';
 
 export const views = {
   menu: MenuView,
+  pathfindingTest: PathfindingTestView,
   settings: SettingsView,
   playersView: PlayersView,
-  modelRendererTest: ModelRendererTestView,
 };
 
 const App: React.FC = () => {
