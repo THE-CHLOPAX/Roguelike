@@ -1,15 +1,26 @@
 import * as THREE from 'three';
 import { Scene, SceneConstructorOptions, useAssetStore } from '@tgdf';
 
-import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { pixelateTexture } from '../../3D/utils/pixelateTexture';
 import { RigidPlane } from '../../3D/classes/gameObjects/RigidPlane';
 import { OrtographicCamera } from '../../3D/classes/cameras/OrtographicCamera';
+import { CHECKERBOARD_TEXTURE, TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
+
+export type TestSceneConstructorOptions = SceneConstructorOptions & {
+  width?: number;
+  height?: number;
+  checkerboardRepeat?: number;
+};
+
+const DEFAULT_WIDTH = 20;
+const DEFAULT_HEIGHT = 20;
+
+const DEFAULT_CHECKERBOARD_REPEAT = 3;
 
 export class TestScene extends Scene {
   public camera: OrtographicCamera;
 
-  constructor(options?: SceneConstructorOptions) {
+  constructor(options?: TestSceneConstructorOptions) {
     super({
       ...options,
       physics: {
@@ -20,7 +31,12 @@ export class TestScene extends Scene {
     const checkerboardTexture = pixelateTexture(
       useAssetStore.getState().textureCache.get(CHECKERBOARD_TEXTURE)
     );
-    checkerboardTexture?.repeat.set(3, 3);
+
+    const planeWidth = options?.width ?? DEFAULT_WIDTH;
+    const planeHeight = options?.height ?? DEFAULT_HEIGHT;
+    const checkerboardRepeat = options?.checkerboardRepeat ?? DEFAULT_CHECKERBOARD_REPEAT;
+
+    checkerboardTexture?.repeat.set(checkerboardRepeat, checkerboardRepeat);
 
     const aspectRatio = window.innerWidth / window.innerHeight;
     const frustumSize = 9;
@@ -41,7 +57,13 @@ export class TestScene extends Scene {
     this.background = new THREE.Color(0x151729);
 
     const floorMaterial = new THREE.MeshPhongMaterial({ map: checkerboardTexture });
-    const floorPlane = new RigidPlane(this, new THREE.Vector2(20, 20), floorMaterial);
+    const floorPlane = new RigidPlane(
+      this,
+      new THREE.Vector2(planeWidth, planeHeight),
+      floorMaterial,
+      TEST_FLOOR_PLANE_MESH_NAME
+    );
+
     floorPlane.rotation.x = -Math.PI / 2;
     this.add(floorPlane);
 

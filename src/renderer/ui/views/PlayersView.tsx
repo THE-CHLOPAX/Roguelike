@@ -58,7 +58,7 @@ export function PlayersView() {
   );
 
   return (
-    <BackToViewLayout backToView="menu">
+    <BackToViewLayout backToView="MenuView">
       <InternalFlex
         direction="column"
         justify="center"

@@ -36,6 +36,7 @@ export * from './internal-3d/types/gameObjects';
 export * from './internal-3d/types/physics';
 export * from './internal-3d/types/scene';
 export * from './internal-3d/utils/traverseFind';
+export * from './internal-3d/utils/isMesh';
 
 // Internal Game Components
 export * from './internal-game-components';
@@ -45,3 +46,6 @@ export { GameObjectComponent } from './internal-game-components/GameObjectCompon
 export * from './internal-math/utils/clamp';
 export * from './internal-math/utils/compareFloats';
 export * from './internal-math/utils/filterBelow';
+
+// Internal Utils
+export * from './utils';
