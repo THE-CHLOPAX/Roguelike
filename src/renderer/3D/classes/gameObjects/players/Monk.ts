@@ -3,7 +3,6 @@ import { RigidBody, useAssetStore } from '@tgdf';
 import { Humanoid } from '../Humanoid/Humanoid';
 import { MODEL_MONK } from '../../../../constants';
 import { TestScene } from '../../../../scenes/test/TestScene';
-import { NavMeshAgent } from '../../gameObjectComponents/NavMeshAgent';
 import { WSADControls } from '../../gameObjectComponents/controls/WSADControls';
 
 export class Monk extends Humanoid {
@@ -38,7 +37,5 @@ export class Monk extends Humanoid {
     );
     // TESTING: Toggle keyboard input for navmesh tests
     wsadControls.toggleKeyboardInput(false);
-
-    this.addComponent('NavMeshAgent', new NavMeshAgent(this));
   }
 }

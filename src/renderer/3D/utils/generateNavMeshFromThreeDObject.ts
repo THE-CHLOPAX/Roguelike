@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { isMesh, logger } from '@tgdf';
-import { threeToSoloNavMesh, DebugDrawer } from '@recast-navigation/three';
+import { DebugDrawer, threeToTileCache } from '@recast-navigation/three';
 
-export type generateNavMeshFromThreeDObjectOptions = Parameters<typeof threeToSoloNavMesh>[1];
+export type generateNavMeshFromThreeDObjectOptions = Parameters<typeof threeToTileCache>[1];
 
 export function generateNavMeshFromThreeDObject(
   object: THREE.Object3D,
@@ -15,17 +15,18 @@ export function generateNavMeshFromThreeDObject(
     }
   });
 
-  const { success, navMesh } = threeToSoloNavMesh(meshChildren, {
+  const { success, navMesh, tileCache } = threeToTileCache(meshChildren, {
     ...options,
+    tileSize: options?.tileSize || 16,
   });
 
   if (!success) {
     logger({ message: 'Failed to generate nav mesh from the provided 3D object.', type: 'error' });
-    return { navMesh: null, debugNavMesh: null };
+    return { navMesh: null, debugNavMesh: null, tileCache: null };
   }
 
   const debugNavMesh = new DebugDrawer();
   debugNavMesh.drawNavMesh(navMesh);
 
-  return { navMesh, debugNavMesh };
+  return { tileCache, navMesh, debugNavMesh };
 }
