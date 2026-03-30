@@ -13,6 +13,8 @@ export class WSADControls extends BaseControls {
   private _mouseInput: MouseInput;
 
   private _isDragging: boolean = false;
+  private _keyboardEnabled: boolean = true;
+  private _mouseEnabled: boolean = true;
 
   constructor({ gameObject, camera, keyboardInput, mouseInput, cameraLerp }: WSADControlsOptions) {
     super({ gameObject, camera, cameraLerp });
@@ -33,6 +35,14 @@ export class WSADControls extends BaseControls {
     this._handleMouseInput();
   }
 
+  public toggleKeyboardInput(enabled: boolean) {
+    this._keyboardEnabled = enabled;
+  }
+
+  public toggleMouseInput(enabled: boolean) {
+    this._mouseEnabled = enabled;
+  }
+
   private _handleKeyboardInput(): void {
     const keyMappings = [
       { key: 'w', axis: 'z' as const, value: -1 },
@@ -43,11 +53,13 @@ export class WSADControls extends BaseControls {
 
     // Attack
     this._keyboardInput.addKeyDownListener('arrowup', () => {
+      if (!this._keyboardEnabled) return;
       this.gameObject.attack('1');
     });
 
     // Sprint
     this._keyboardInput.addKeyDownListener('shift', () => {
+      if (!this._keyboardEnabled) return;
       this.gameObject.toggleSprint(true);
     });
 
@@ -59,6 +71,7 @@ export class WSADControls extends BaseControls {
       this._keyboardInput.addKeyPressListener(
         key,
         () => {
+          if (!this._keyboardEnabled) return;
           this.direction[axis] = value;
         },
         10
@@ -71,6 +84,7 @@ export class WSADControls extends BaseControls {
 
   private _handleMouseInput(): void {
     this._mouseInput.addMouseClickListener('left', () => {
+      if (!this._mouseEnabled) return;
       document.body.style.cursor = 'grabbing';
       this._isDragging = true;
     });
@@ -81,10 +95,12 @@ export class WSADControls extends BaseControls {
     });
 
     this._mouseInput.addMouseScrollListener((e: WheelEvent) => {
+      if (!this._mouseEnabled) return;
       this.camera.setZoom(this.camera.zoom + e.deltaY * -BaseControls.ZOOM_SENSITIVITY);
     });
 
     this._mouseInput.addMouseMoveListener((e: MouseEvent) => {
+      if (!this._mouseEnabled) return;
       if (this._isDragging) {
         const movementX = e.movementX || 0;
         // Rotate around pivot point
