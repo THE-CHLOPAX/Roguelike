@@ -2,21 +2,22 @@ export const executeAsyncOperationsWithProgress = <T extends readonly unknown[]>
   promises: { [K in keyof T]: Promise<T[K]> },
   onProgress: (progress: number) => void
 ): Promise<T> => {
-  // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve, reject) => {
-    const total = promises.length;
-    let loaded = 0;
+  const total = promises.length;
+  if (total === 0) {
+    onProgress(1);
+    return Promise.resolve([] as unknown as T);
+  }
 
-    for (const promise of promises) {
-      try {
-        await promise;
-        loaded += 1;
-        onProgress(loaded / total);
-      } catch (error) {
-        reject(error);
-      }
-    }
+  let loaded = 0;
+  onProgress(0);
 
-    resolve(await Promise.all(promises));
-  });
+  const wrappedPromises = promises.map((p) =>
+    p.then((result) => {
+      loaded++;
+      onProgress(loaded / total);
+      return result;
+    })
+  ) as { [K in keyof T]: Promise<T[K]> };
+
+  return Promise.all(wrappedPromises);
 };

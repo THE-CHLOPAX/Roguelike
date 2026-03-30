@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { isMesh, logger } from '@tgdf';
 import { threeToSoloNavMesh, DebugDrawer } from '@recast-navigation/three';
 
 export type generateNavMeshFromThreeDObjectOptions = Parameters<typeof threeToSoloNavMesh>[1];
@@ -9,8 +10,8 @@ export function generateNavMeshFromThreeDObject(
 ) {
   const meshChildren: THREE.Mesh[] = [];
   object.traverse((child) => {
-    if (child.type === 'Mesh') {
-      meshChildren.push(child as THREE.Mesh);
+    if (isMesh(child)) {
+      meshChildren.push(child);
     }
   });
 
@@ -19,7 +20,7 @@ export function generateNavMeshFromThreeDObject(
   });
 
   if (!success) {
-    console.error('Failed to generate nav mesh from the provided 3D object.');
+    logger({ message: 'Failed to generate nav mesh from the provided 3D object.', type: 'error' });
     return { navMesh: null, debugNavMesh: null };
   }
 
