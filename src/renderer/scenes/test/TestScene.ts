@@ -19,6 +19,7 @@ const DEFAULT_CHECKERBOARD_REPEAT = 3;
 
 export class TestScene extends Scene {
   public camera: OrtographicCamera;
+  public floorPlane: RigidPlane;
 
   constructor(options?: TestSceneConstructorOptions) {
     super({
@@ -57,15 +58,14 @@ export class TestScene extends Scene {
     this.background = new THREE.Color(0x151729);
 
     const floorMaterial = new THREE.MeshPhongMaterial({ map: checkerboardTexture });
-    const floorPlane = new RigidPlane(
+    this.floorPlane = new RigidPlane(
       this,
       new THREE.Vector2(planeWidth, planeHeight),
       floorMaterial,
       TEST_FLOOR_PLANE_MESH_NAME
     );
-
-    floorPlane.rotation.x = -Math.PI / 2;
-    this.add(floorPlane);
+    this.floorPlane.rotation.x = -Math.PI / 2;
+    this.add(this.floorPlane);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(10, 10, 10);
