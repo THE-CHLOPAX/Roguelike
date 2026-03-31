@@ -42,6 +42,15 @@ export class NavMeshAgent extends GameObjectComponent {
     this._agentInstance.resetMoveTarget();
   }
 
+  public get target(): THREE.Vector3 | null {
+    if (!this._agentInstance) {
+      this._logNoAgentError();
+      return null;
+    }
+
+    return new THREE.Vector3().copy(this._agentInstance.target());
+  }
+
   public override get gameObject(): MovableGameObject {
     return super.gameObject as MovableGameObject;
   }
@@ -71,16 +80,24 @@ export class NavMeshAgent extends GameObjectComponent {
 
   protected override onAwake(): void {
     super.onAwake();
-    this._agentInstance = this._crowd.addAgent(this.gameObject.position, {
+
+    // Use provided options or sensible defaults
+    const params = {
       radius: 0.5,
-      height: 0.5,
-      maxAcceleration: 4.0,
-      maxSpeed: 1.0,
-      collisionQueryRange: 0.5,
-      pathOptimizationRange: 0.0,
-      separationWeight: 1.0,
+      height: 2.0,
+      maxAcceleration: 8.0,
+      maxSpeed: 2.0,
+      collisionQueryRange: 0.5 * 12,
+      pathOptimizationRange: 0.5 * 30,
+      separationWeight: 2.0,
       ...this._options,
-    });
+    };
+
+    this._agentInstance = this._crowd.addAgent(this.gameObject.position, params);
+  }
+
+  public override destroy(): void {
+    super.destroy();
   }
 
   private _logNoAgentError() {

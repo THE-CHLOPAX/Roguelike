@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { Crowd, NavMesh, TileCache } from '@recast-navigation/core';
-import { CrowdHelper, TileCacheHelper } from '@recast-navigation/three';
 import { traverseFind, isMesh, logger, GameObject, RigidBody } from '@tgdf';
 
 import { TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
@@ -12,13 +11,16 @@ import { MouseInteractionObserver } from '../../3D/classes/gameObjectComponents/
 
 const OBSTACLE_BOX_SIZE = 1;
 
+// NavMesh configuration
+const NAV_CELL_SIZE = 0.2; // Smaller = more precision
+const AGENT_RADIUS = 0.6; // Agent radius in world units
+const AGENT_HEIGHT = 2.0;
+
 export class PathfindingTestScene extends TestScene {
   private _navMesh: NavMesh | null = null;
   private _tileCache: TileCache | null = null;
   private _navMeshCrowd: Crowd | null = null;
   private _monk: Monk | null = null;
-  private _tileCacheHelper: TileCacheHelper | null = null;
-  private _crowdHelper: CrowdHelper | null = null;
 
   constructor(options: TestSceneConstructorOptions) {
     super({
@@ -38,12 +40,11 @@ export class PathfindingTestScene extends TestScene {
 
     if (this._navMeshCrowd) {
       console.log('Adding nav mesh agent to monk');
-      const monkBounds = new THREE.Box3().setFromObject(monk);
-      const monkSize = monkBounds.getSize(new THREE.Vector3());
       monk.addComponent(
         'NavMeshAgent',
         new NavMeshAgent(monk, this._navMeshCrowd, {
-          radius: monkSize.x / 2,
+          radius: AGENT_RADIUS,
+          height: AGENT_HEIGHT,
         })
       );
     }
@@ -53,9 +54,11 @@ export class PathfindingTestScene extends TestScene {
     super.onUpdate(_deltaTime);
 
     if (this._navMeshCrowd) {
-      this._crowdHelper?.update();
-      this._tileCacheHelper?.update();
       this._navMeshCrowd.update(_deltaTime);
+    }
+
+    if (this._tileCache && this._navMesh) {
+      this._tileCache.update(this._navMesh);
     }
   }
 
@@ -63,20 +66,22 @@ export class PathfindingTestScene extends TestScene {
     const floorPlane = traverseFind(this, (child) => child.name === TEST_FLOOR_PLANE_MESH_NAME);
 
     if (isMesh(floorPlane)) {
-      const { navMesh, tileCache } = generateNavMeshFromThreeDObject(floorPlane);
-
-      if (tileCache) {
-        this._tileCacheHelper = new TileCacheHelper(tileCache);
-        this.add(this._tileCacheHelper);
-      }
+      const { navMesh, tileCache } = generateNavMeshFromThreeDObject(floorPlane, {
+        cs: NAV_CELL_SIZE,
+        ch: NAV_CELL_SIZE,
+        // Erode NavMesh by agent radius - this prevents tight gaps
+        walkableRadius: Math.ceil(AGENT_RADIUS / NAV_CELL_SIZE),
+        walkableHeight: Math.ceil(AGENT_HEIGHT / NAV_CELL_SIZE),
+      });
 
       this._navMesh = navMesh;
       this._tileCache = tileCache;
 
       if (navMesh) {
-        this._navMeshCrowd = new Crowd(navMesh, { maxAgents: 10, maxAgentRadius: 5 });
-        this._crowdHelper = new CrowdHelper(this._navMeshCrowd);
-        this.add(this._crowdHelper);
+        this._navMeshCrowd = new Crowd(navMesh, {
+          maxAgents: 10,
+          maxAgentRadius: AGENT_RADIUS,
+        });
       }
     }
   }
@@ -100,9 +105,6 @@ export class PathfindingTestScene extends TestScene {
 
     planeMouseInteractionObserver.onLeftClick((intersection) => {
       const clickedPoint = intersection[0].point;
-
-      console.log('Clicked point: ', clickedPoint);
-
       // move monk to clicked point
       if (this._monk) {
         const navMeshAgent = this._monk.gameObjectComponents.get('NavMeshAgent') as
@@ -141,13 +143,17 @@ export class PathfindingTestScene extends TestScene {
     }
 
     const obstacleBoxBounds = new THREE.Box3().setFromObject(obstacleBox);
-    const obstacleSize = obstacleBoxBounds.getSize(new THREE.Vector3()).multiplyScalar(0.6);
+    const obstacleSize = obstacleBoxBounds.getSize(new THREE.Vector3()).multiplyScalar(0.5);
 
-    console.log('Obstacle box bounds: ', obstacleBoxBounds);
+    // Add agent radius as padding to ensure agents can't squeeze through gaps
+    const paddedSize = new THREE.Vector3(
+      obstacleSize.x + AGENT_RADIUS,
+      obstacleSize.y,
+      obstacleSize.z + AGENT_RADIUS
+    );
 
-    this._tileCache.addBoxObstacle(obstacleBox.position, obstacleSize, obstacleBox.rotation.y);
+    this._tileCache.addBoxObstacle(obstacleBox.position, paddedSize, obstacleBox.rotation.y);
 
-    this._tileCache.update(this._navMesh);
     this.add(obstacleBox);
   }
 }

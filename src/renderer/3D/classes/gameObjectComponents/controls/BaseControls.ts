@@ -60,13 +60,6 @@ export class BaseControls extends GameObjectComponent {
       this.camera.rotation.y
     );
 
-    console.log(
-      'mocing camera to player position: ',
-      playerPosition,
-      ' with offset: ',
-      rotatedOffset
-    );
-
     // Move camera to the rotated offset position
     this.camera.moveTo(playerPosition, { offset: rotatedOffset, lerp: this._lerp });
   }
