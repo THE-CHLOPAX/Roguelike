@@ -4,12 +4,20 @@ import { Crowd, CrowdAgent, CrowdAgentParams } from '@recast-navigation/core';
 
 import { MovableGameObject } from '../gameObjects/MovableGameObject';
 
+/**
+ * TODO:
+ * - Agent doesn't use existing MovableGameObject movement logic - this is unacceptable
+ * - There's a lot of boilerplate to setup navmesh, crowds, agents, create
+ * obstacles etc - we need to abstract all of this away and provide a simple API for development
+ * - Navmesh doesnt get updated when we add/remove obstacles
+ */
+
 export class NavMeshAgent extends GameObjectComponent {
   private _crowd: Crowd;
   private _agentInstance: CrowdAgent | null = null;
-  private _options?: CrowdAgentParams;
+  private _options?: Partial<CrowdAgentParams>;
 
-  constructor(gameObject: MovableGameObject, crowd: Crowd, options?: CrowdAgentParams) {
+  constructor(gameObject: MovableGameObject, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
     super(gameObject);
 
     this._crowd = crowd;
@@ -34,6 +42,10 @@ export class NavMeshAgent extends GameObjectComponent {
     this._agentInstance.resetMoveTarget();
   }
 
+  public override get gameObject(): MovableGameObject {
+    return super.gameObject as MovableGameObject;
+  }
+
   protected override onUpdate(deltaTime: number): void {
     super.onUpdate(deltaTime);
 
@@ -42,9 +54,19 @@ export class NavMeshAgent extends GameObjectComponent {
       return;
     }
 
-    // Update the agent's position based on the crowd simulation
+    // Update the physics body's position based on the crowd simulation
     const agentPosition = this._agentInstance.position();
-    this.gameObject.position.set(agentPosition.x, agentPosition.y, agentPosition.z);
+    const rigidBody = this.gameObject.rigidBody;
+
+    if (rigidBody?.body) {
+      rigidBody.body.setTranslation(
+        { x: agentPosition.x, y: rigidBody.body.translation().y, z: agentPosition.z },
+        false
+      );
+    } else {
+      // Fallback: if no rigid body, update position directly
+      this.gameObject.position.copy(agentPosition);
+    }
   }
 
   protected override onAwake(): void {

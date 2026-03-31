@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Crowd, NavMesh, TileCache } from '@recast-navigation/core';
+import { CrowdHelper, TileCacheHelper } from '@recast-navigation/three';
 import { traverseFind, isMesh, logger, GameObject, RigidBody } from '@tgdf';
 
 import { TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
@@ -16,6 +17,8 @@ export class PathfindingTestScene extends TestScene {
   private _tileCache: TileCache | null = null;
   private _navMeshCrowd: Crowd | null = null;
   private _monk: Monk | null = null;
+  private _tileCacheHelper: TileCacheHelper | null = null;
+  private _crowdHelper: CrowdHelper | null = null;
 
   constructor(options: TestSceneConstructorOptions) {
     super({
@@ -35,7 +38,14 @@ export class PathfindingTestScene extends TestScene {
 
     if (this._navMeshCrowd) {
       console.log('Adding nav mesh agent to monk');
-      monk.addComponent('NavMeshAgent', new NavMeshAgent(monk, this._navMeshCrowd));
+      const monkBounds = new THREE.Box3().setFromObject(monk);
+      const monkSize = monkBounds.getSize(new THREE.Vector3());
+      monk.addComponent(
+        'NavMeshAgent',
+        new NavMeshAgent(monk, this._navMeshCrowd, {
+          radius: monkSize.x / 2,
+        })
+      );
     }
   }
 
@@ -43,6 +53,8 @@ export class PathfindingTestScene extends TestScene {
     super.onUpdate(_deltaTime);
 
     if (this._navMeshCrowd) {
+      this._crowdHelper?.update();
+      this._tileCacheHelper?.update();
       this._navMeshCrowd.update(_deltaTime);
     }
   }
@@ -51,17 +63,20 @@ export class PathfindingTestScene extends TestScene {
     const floorPlane = traverseFind(this, (child) => child.name === TEST_FLOOR_PLANE_MESH_NAME);
 
     if (isMesh(floorPlane)) {
-      const { navMesh, debugNavMesh, tileCache } = generateNavMeshFromThreeDObject(floorPlane);
+      const { navMesh, tileCache } = generateNavMeshFromThreeDObject(floorPlane);
 
-      if (debugNavMesh) {
-        this.add(debugNavMesh);
+      if (tileCache) {
+        this._tileCacheHelper = new TileCacheHelper(tileCache);
+        this.add(this._tileCacheHelper);
       }
 
       this._navMesh = navMesh;
       this._tileCache = tileCache;
 
       if (navMesh) {
-        this._navMeshCrowd = new Crowd(navMesh, { maxAgents: 10, maxAgentRadius: 1 });
+        this._navMeshCrowd = new Crowd(navMesh, { maxAgents: 10, maxAgentRadius: 5 });
+        this._crowdHelper = new CrowdHelper(this._navMeshCrowd);
+        this.add(this._crowdHelper);
       }
     }
   }
@@ -126,12 +141,11 @@ export class PathfindingTestScene extends TestScene {
     }
 
     const obstacleBoxBounds = new THREE.Box3().setFromObject(obstacleBox);
+    const obstacleSize = obstacleBoxBounds.getSize(new THREE.Vector3()).multiplyScalar(0.6);
 
-    this._tileCache.addBoxObstacle(
-      obstacleBox.position,
-      obstacleBoxBounds.getSize(new THREE.Vector3()),
-      obstacleBox.rotation.y
-    );
+    console.log('Obstacle box bounds: ', obstacleBoxBounds);
+
+    this._tileCache.addBoxObstacle(obstacleBox.position, obstacleSize, obstacleBox.rotation.y);
 
     this._tileCache.update(this._navMesh);
     this.add(obstacleBox);
