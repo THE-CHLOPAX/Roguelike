@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
-export type MovableGameObjectOptions = {
+export type MovableRigidGameObjectOptions = {
   speed: number;
   sprintSpeed?: number;
   rigidBodyOptions?: RigidBodyOptions;
@@ -9,7 +9,7 @@ export type MovableGameObjectOptions = {
 
 const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
 
-export class MovableGameObject extends GameObject {
+export class MovableRigidGameObject extends GameObject {
   public defaultSpeed: number;
   public sprintSpeed: number;
 
@@ -18,7 +18,9 @@ export class MovableGameObject extends GameObject {
   private _currentRotation: number = 0;
   private _movementDisabled: boolean = false;
 
-  constructor(scene: Scene, options: MovableGameObjectOptions) {
+  private _currentMovementTarget: THREE.Vector3 | null = null;
+
+  constructor(scene: Scene, options: MovableRigidGameObjectOptions) {
     super({ scene });
 
     this.defaultSpeed = options.speed;
@@ -32,7 +34,7 @@ export class MovableGameObject extends GameObject {
     );
   }
 
-  public get speed(): number {
+  public get currentSpeed(): number {
     return this._currentSpeed;
   }
 
@@ -82,5 +84,29 @@ export class MovableGameObject extends GameObject {
     }
 
     this._rigidBody.setLinearVelocity(velocity);
+  }
+
+  public moveTo(position: THREE.Vector3): void {
+    this._currentMovementTarget = position.clone();
+  }
+
+  public resetMovementTarget(): void {
+    this._currentMovementTarget = null;
+  }
+
+  protected override onUpdate(_deltaTime: number): void {
+    super.onUpdate(_deltaTime);
+
+    if (this._currentMovementTarget && !this._movementDisabled) {
+      const direction = this._currentMovementTarget.clone().sub(this.position);
+      const distance = direction.length();
+
+      if (distance > 0.1) {
+        direction.normalize();
+        this.move(direction);
+      } else {
+        this._currentMovementTarget = null;
+      }
+    }
   }
 }

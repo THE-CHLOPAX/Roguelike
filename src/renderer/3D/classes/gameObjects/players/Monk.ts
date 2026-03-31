@@ -26,7 +26,7 @@ export class Monk extends Humanoid {
       },
     });
 
-    const wsadControls = this.addComponent(
+    this.addComponent(
       'WSADControls',
       new WSADControls({
         gameObject: this,
@@ -35,7 +35,5 @@ export class Monk extends Humanoid {
         mouseInput: scene.mouseInput,
       })
     );
-    // TESTING: Toggle keyboard input for navmesh tests
-    wsadControls.toggleKeyboardInput(false);
   }
 }
