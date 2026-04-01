@@ -16,6 +16,7 @@ const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
 export class MovableRigidGameObject extends GameObject {
   public defaultSpeed: number;
   public sprintSpeed: number;
+  public walkSpeed: number;
 
   private _currentSpeed: number;
   private _rigidBody: RigidBody;
@@ -30,6 +31,7 @@ export class MovableRigidGameObject extends GameObject {
 
     this.defaultSpeed = options.speed;
     this.sprintSpeed = options.sprintSpeed ?? options.speed;
+    this.walkSpeed = options.walkSpeed ?? options.speed * 0.5;
 
     this._currentSpeed = this.defaultSpeed;
 

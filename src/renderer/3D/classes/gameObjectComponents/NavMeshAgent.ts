@@ -16,7 +16,7 @@ import { MovableRigidGameObject } from '../gameObjects/MovableRigidGameObject';
  * speeds for regular RigidBody movement. Do not change
  * unless you know what you're doing.
  */
-const ACCELERATION_MULTIPLIER = 15;
+const ACCELERATION_MULTIPLIER = 15; // Has to be high enough to accelerate quickly and decelerate without overshooting.
 const VELOCITY_MULTIPLIER = 2.4;
 
 export class NavMeshAgent extends GameObjectComponent {
@@ -98,7 +98,12 @@ export class NavMeshAgent extends GameObjectComponent {
       return new THREE.Vector3();
     }
 
-    return new THREE.Vector3().copy(this._agentInstance.velocity());
+    // There's a discrepancy between NavMeshAgent velocity and actual velocity
+    // of the game object when using Rigidbody movement, so we need to apply a
+    // multiplier to make them match up.
+    return new THREE.Vector3()
+      .copy(this._agentInstance.velocity())
+      .divideScalar(VELOCITY_MULTIPLIER);
   }
 
   public override get gameObject(): MovableRigidGameObject {

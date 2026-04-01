@@ -106,7 +106,7 @@ export class PathfindingTestScene extends TestScene {
       const clickedPoint = intersection[0].point;
       // move monk to clicked point
       if (this._monk) {
-        this._monk.moveTo(clickedPoint, this._monk.sprintSpeed);
+        this._monk.moveTo(clickedPoint, this._monk.walkSpeed);
       }
     });
 
