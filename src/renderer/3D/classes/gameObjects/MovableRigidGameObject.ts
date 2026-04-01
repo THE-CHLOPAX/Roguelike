@@ -1,13 +1,17 @@
 import * as THREE from 'three';
-import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { GameObject, GameObjectComponent, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+
+import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
 
 export type MovableRigidGameObjectOptions = {
   speed: number;
   sprintSpeed?: number;
+  walkSpeed?: number;
   rigidBodyOptions?: RigidBodyOptions;
 };
 
 const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
+const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
 
 export class MovableRigidGameObject extends GameObject {
   public defaultSpeed: number;
@@ -15,6 +19,7 @@ export class MovableRigidGameObject extends GameObject {
 
   private _currentSpeed: number;
   private _rigidBody: RigidBody;
+  private _navMeshAgent?: NavMeshAgent;
   private _currentRotation: number = 0;
   private _movementDisabled: boolean = false;
 
@@ -29,7 +34,7 @@ export class MovableRigidGameObject extends GameObject {
     this._currentSpeed = this.defaultSpeed;
 
     this._rigidBody = this.addComponent(
-      'RigidBodyComponent',
+      RIGID_BODY_COMPONENT_ID,
       new RigidBody(this, options.rigidBodyOptions)
     );
   }
@@ -39,6 +44,9 @@ export class MovableRigidGameObject extends GameObject {
   }
 
   public get velocity(): THREE.Vector3 | null {
+    if (this._navMeshAgent) {
+      return this._navMeshAgent.velocity;
+    }
     return this._rigidBody.getLinearVelocity();
   }
 
@@ -50,6 +58,17 @@ export class MovableRigidGameObject extends GameObject {
     return this._movementDisabled;
   }
 
+  public override addComponent<C extends GameObjectComponent>(name: string, component: C): C {
+    const addedComponent = super.addComponent(name, component);
+
+    // If the added component is a NavMeshAgent, keep a reference to it
+    if (component instanceof NavMeshAgent) {
+      this._navMeshAgent = component;
+    }
+
+    return addedComponent;
+  }
+
   public toggleSprint(enabled: boolean): void {
     this._currentSpeed = enabled ? this.sprintSpeed : this.defaultSpeed;
   }
@@ -58,18 +77,37 @@ export class MovableRigidGameObject extends GameObject {
     this._movementDisabled = disabled;
   }
 
-  public move(direction: THREE.Vector3): void {
+  public move(direction: THREE.Vector3, speed = this._currentSpeed): void {
     if (this._movementDisabled) return;
 
-    const velocity = direction.clone().multiplyScalar(this._currentSpeed);
-
-    // Preserve Y velocity (gravity)
-    const currentVelocity = this._rigidBody.getLinearVelocity();
-    if (currentVelocity) {
-      velocity.y = currentVelocity.y;
+    // Check if the movement should be controlled by NavMeshAgent
+    if (this._navMeshAgent) {
+      this._navMeshAgent.requestMoveDirection(direction, speed);
     }
+    // Else, use standard Rigidbody movement
+    else {
+      this._moveRigidbody(direction, speed);
+    }
+  }
 
-    // Rotate the object to face the movement direction (only if moving)
+  public moveTo(position: THREE.Vector3, speed = this.defaultSpeed): void {
+    if (this.movementDisabled) return;
+
+    // Check if we should use pathfinding via the NavMeshAgent
+    if (this._navMeshAgent) {
+      this._navMeshAgent.requestMoveTarget(position, speed);
+    }
+    // Else, set a simple straight-line movement towards the target using Rigidbody
+    else {
+      this._moveRigidBodyToPosition(position, speed);
+    }
+  }
+
+  public resetMovementTarget(): void {
+    this._currentMovementTarget = null;
+  }
+
+  public rotateTowards(direction: THREE.Vector3): void {
     if (direction.x !== 0 || direction.z !== 0) {
       const targetRotation = Math.atan2(direction.x, direction.z);
 
@@ -82,20 +120,10 @@ export class MovableRigidGameObject extends GameObject {
       // Sync rotation to physics body so it's not overwritten
       this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
     }
-
-    this._rigidBody.setLinearVelocity(velocity);
   }
 
-  public moveTo(position: THREE.Vector3): void {
-    this._currentMovementTarget = position.clone();
-  }
-
-  public resetMovementTarget(): void {
-    this._currentMovementTarget = null;
-  }
-
-  protected override onUpdate(_deltaTime: number): void {
-    super.onUpdate(_deltaTime);
+  protected override onUpdate(deltaTime: number): void {
+    super.onUpdate(deltaTime);
 
     if (this._currentMovementTarget && !this._movementDisabled) {
       const direction = this._currentMovementTarget.clone().sub(this.position);
@@ -108,5 +136,25 @@ export class MovableRigidGameObject extends GameObject {
         this._currentMovementTarget = null;
       }
     }
+  }
+
+  private _moveRigidbody(direction: THREE.Vector3, speed: number): void {
+    const velocity = direction.clone().multiplyScalar(speed);
+
+    // Preserve Y velocity (gravity)
+    const currentVelocity = this._rigidBody.getLinearVelocity();
+    if (currentVelocity) {
+      velocity.y = currentVelocity.y;
+    }
+
+    // Rotate the object to face the movement direction (only if moving)
+    this.rotateTowards(direction);
+
+    this._rigidBody.setLinearVelocity(velocity);
+  }
+
+  private _moveRigidBodyToPosition(position: THREE.Vector3, speed: number): void {
+    this._currentMovementTarget = position.clone();
+    this._currentSpeed = speed;
   }
 }

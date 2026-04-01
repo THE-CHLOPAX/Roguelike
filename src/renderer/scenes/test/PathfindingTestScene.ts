@@ -39,7 +39,6 @@ export class PathfindingTestScene extends TestScene {
     this.add(monk);
 
     if (this._navMeshCrowd) {
-      console.log('Adding nav mesh agent to monk');
       monk.addComponent(
         'NavMeshAgent',
         new NavMeshAgent(monk, this._navMeshCrowd, {
@@ -50,11 +49,11 @@ export class PathfindingTestScene extends TestScene {
     }
   }
 
-  protected override onUpdate(_deltaTime: number): void {
-    super.onUpdate(_deltaTime);
+  protected override onUpdate(deltaTime: number): void {
+    super.onUpdate(deltaTime);
 
     if (this._navMeshCrowd) {
-      this._navMeshCrowd.update(_deltaTime);
+      this._navMeshCrowd.update(deltaTime);
     }
 
     if (this._tileCache && this._navMesh) {
@@ -107,13 +106,7 @@ export class PathfindingTestScene extends TestScene {
       const clickedPoint = intersection[0].point;
       // move monk to clicked point
       if (this._monk) {
-        const navMeshAgent = this._monk.gameObjectComponents.get('NavMeshAgent') as
-          | NavMeshAgent
-          | undefined;
-        if (navMeshAgent) {
-          console.log('Requesting move target for nav mesh agent: ', clickedPoint);
-          navMeshAgent.requestMoveTarget(clickedPoint);
-        }
+        this._monk.moveTo(clickedPoint, this._monk.sprintSpeed);
       }
     });
 

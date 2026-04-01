@@ -93,7 +93,8 @@ export class Humanoid extends MovableRigidGameObject {
     }
   }
 
-  protected override onUpdate(_deltaTime: number): void {
+  protected override onUpdate(deltaTime: number): void {
+    super.onUpdate(deltaTime);
     this._transitionVelocityBasedState();
   }
 
