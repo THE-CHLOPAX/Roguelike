@@ -5,12 +5,6 @@ import { Crowd, CrowdAgent, CrowdAgentParams } from '@recast-navigation/core';
 import { MovableRigidGameObject } from '../gameObjects/MovableRigidGameObject';
 
 /**
- * TODO:
- * - There's a lot of boilerplate to setup navmesh, crowds, agents, create
- * obstacles etc - we need to abstract all of this away and provide a simple API for development
- */
-
-/**
  * Those are arbitrary, tunable values that were
  * necessary to make agent speeds match corresponding
  * speeds for regular RigidBody movement. Do not change
@@ -135,6 +129,8 @@ export class NavMeshAgent extends GameObjectComponent {
     // Sync physics position to agent's internal position to prevent desync issues
     const actualPos = this.gameObject.position;
     const agentPos = this._agentInstance.position();
+
+    if (!this.gameObject.rigidBody?.body) return;
 
     this.gameObject.rigidBody.body?.setTranslation(
       {

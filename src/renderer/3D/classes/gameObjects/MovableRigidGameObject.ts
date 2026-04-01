@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GameObject, GameObjectComponent, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { GameObject, GameObjectComponent, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
 
@@ -19,12 +19,14 @@ export class MovableRigidGameObject extends GameObject {
   public walkSpeed: number;
 
   private _currentSpeed: number;
-  private _rigidBody: RigidBody;
+  private _rigidBody: RigidBody | null = null;
   private _navMeshAgent?: NavMeshAgent;
   private _currentRotation: number = 0;
   private _movementDisabled: boolean = false;
 
   private _currentMovementTarget: THREE.Vector3 | null = null;
+
+  private _options: MovableRigidGameObjectOptions;
 
   constructor(scene: Scene, options: MovableRigidGameObjectOptions) {
     super({ scene });
@@ -33,12 +35,9 @@ export class MovableRigidGameObject extends GameObject {
     this.sprintSpeed = options.sprintSpeed ?? options.speed;
     this.walkSpeed = options.walkSpeed ?? options.speed * 0.5;
 
-    this._currentSpeed = this.defaultSpeed;
+    this._options = options;
 
-    this._rigidBody = this.addComponent(
-      RIGID_BODY_COMPONENT_ID,
-      new RigidBody(this, options.rigidBodyOptions)
-    );
+    this._currentSpeed = this.defaultSpeed;
   }
 
   public get currentSpeed(): number {
@@ -48,11 +47,14 @@ export class MovableRigidGameObject extends GameObject {
   public get velocity(): THREE.Vector3 | null {
     if (this._navMeshAgent) {
       return this._navMeshAgent.velocity;
+    } else if (this._rigidBody) {
+      return this._rigidBody.getLinearVelocity();
+    } else {
+      return null;
     }
-    return this._rigidBody.getLinearVelocity();
   }
 
-  public get rigidBody(): RigidBody {
+  public get rigidBody(): RigidBody | null {
     return this._rigidBody;
   }
 
@@ -110,6 +112,14 @@ export class MovableRigidGameObject extends GameObject {
   }
 
   public rotateTowards(direction: THREE.Vector3): void {
+    if (!this._rigidBody) {
+      logger({
+        message: 'Cannot rotate using Rigidbody because it is not initialized.',
+        type: 'error',
+      });
+      return;
+    }
+
     if (direction.x !== 0 || direction.z !== 0) {
       const targetRotation = Math.atan2(direction.x, direction.z);
 
@@ -122,6 +132,14 @@ export class MovableRigidGameObject extends GameObject {
       // Sync rotation to physics body so it's not overwritten
       this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
     }
+  }
+
+  protected override onAwake(): void {
+    super.onAwake();
+    this._rigidBody = this.addComponent(
+      RIGID_BODY_COMPONENT_ID,
+      new RigidBody(this, this._options.rigidBodyOptions)
+    );
   }
 
   protected override onUpdate(deltaTime: number): void {
@@ -141,6 +159,14 @@ export class MovableRigidGameObject extends GameObject {
   }
 
   private _moveRigidbody(direction: THREE.Vector3, speed: number): void {
+    if (!this._rigidBody) {
+      logger({
+        message: 'Cannot move using Rigidbody because it is not initialized.',
+        type: 'error',
+      });
+      return;
+    }
+
     const velocity = direction.clone().multiplyScalar(speed);
 
     // Preserve Y velocity (gravity)

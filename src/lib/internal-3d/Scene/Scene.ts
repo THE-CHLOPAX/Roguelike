@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { init } from '@recast-navigation/core';
 import { logger, KeyboardInput, MouseInput } from '@tgdf';
 
 import { Emitter } from '../Emitter';
@@ -6,6 +7,7 @@ import { GameObject } from '../GameObject';
 import { PhysicsManager } from '../PhysicsManager';
 import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
 import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
+import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {
   public abstract camera: THREE.Camera;
@@ -16,6 +18,7 @@ export abstract class Scene extends THREE.Scene {
   private _mouseInput?: MouseInput;
 
   private _physicsManager?: PhysicsManager;
+  private _navMeshManager?: NavMeshManager;
   private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
   constructor(options?: SceneConstructorOptions) {
@@ -43,6 +46,10 @@ export abstract class Scene extends THREE.Scene {
     return this._physicsManager;
   }
 
+  public get navMeshManager(): NavMeshManager | undefined {
+    return this._navMeshManager;
+  }
+
   public get renderer(): THREE.WebGLRenderer | null {
     return this._renderer;
   }
@@ -50,6 +57,11 @@ export abstract class Scene extends THREE.Scene {
   public update(deltaTime: number, renderer: THREE.WebGLRenderer | null): void {
     // Update physics world with deltaTime for fixed time step
     this.physics?.update(deltaTime);
+
+    // Update navmesh manager
+    if (this._navMeshManager) {
+      this._navMeshManager.update(deltaTime);
+    }
 
     // Assign current renderer
     if (this._renderer !== renderer) this.events.trigger('rendererChange', { renderer });
@@ -122,6 +134,14 @@ export abstract class Scene extends THREE.Scene {
   public enableInput(): void {
     this._keyboardInput?.enable();
     this._mouseInput?.enable();
+  }
+
+  public async initializeNavMeshManager(
+    floorObject: THREE.Object3D,
+    options?: NavMeshManagerOptions
+  ): Promise<void> {
+    await init();
+    this._navMeshManager = new NavMeshManager(this, floorObject, options);
   }
 
   protected onUpdate(_deltaTime: number): void {}

@@ -1,25 +1,19 @@
 import * as THREE from 'three';
-import { Crowd, NavMesh, TileCache } from '@recast-navigation/core';
 import { traverseFind, isMesh, logger, GameObject, RigidBody } from '@tgdf';
 
 import { TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
 import { Monk } from '../../3D/classes/gameObjects/players/Monk';
 import { TestScene, TestSceneConstructorOptions } from './TestScene';
 import { NavMeshAgent } from '../../3D/classes/gameObjectComponents/NavMeshAgent';
-import { generateNavMeshFromThreeDObject } from '../../3D/utils/generateNavMeshFromThreeDObject';
 import { MouseInteractionObserver } from '../../3D/classes/gameObjectComponents/MouseInteractionObserver';
 
 const OBSTACLE_BOX_SIZE = 1;
 
 // NavMesh configuration
-const NAV_CELL_SIZE = 0.2; // Smaller = more precision
 const AGENT_RADIUS = 0.6; // Agent radius in world units
 const AGENT_HEIGHT = 2.0;
 
 export class PathfindingTestScene extends TestScene {
-  private _navMesh: NavMesh | null = null;
-  private _tileCache: TileCache | null = null;
-  private _navMeshCrowd: Crowd | null = null;
   private _monk: Monk | null = null;
 
   constructor(options: TestSceneConstructorOptions) {
@@ -30,59 +24,36 @@ export class PathfindingTestScene extends TestScene {
       checkerboardRepeat: 3,
     });
 
-    this._generateNavMesh();
-    this._bindMouseInteractionObserver();
-
     const monk = new Monk(this);
     this._monk = monk;
 
     this.add(monk);
 
-    if (this._navMeshCrowd) {
-      monk.addComponent(
-        'NavMeshAgent',
-        new NavMeshAgent(monk, this._navMeshCrowd, {
-          radius: AGENT_RADIUS,
-          height: AGENT_HEIGHT,
-        })
-      );
-    }
+    this.initializeNavMeshManager(this.floorPlane, {
+      agentHeight: AGENT_HEIGHT,
+      agentRadius: AGENT_RADIUS,
+    }).then(() => {
+      const crowd = this.navMeshManager!.addCrowd('main-crowd', {
+        maxAgents: 100,
+        maxAgentRadius: AGENT_RADIUS,
+      });
+
+      if (crowd) {
+        monk.addComponent(
+          'NavMeshAgent',
+          new NavMeshAgent(monk, crowd, {
+            radius: AGENT_RADIUS,
+            height: AGENT_HEIGHT,
+          })
+        );
+      }
+    });
+
+    this._bindMouseInteractionObserver();
   }
 
   protected override onUpdate(deltaTime: number): void {
     super.onUpdate(deltaTime);
-
-    if (this._navMeshCrowd) {
-      this._navMeshCrowd.update(deltaTime);
-    }
-
-    if (this._tileCache && this._navMesh) {
-      this._tileCache.update(this._navMesh);
-    }
-  }
-
-  private _generateNavMesh() {
-    const floorPlane = traverseFind(this, (child) => child.name === TEST_FLOOR_PLANE_MESH_NAME);
-
-    if (isMesh(floorPlane)) {
-      const { navMesh, tileCache } = generateNavMeshFromThreeDObject(floorPlane, {
-        cs: NAV_CELL_SIZE,
-        ch: NAV_CELL_SIZE,
-        // Erode NavMesh by agent radius - this prevents tight gaps
-        walkableRadius: Math.ceil(AGENT_RADIUS / NAV_CELL_SIZE),
-        walkableHeight: Math.ceil(AGENT_HEIGHT / NAV_CELL_SIZE),
-      });
-
-      this._navMesh = navMesh;
-      this._tileCache = tileCache;
-
-      if (navMesh) {
-        this._navMeshCrowd = new Crowd(navMesh, {
-          maxAgents: 10,
-          maxAgentRadius: AGENT_RADIUS,
-        });
-      }
-    }
   }
 
   private _bindMouseInteractionObserver() {
@@ -127,26 +98,14 @@ export class PathfindingTestScene extends TestScene {
 
     obstacleBox.addComponent('RigidBody', new RigidBody(obstacleBox, { type: 'static' }));
 
-    if (!this._tileCache || !this._navMesh) {
+    if (!this.navMeshManager) {
       logger({
-        message: 'Tile cache or nav mesh not available, cannot add obstacle to nav mesh.',
+        message: 'NavMeshManager not initialized. Cannot add obstacle.',
         type: 'error',
       });
       return;
     }
 
-    const obstacleBoxBounds = new THREE.Box3().setFromObject(obstacleBox);
-    const obstacleSize = obstacleBoxBounds.getSize(new THREE.Vector3()).multiplyScalar(0.5);
-
-    // Add agent radius as padding to ensure agents can't squeeze through gaps
-    const paddedSize = new THREE.Vector3(
-      obstacleSize.x + AGENT_RADIUS,
-      obstacleSize.y,
-      obstacleSize.z + AGENT_RADIUS
-    );
-
-    this._tileCache.addBoxObstacle(obstacleBox.position, paddedSize, obstacleBox.rotation.y);
-
-    this.add(obstacleBox);
+    this.navMeshManager.addBoxObstacle('test-obstacle', obstacleBox);
   }
 }

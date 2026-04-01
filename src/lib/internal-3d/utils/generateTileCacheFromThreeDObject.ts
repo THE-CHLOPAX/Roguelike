@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import { isMesh, logger } from '@tgdf';
 import { DebugDrawer, threeToTileCache } from '@recast-navigation/three';
 
-export type generateNavMeshFromThreeDObjectOptions = Parameters<typeof threeToTileCache>[1];
+export type generateTileCacheFromThreeDObjectOptions = Parameters<typeof threeToTileCache>[1];
 
-export function generateNavMeshFromThreeDObject(
+export function generateTileCacheFromThreeDObject(
   object: THREE.Object3D,
-  options?: generateNavMeshFromThreeDObjectOptions
+  options?: generateTileCacheFromThreeDObjectOptions
 ) {
   const meshChildren: THREE.Mesh[] = [];
   object.traverse((child) => {
