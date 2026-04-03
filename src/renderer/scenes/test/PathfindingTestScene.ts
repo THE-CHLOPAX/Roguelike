@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { v4 as uuid } from 'uuid';
 import { traverseFind, isMesh, logger, GameObject, RigidBody } from '@tgdf';
 
 import { TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
@@ -106,6 +107,6 @@ export class PathfindingTestScene extends TestScene {
       return;
     }
 
-    this.navMeshManager.addBoxObstacle('test-obstacle', obstacleBox);
+    this.navMeshManager.addBoxObstacle(uuid(), obstacleBox);
   }
 }
