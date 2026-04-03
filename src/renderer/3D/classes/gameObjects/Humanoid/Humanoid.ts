@@ -5,14 +5,14 @@ import { HumanoidStates, StateGroup } from '../../../types';
 import { HUMANOID_STATE_MACHINE } from './humanoidStateMachine';
 import { ModelRenderer } from '../../gameObjectComponents/ModelRenderer';
 import { StateController } from '../../gameObjectComponents/StateController';
-import { MovableGameObject, MovableGameObjectOptions } from '../MovableGameObject';
 import { AnimationController } from '../../gameObjectComponents/AnimationController';
+import { MovableRigidGameObject, MovableRigidGameObjectOptions } from '../MovableRigidGameObject';
 
-export type HumanoidOptions = MovableGameObjectOptions & {
+export type HumanoidOptions = MovableRigidGameObjectOptions & {
   model: THREE.Object3D;
 };
 
-export class Humanoid extends MovableGameObject {
+export class Humanoid extends MovableRigidGameObject {
   private _animationController: AnimationController;
   private _modelRenderer: ModelRenderer;
   private _stateController: StateController<HumanoidStates>;
@@ -93,7 +93,8 @@ export class Humanoid extends MovableGameObject {
     }
   }
 
-  protected override onUpdate(_deltaTime: number): void {
+  protected override onUpdate(deltaTime: number): void {
+    super.onUpdate(deltaTime);
     this._transitionVelocityBasedState();
   }
 

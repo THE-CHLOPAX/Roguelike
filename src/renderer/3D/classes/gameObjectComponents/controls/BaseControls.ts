@@ -59,6 +59,7 @@ export class BaseControls extends GameObjectComponent {
       new THREE.Vector3(0, 1, 0),
       this.camera.rotation.y
     );
+
     // Move camera to the rotated offset position
     this.camera.moveTo(playerPosition, { offset: rotatedOffset, lerp: this._lerp });
   }

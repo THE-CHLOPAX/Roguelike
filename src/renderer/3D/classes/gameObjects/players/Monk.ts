@@ -17,6 +17,7 @@ export class Monk extends Humanoid {
       model: monkModel,
       speed: 2.5,
       sprintSpeed: 4,
+      walkSpeed: 1,
       rigidBodyOptions: {
         mass: 0.1,
         friction: 0,
