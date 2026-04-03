@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Scene, logger } from '@tgdf';
-import { CrowdHelper, DebugDrawer } from '@recast-navigation/three';
-import { Crowd, NavMesh, TileCache } from '@recast-navigation/core';
+import { BoxObstacle, Crowd, NavMesh, TileCache } from '@recast-navigation/core';
+import { CrowdHelper, DebugDrawer, TileCacheHelper } from '@recast-navigation/three';
 
 import { generateTileCacheFromThreeDObject } from './utils/generateTileCacheFromThreeDObject';
 
@@ -10,6 +10,10 @@ export type NavMeshManagerOptions = {
   cellHeight?: number;
   agentRadius?: number;
   agentHeight?: number;
+};
+
+type ObstacleUserData = {
+  obstacle: BoxObstacle;
 };
 
 const DEFAULT_CELL_SIZE = 0.2; // Smaller = more precision
@@ -28,6 +32,7 @@ export class NavMeshManager {
   private _tileCache: TileCache | null = null;
   private _navMesh: NavMesh | null = null;
   private _debugNavMesh: DebugDrawer | null = null;
+  private _debugTileCache: TileCacheHelper | null = null;
 
   private _options: Required<NavMeshManagerOptions>;
 
@@ -81,6 +86,14 @@ export class NavMeshManager {
     const obstacle = addObstacleResult?.obstacle;
 
     if (obstacle !== undefined) {
+      if (this._obstacleMap.get(id)) {
+        logger({
+          message: `Obstacle with id ${id} already exists. It will be replaced.`,
+          type: 'warn',
+        });
+        this.removeBoxObstacle(id);
+      }
+
       object.userData.obstacle = obstacle; // Store reference to obstacle for later removal
       this._obstacleMap.set(id, object);
       this._scene.add(object);
@@ -102,8 +115,18 @@ export class NavMeshManager {
     }
 
     const obstacleObject = this._obstacleMap.get(id);
+    const obstacleBox = (obstacleObject?.userData as ObstacleUserData)?.obstacle;
+
     if (obstacleObject !== undefined) {
-      this._tileCache.removeObstacle(obstacleObject.userData.obstacle);
+      if (obstacleBox !== undefined) {
+        this._tileCache.removeObstacle(obstacleBox);
+      } else {
+        logger({
+          message: `Obstacle object for id ${id} does not have a reference to its BoxObstacle.`,
+          type: 'error',
+        });
+      }
+
       this._scene.remove(obstacleObject);
       this._obstacleMap.delete(id);
     } else {
@@ -112,10 +135,6 @@ export class NavMeshManager {
         type: 'error',
       });
     }
-  }
-
-  public getBoxObstacleObjectThreeD(id: string): THREE.Object3D | null {
-    return this._obstacleMap.get(id) ?? null;
   }
 
   public addCrowd(
@@ -140,6 +159,31 @@ export class NavMeshManager {
     return crowd;
   }
 
+  public toggleTileCacheDebug(show: boolean): void {
+    if (!this._tileCache) {
+      logger({
+        message: 'TileCache is not available for debugging.',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (show) {
+      this._debugTileCache = new TileCacheHelper(this._tileCache);
+      this._scene.add(this._debugTileCache);
+    } else {
+      if (this._debugTileCache) {
+        this._scene.remove(this._debugTileCache);
+        this._debugTileCache = null;
+      } else {
+        logger({
+          message: 'TileCache debug helper is not currently active.',
+          type: 'error',
+        });
+      }
+    }
+  }
+
   public toggleCrowdDebug(crowdId: string, show: boolean): void {
     const crowd = this._crowdMap.get(crowdId);
     if (!crowd) {
@@ -151,6 +195,14 @@ export class NavMeshManager {
     }
 
     if (show) {
+      if (this._crowdHelperMap.get(crowdId)) {
+        logger({
+          message: `Debug helper for Crowd with id ${crowdId} already exists.`,
+          type: 'warn',
+        });
+        return;
+      }
+
       const crowdHelper = new CrowdHelper(crowd);
       this._crowdHelperMap.set(crowdId, crowdHelper);
       this._scene.add(crowdHelper);
@@ -175,8 +227,8 @@ export class NavMeshManager {
   }
 
   public removeCrowd(id: string): void {
-    this._crowdMap.delete(id);
     this.toggleCrowdDebug(id, false);
+    this._crowdMap.delete(id);
   }
 
   public toggleDebugNavMesh(show: boolean): void {
