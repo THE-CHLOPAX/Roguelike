@@ -147,9 +147,6 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
   public toggleVisible(visible: boolean): void {
     this._meshVisible = visible;
-    if (this._colliderDebugMesh) {
-      this._colliderDebugMesh.visible = visible;
-    }
   }
 
   public getLinearVelocity(): THREE.Vector3 | null {
@@ -172,6 +169,13 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       return;
     }
     return this.gameObject.scene.physics.onCollision(callback);
+  }
+
+  protected override onUpdate(deltaTime: number): void {
+    super.onUpdate(deltaTime);
+    if (this._colliderDebugMesh) {
+      this._colliderDebugMesh.visible = this._meshVisible;
+    }
   }
 
   private _createPhysicsBody(): void {

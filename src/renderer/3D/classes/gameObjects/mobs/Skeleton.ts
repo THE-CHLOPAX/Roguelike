@@ -1,20 +1,20 @@
+import * as THREE from 'three';
 import { getModelFromStore, RigidBody } from '@tgdf';
 
 import { MODELS } from '../../../../constants';
 import { Humanoid } from '../Humanoid/Humanoid';
 import { TestScene } from '../../../../scenes/test/TestScene';
-import { WSADControls } from '../../gameObjectComponents/controls/WSADControls';
 
-export class Monk extends Humanoid {
+export class Skeleton extends Humanoid {
   constructor(scene: TestScene) {
-    const monkModel = getModelFromStore(MODELS.MONK);
+    const skeletonModel = getModelFromStore(MODELS.SKELETON);
 
-    if (!monkModel) {
-      throw new Error(`Model not found in cache: ${MODELS.MONK}`);
+    if (!skeletonModel) {
+      throw new Error(`Model not found in cache: ${MODELS.SKELETON}`);
     }
 
     super(scene, {
-      model: monkModel,
+      model: skeletonModel,
       speed: 2.5,
       sprintSpeed: 4,
       walkSpeed: 1,
@@ -26,15 +26,5 @@ export class Monk extends Humanoid {
         colliderShape: RigidBody.ShapeType.Cylinder,
       },
     });
-
-    this.addComponent(
-      'WSADControls',
-      new WSADControls({
-        gameObject: this,
-        camera: scene.camera,
-        keyboardInput: scene.keyboardInput,
-        mouseInput: scene.mouseInput,
-      })
-    );
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { create } from 'zustand';
 import { traverseFind, logger } from '@tgdf';
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export type AssetState = {
@@ -201,6 +202,11 @@ export const useAssetStore = create<AssetState>((set, get) => ({
           // Pass animations
           object.animations = gltf.animations; // Attach animations to the object for easier access
 
+          // Format animation names to lowercase for easier retrieval
+          object.animations.forEach((clip) => {
+            clip.name = clip.name.toLowerCase();
+          });
+
           set((state) => ({
             modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, object),
           }));
@@ -215,4 +221,13 @@ export const useAssetStore = create<AssetState>((set, get) => ({
   },
 }));
 
+// TODO: is this being used?
 export const loadModelJSON = useAssetStore.getState().loadModelJSON;
+
+export const getModelFromStore = (id: string): THREE.Object3D | undefined => {
+  const modelObject =
+    useAssetStore.getState().modelCacheJSON.get(id) ||
+    useAssetStore.getState().modelCacheGLTF.get(id);
+  // Model has to be copied using skeleton utils
+  return modelObject ? clone(modelObject) : undefined;
+};

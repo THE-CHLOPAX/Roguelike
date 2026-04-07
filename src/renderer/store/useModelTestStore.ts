@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-import { MODEL_MONK } from '../constants';
+import { MODELS } from '../constants';
 
 export type ModelTestState = {
   currentModelId: string | null;
@@ -12,7 +12,7 @@ export type ModelTestState = {
 
 export const useModelTestStore = create<ModelTestState>()(
   subscribeWithSelector((set) => ({
-    currentModelId: MODEL_MONK,
+    currentModelId: MODELS.MONK,
     setCurrentModelId: (modelId: string | null) => {
       set({ currentModelId: modelId });
     },
