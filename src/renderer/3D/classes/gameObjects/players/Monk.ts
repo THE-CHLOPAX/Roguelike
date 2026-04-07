@@ -1,16 +1,16 @@
 import { getModelFromStore, RigidBody } from '@tgdf';
 
-import { MODELS } from '../../../../constants';
+import { MODELS } from '../../../constants';
 import { Humanoid } from '../Humanoid/Humanoid';
 import { TestScene } from '../../../../scenes/test/TestScene';
 import { WSADControls } from '../../gameObjectComponents/controls/WSADControls';
 
 export class Monk extends Humanoid {
   constructor(scene: TestScene) {
-    const monkModel = getModelFromStore(MODELS.MONK);
+    const monkModel = getModelFromStore(MODELS.MONK.id);
 
     if (!monkModel) {
-      throw new Error(`Model not found in cache: ${MODELS.MONK}`);
+      throw new Error(`Model not found in cache: ${MODELS.MONK.id}`);
     }
 
     super(scene, {

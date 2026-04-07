@@ -1,16 +1,15 @@
-import * as THREE from 'three';
 import { getModelFromStore, RigidBody } from '@tgdf';
 
-import { MODELS } from '../../../../constants';
+import { MODELS } from '../../../constants';
 import { Humanoid } from '../Humanoid/Humanoid';
 import { TestScene } from '../../../../scenes/test/TestScene';
 
 export class Skeleton extends Humanoid {
   constructor(scene: TestScene) {
-    const skeletonModel = getModelFromStore(MODELS.SKELETON);
+    const skeletonModel = getModelFromStore(MODELS.SKELETON.id);
 
     if (!skeletonModel) {
-      throw new Error(`Model not found in cache: ${MODELS.SKELETON}`);
+      throw new Error(`Model not found in cache: ${MODELS.SKELETON.id}`);
     }
 
     super(scene, {

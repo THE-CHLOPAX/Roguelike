@@ -19,6 +19,12 @@ export enum StateGroup {
   DEAD = 'dead',
 }
 
+export type ModelRecord = {
+  id: string;
+  path: string;
+  nameExtractor?: string;
+};
+
 export type StateConfig<T> = {
   allowedTransitions: T[];
   stateGroup: StateGroup;
