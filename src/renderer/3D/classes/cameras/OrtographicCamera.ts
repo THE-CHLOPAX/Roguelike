@@ -57,6 +57,14 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     this._pivotPoint.copy(point);
   }
 
+  public setZoomMax(max: number): void {
+    this._zoom.max = max;
+  }
+
+  public setZoomMin(min: number): void {
+    this._zoom.min = min;
+  }
+
   public setZoom(zoom: number): void {
     this.zoom = THREE.MathUtils.clamp(zoom, this._zoom.min, this._zoom.max);
     this.updateProjectionMatrix();

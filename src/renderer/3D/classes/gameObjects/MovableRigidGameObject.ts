@@ -81,6 +81,10 @@ export class MovableRigidGameObject extends GameObject {
     this._movementDisabled = disabled;
   }
 
+  public toggleDebug(enabled: boolean): void {
+    this._rigidBody?.toggleVisible(enabled);
+  }
+
   public move(direction: THREE.Vector3, speed = this._currentSpeed): void {
     if (this._movementDisabled) return;
 

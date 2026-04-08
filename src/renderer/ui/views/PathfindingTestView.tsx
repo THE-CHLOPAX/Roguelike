@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
+import { MODELS } from '../../3D/constants';
+import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { BackToViewLayout } from '../../layouts/BackToViewLayout';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 import { PathfindingTestScene } from '../../scenes/test/PathfindingTestScene';
-import { CHECKERBOARD_TEXTURE, MODEL_KNIGHT, MODEL_MONK } from '../../constants';
 
 export function PathfindingTestView() {
   const { loadTexture, loadModelGLTF } = useAssetStore();
@@ -14,8 +15,8 @@ export function PathfindingTestView() {
     sceneClass: PathfindingTestScene,
     asyncPreloadOperations: [
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
-      loadModelGLTF(MODEL_MONK, './assets/playerModels/monk.glb', 'Monk'),
-      loadModelGLTF(MODEL_KNIGHT, './assets/playerModels/knight.glb', 'Knight'),
+      loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, MODELS.MONK.nameExtractor),
+      loadModelGLTF(MODELS.SKELETON.id, MODELS.SKELETON.path, MODELS.SKELETON.nameExtractor),
     ],
   });
 
