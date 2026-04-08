@@ -23,7 +23,6 @@ export class MovableRigidGameObject extends GameObject {
   private _navMeshAgent?: NavMeshAgent;
   private _currentRotation: number = 0;
   private _movementDisabled: boolean = false;
-  private _shouldToggleDebug: boolean = false;
 
   private _currentMovementTarget: THREE.Vector3 | null = null;
 
@@ -83,7 +82,7 @@ export class MovableRigidGameObject extends GameObject {
   }
 
   public toggleDebug(enabled: boolean): void {
-    this._shouldToggleDebug = enabled;
+    this._rigidBody?.toggleVisible(enabled);
   }
 
   public move(direction: THREE.Vector3, speed = this._currentSpeed): void {
@@ -149,8 +148,6 @@ export class MovableRigidGameObject extends GameObject {
 
   protected override onUpdate(deltaTime: number): void {
     super.onUpdate(deltaTime);
-
-    this._rigidBody?.toggleVisible(this._shouldToggleDebug);
 
     if (this._currentMovementTarget && !this._movementDisabled) {
       const direction = this._currentMovementTarget.clone().sub(this.position);
