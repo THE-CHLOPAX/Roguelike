@@ -1,4 +1,4 @@
-import { getModelFromStore, RigidBody } from '@tgdf';
+import { getModelFromStore } from '@tgdf';
 
 import { MODELS } from '../../../constants';
 import { Humanoid } from '../Humanoid/Humanoid';
@@ -22,7 +22,7 @@ export class Skeleton extends Humanoid {
         friction: 0,
         linearDamping: 0,
         lockRotation: true,
-        colliderShape: RigidBody.ShapeType.Cylinder,
+        colliderShape: 'cylinder',
       },
     });
   }

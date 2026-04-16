@@ -95,6 +95,10 @@ export class PhysicsManager {
     return () => this._collisionSubscribers.delete(callback);
   }
 
+  public offCollision(callback: PhysicsCollisionCallback): void {
+    this._collisionSubscribers.delete(callback);
+  }
+
   public addBody(object: THREE.Object3D, body: RAPIER.RigidBody): void {
     if (!this._bodies) {
       logger({ message: 'Physics bodies map is not initialized', type: 'warn' });

@@ -15,11 +15,13 @@ export class RigidPlane extends GameObject {
 
     this.add(mesh);
 
-    this.addComponent(
+    const rigidBody = this.addComponent(
       'RigidBodyComponent',
       new RigidBody(this, {
         type: 'static',
       })
     );
+
+    rigidBody.toggleDebug(true);
   }
 }
