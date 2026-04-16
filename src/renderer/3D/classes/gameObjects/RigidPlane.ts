@@ -13,6 +13,7 @@ export class RigidPlane extends GameObject {
       scene,
     });
 
+    mesh.rotation.x = -Math.PI / 2;
     this.add(mesh);
 
     const rigidBody = this.addComponent(

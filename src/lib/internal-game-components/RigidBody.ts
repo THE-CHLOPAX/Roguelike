@@ -57,14 +57,6 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
     if (!scene) throw new Error('RigidBody: GameObject is not part of a scene');
     if (!scene.physics) throw new Error('RigidBody: Physics system not initialized in scene');
-
-    if (scene.physics.isInitialized) {
-      this._init();
-    } else {
-      scene.physics.events.once('physicsinitialized', () => {
-        this._init();
-      });
-    }
   }
 
   public getPhysicsCollider(): RAPIER.Collider | null {
@@ -134,6 +126,30 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
         type: 'warn',
       });
     }
+  }
+
+  protected override onAwake(): void {
+    super.onAwake();
+
+    const physicsManager = this._getPhysicsManager();
+    if (physicsManager.isInitialized) {
+      this._init();
+    } else {
+      physicsManager.events.once('physicsinitialized', () => {
+        this._init();
+      });
+    }
+  }
+
+  protected override onUpdate(_deltaTime: number): void {
+    super.onUpdate(_deltaTime);
+    // Sync game object's position and rotation with physics body
+    const body = this._getBody();
+    const translation = body.translation();
+    const rotation = body.rotation();
+
+    this.gameObject.position.set(translation.x, translation.y, translation.z);
+    this.gameObject.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
   }
 
   protected override onDestroyed(): void {

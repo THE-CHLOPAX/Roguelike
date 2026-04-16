@@ -29,11 +29,6 @@ export function getRigidBodyColliderDescription(
       throw new Error(`Unsupported collider shape: ${type}`);
   }
 
-  // Set collider translation to match the bounding box center
-  // This ensures the collider is positioned correctly relative to the model's geometry
-  const bboxCenter = new THREE.Vector3();
-  bbox.getCenter(bboxCenter);
-
   // Set material properties
   if (options?.friction) colliderDesc.setFriction(options.friction);
   if (options?.restitution) colliderDesc.setRestitution(options.restitution);

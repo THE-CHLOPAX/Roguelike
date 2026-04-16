@@ -74,20 +74,6 @@ export class PhysicsManager {
       this._accumulator -= FIXED_TIME_STEP;
       subSteps++;
     }
-
-    if (!this._bodies) {
-      logger({ message: 'Physics bodies map is not initialized', type: 'warn' });
-      return;
-    }
-
-    // Sync Three.js objects with physics bodies
-    this._bodies.forEach((body, object) => {
-      const translation = body.translation();
-      const rotation = body.rotation();
-
-      object.position.set(translation.x, translation.y, translation.z);
-      object.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
-    });
   }
 
   public onCollision(callback: PhysicsCollisionCallback): () => void {
