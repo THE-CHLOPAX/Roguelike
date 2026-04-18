@@ -199,18 +199,32 @@ export const useAssetStore = create<AssetState>((set, get) => ({
             object = foundObject || gltf.scene;
           }
 
-          // Pass animations
-          object.animations = gltf.animations; // Attach animations to the object for easier access
+          // Reposition origin to geometric center by wrapping in a container
+          const bbox = new THREE.Box3().setFromObject(object);
+          const center = bbox.getCenter(new THREE.Vector3());
+          
+          // Create a container that will become the new "root" with centered origin
+          const container = new THREE.Group();
+          container.name = object.name + '_Container';
+          
+          // Move the model so its geometric center is at the container's origin
+          object.position.sub(center);
+          
+          // Add model as child of container
+          container.add(object);
+          
+          // Pass animations to the container (so they're accessible via the returned object)
+          container.animations = gltf.animations;
 
           // Format animation names to lowercase for easier retrieval
-          object.animations.forEach((clip) => {
+          container.animations.forEach((clip) => {
             clip.name = clip.name.toLowerCase();
           });
 
           set((state) => ({
-            modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, object),
+            modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, container),
           }));
-          resolve(object);
+          resolve(container);
         },
         undefined,
         (error) => {

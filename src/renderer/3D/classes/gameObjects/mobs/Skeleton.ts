@@ -12,6 +12,8 @@ export class Skeleton extends Humanoid {
       throw new Error(`Model not found in cache: ${MODELS.SKELETON.id}`);
     }
 
+    skeletonModel.scale.multiplyScalar(1.2);
+
     super(scene, {
       model: skeletonModel,
       speed: 2.5,
@@ -22,7 +24,8 @@ export class Skeleton extends Humanoid {
         friction: 0,
         linearDamping: 0,
         lockRotation: true,
-        colliderShape: 'cylinder',
+        colliderShape: 'box',
+        enableCollisionDetection: true,
       },
     });
   }

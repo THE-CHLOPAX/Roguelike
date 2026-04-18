@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { InternalLoader, ThreeDViewer, useAssetStore, useGraphicsStore } from '@tgdf';
+import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { MODELS } from '../../3D/constants';
 import { CHECKERBOARD_TEXTURE } from '../../constants';
@@ -30,7 +30,12 @@ export function PathfindingTestView() {
           onComplete={() => setLoadingFinished(true)}
         />
       ) : (
-        <ThreeDViewer scene={scene!} resX={resolution.width} resY={resolution.height} debug />
+        <ThreeDViewerPixelated
+          scene={scene!}
+          resX={resolution.width}
+          resY={resolution.height}
+          debug
+        />
       )}
     </BackToViewLayout>
   );

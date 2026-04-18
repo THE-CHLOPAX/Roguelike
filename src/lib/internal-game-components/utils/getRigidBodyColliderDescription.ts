@@ -22,7 +22,7 @@ export function getRigidBodyColliderDescription(
     case 'cylinder': {
       const radius = Math.max(size.x, size.z) / 2;
       const height = size.y;
-      colliderDesc = RAPIER.ColliderDesc.cylinder(radius, height / 2);
+      colliderDesc = RAPIER.ColliderDesc.cylinder(height / 2, radius);
       break;
     }
     default:
@@ -33,6 +33,11 @@ export function getRigidBodyColliderDescription(
   if (options?.friction) colliderDesc.setFriction(options.friction);
   if (options?.restitution) colliderDesc.setRestitution(options.restitution);
   if (options?.mass) colliderDesc.setMass(options.mass);
+
+  // Enable collision events if requested
+  if (options?.enableCollisionDetection) {
+    colliderDesc.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+  }
 
   return colliderDesc;
 }

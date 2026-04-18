@@ -28,15 +28,11 @@ export class PathfindingTestScene extends TestScene {
 
     const monk = new Monk(this);
     this._monk = monk;
-    monk.toggleDebug(true);
 
     this.add(monk);
 
     const skeleton = new Skeleton(this);
-    skeleton.position.set(1, 2, 0);
     this.add(skeleton);
-
-    skeleton.toggleDebug(true);
 
     this.initializeNavMeshManager(this.floorPlane, {
       agentHeight: AGENT_HEIGHT,

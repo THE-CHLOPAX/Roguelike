@@ -100,10 +100,8 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   }
 
   public toggleDebug(visible: boolean): void {
-    console.log('Toggling debug mesh visibility:', visible);
     this._debugMeshVisible = visible;
     if (this._colliderDebugMesh) {
-      console.log('Setting debug mesh visibility to:', visible);
       this._colliderDebugMesh.visible = visible;
     }
   }
@@ -208,7 +206,9 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     const collider = world.createCollider(colliderDesc, body);
 
     // Create debug mesh from collider geometry
-    console.log('creating debug mesh');
+    if (this._colliderDebugMesh) {
+      this.gameObject.remove(this._colliderDebugMesh);
+    }
     this._colliderDebugMesh = this._createDebugMesh(collider);
 
     this.gameObject.add(this._colliderDebugMesh);
@@ -226,10 +226,6 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   }
 
   private _createDebugMesh(collider: RAPIER.Collider): THREE.Mesh {
-    if (this._colliderDebugMesh) {
-      this.gameObject.remove(this._colliderDebugMesh);
-    }
-
     const mesh = getMeshFromCollider(collider);
     mesh.visible = this._debugMeshVisible;
     mesh.name = `${this.gameObject.name}_ColliderDebugMesh`;

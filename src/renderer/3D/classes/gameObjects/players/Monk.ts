@@ -23,7 +23,7 @@ export class Monk extends Humanoid {
         friction: 0,
         linearDamping: 0,
         lockRotation: true,
-        colliderShape: 'cylinder',
+        colliderShape: 'box',
       },
     });
 

@@ -16,13 +16,12 @@ export class RigidPlane extends GameObject {
     mesh.rotation.x = -Math.PI / 2;
     this.add(mesh);
 
-    const rigidBody = this.addComponent(
+    this.addComponent(
       'RigidBodyComponent',
       new RigidBody(this, {
         type: 'static',
+        enableCollisionDetection: true,
       })
     );
-
-    rigidBody.toggleDebug(true);
   }
 }

@@ -93,6 +93,26 @@ export class PhysicsManager {
     this._bodies.set(object, body);
   }
 
+  public getObjectFromBody(body: RAPIER.RigidBody): THREE.Object3D | undefined {
+    if (!this._bodies) return undefined;
+    
+    for (const [object, b] of this._bodies.entries()) {
+      if (b === body) return object;
+    }
+    return undefined;
+  }
+
+  public getBodyFromHandle(handle: RAPIER.RigidBodyHandle): RAPIER.RigidBody | null {
+    if (!this._world) return null;
+    return this._world.getRigidBody(handle);
+  }
+
+  public getObjectFromHandle(handle: RAPIER.RigidBodyHandle): THREE.Object3D | undefined {
+    const body = this.getBodyFromHandle(handle);
+    if (!body) return undefined;
+    return this.getObjectFromBody(body);
+  }
+
   public removeBody(object: THREE.Object3D): void {
     if (!this._bodies) {
       logger({ message: 'Physics bodies map is not initialized', type: 'warn' });
