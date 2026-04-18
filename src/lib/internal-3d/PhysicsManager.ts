@@ -22,6 +22,7 @@ export class PhysicsManager {
   private _world?: RAPIER.World;
   private _eventQueue?: RAPIER.EventQueue;
   private _collisionSubscribers: Set<PhysicsCollisionCallback> = new Set();
+  private _handlesMap: Map<RAPIER.RigidBodyHandle, THREE.Object3D> = new Map();
   private _bodies: Map<THREE.Object3D, RAPIER.RigidBody> = new Map();
   private _events: Emitter<PhysicsManagerEventsMap> = new Emitter<PhysicsManagerEventsMap>();
   private _isInitialized: boolean = false;
@@ -91,15 +92,12 @@ export class PhysicsManager {
       return;
     }
     this._bodies.set(object, body);
+    this._handlesMap.set(body.handle, object);
   }
 
   public getObjectFromBody(body: RAPIER.RigidBody): THREE.Object3D | undefined {
     if (!this._bodies) return undefined;
-    
-    for (const [object, b] of this._bodies.entries()) {
-      if (b === body) return object;
-    }
-    return undefined;
+    return this._handlesMap.get(body.handle) || undefined;
   }
 
   public getBodyFromHandle(handle: RAPIER.RigidBodyHandle): RAPIER.RigidBody | null {
@@ -122,6 +120,7 @@ export class PhysicsManager {
     if (body && this._world) {
       this._world.removeRigidBody(body);
       this._bodies.delete(object);
+      this._handlesMap.delete(body.handle);
     } else {
       logger({
         message: 'Physics Manager: unable to remove body - body not found for the given object',
@@ -140,6 +139,7 @@ export class PhysicsManager {
       this._eventQueue = undefined;
     }
     this._bodies.clear();
+    this._handlesMap.clear();
     this._collisionSubscribers.clear();
     this._accumulator = 0; // Reset accumulator on dispose
     this._isInitialized = false;

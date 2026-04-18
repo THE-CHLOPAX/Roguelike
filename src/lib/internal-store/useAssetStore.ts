@@ -16,7 +16,16 @@ export type AssetState = {
   loadAudio: (id: string, url: string, volume?: number) => Promise<HTMLAudioElement>;
   loadFont: (id: string, url: string) => Promise<FontFace>;
   loadModelJSON: (id: string, url: string, nameExtractor?: string) => Promise<THREE.Object3D>;
-  loadModelGLTF: (id: string, url: string, nameExtractor?: string) => Promise<THREE.Object3D>;
+  loadModelGLTF: (
+    id: string,
+    url: string,
+    options?: LoadModelGLTFOptions
+  ) => Promise<THREE.Object3D>;
+};
+
+export type LoadModelGLTFOptions = {
+  nameExtractor?: string;
+  centerOrigin?: boolean; // Whether to reposition the model's origin to its geometric center (default: true)
 };
 
 const gltfLoader = new GLTFLoader();
@@ -171,7 +180,11 @@ export const useAssetStore = create<AssetState>((set, get) => ({
     });
   },
 
-  loadModelGLTF: (id: string, url: string, nameExtractor?: string): Promise<THREE.Object3D> => {
+  loadModelGLTF: (
+    id: string,
+    url: string,
+    options?: LoadModelGLTFOptions
+  ): Promise<THREE.Object3D> => {
     // Check cache first
     const cached = get().modelCacheGLTF.get(id);
     if (cached) {
@@ -183,6 +196,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
         url,
         (gltf) => {
           let object: THREE.Object3D = gltf.scene;
+          const nameExtractor = options?.nameExtractor;
 
           if (nameExtractor) {
             const foundObject = traverseFind(
@@ -202,17 +216,19 @@ export const useAssetStore = create<AssetState>((set, get) => ({
           // Reposition origin to geometric center by wrapping in a container
           const bbox = new THREE.Box3().setFromObject(object);
           const center = bbox.getCenter(new THREE.Vector3());
-          
+
           // Create a container that will become the new "root" with centered origin
           const container = new THREE.Group();
           container.name = object.name + '_Container';
-          
-          // Move the model so its geometric center is at the container's origin
-          object.position.sub(center);
-          
+
+          if (options?.centerOrigin) {
+            // Move the model so its geometric center is at the container's origin
+            object.position.sub(center);
+          }
+
           // Add model as child of container
           container.add(object);
-          
+
           // Pass animations to the container (so they're accessible via the returned object)
           container.animations = gltf.animations;
 

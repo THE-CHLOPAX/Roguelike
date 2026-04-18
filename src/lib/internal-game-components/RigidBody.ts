@@ -142,7 +142,8 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   protected override onUpdate(_deltaTime: number): void {
     super.onUpdate(_deltaTime);
     // Sync game object's position and rotation with physics body
-    const body = this._getBody();
+    const body = this._body;
+    if (!body) return;
     const translation = body.translation();
     const rotation = body.rotation();
 

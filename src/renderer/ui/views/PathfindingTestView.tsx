@@ -15,8 +15,14 @@ export function PathfindingTestView() {
     sceneClass: PathfindingTestScene,
     asyncPreloadOperations: [
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
-      loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, MODELS.MONK.nameExtractor),
-      loadModelGLTF(MODELS.SKELETON.id, MODELS.SKELETON.path, MODELS.SKELETON.nameExtractor),
+      loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, {
+        nameExtractor: MODELS.MONK.nameExtractor,
+        centerOrigin: true,
+      }),
+      loadModelGLTF(MODELS.SKELETON.id, MODELS.SKELETON.path, {
+        nameExtractor: MODELS.SKELETON.nameExtractor,
+        centerOrigin: true,
+      }),
     ],
   });
 
