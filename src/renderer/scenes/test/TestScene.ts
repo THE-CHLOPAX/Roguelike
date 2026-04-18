@@ -64,7 +64,6 @@ export class TestScene extends Scene {
       floorMaterial,
       TEST_FLOOR_PLANE_MESH_NAME
     );
-    this.floorPlane.rotation.x = -Math.PI / 2;
     this.add(this.floorPlane);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);

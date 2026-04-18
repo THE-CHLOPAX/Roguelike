@@ -130,9 +130,11 @@ export class NavMeshAgent extends GameObjectComponent {
     const actualPos = this.gameObject.position;
     const agentPos = this._agentInstance.position();
 
-    if (!this.gameObject.rigidBody?.body) return;
+    const rigidBody = this.gameObject.rigidBody?.getRigidBody();
 
-    this.gameObject.rigidBody.body?.setTranslation(
+    if (!rigidBody) return;
+
+    rigidBody.setTranslation(
       {
         x: agentPos.x,
         y: actualPos.y,

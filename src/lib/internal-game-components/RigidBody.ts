@@ -1,20 +1,16 @@
 import * as THREE from 'three';
-import { logger, GameObject } from '@tgdf';
 import RAPIER from '@dimforge/rapier3d-compat';
+import { PhysicsManager } from '@tgdf/internal-3d/PhysicsManager';
 
+import { logger } from '../internal-ui/utils/logger';
+import { GameObject } from '../internal-3d/GameObject';
 import { GameObjectComponent } from './GameObjectComponent';
+import { getMeshFromCollider } from './utils/getMeshFromCollider';
 import { PhysicsCollisionCallback } from '../internal-3d/types/physics';
+import { getRigidBodyColliderDescription } from './utils/getRigidBodyColliderDescription';
+import { getRigidBodyDescriptionForObject } from './utils/getRigidBodyDescriptionForObject';
 
-declare module '@tgdf' {
-  export interface GameObjectEventMap {
-    colliderready: void;
-  }
-}
-
-export type RigidBodyEventsMap = {
-  colliderready: void;
-};
-
+export type RigidBodyShape = 'box' | 'cylinder';
 export type RigidBodyType = 'dynamic' | 'static' | 'kinematic';
 export type RigidBodyOptions = {
   type?: RigidBodyType;
@@ -24,7 +20,7 @@ export type RigidBodyOptions = {
   linearDamping?: number; // Air resistance
   angularDamping?: number; // Rotation resistance
   lockRotation?: boolean;
-  colliderShape?: RAPIER.ShapeType;
+  colliderShape?: RigidBodyShape;
   enableCollisionDetection?: boolean;
 };
 
@@ -33,10 +29,12 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   public static ShapeType = RAPIER.ShapeType;
   public static ActiveEvents = RAPIER.ActiveEvents;
 
-  private _body?: RAPIER.RigidBody;
-  private _collider?: RAPIER.Collider;
-  private _colliderDebugMesh?: THREE.Mesh;
-  private _meshVisible: boolean = false;
+  private _body: RAPIER.RigidBody | null = null;
+  private _collider: RAPIER.Collider | null = null;
+  private _colliderDebugMesh: THREE.Mesh | null = null;
+  private _debugMeshVisible: boolean = false;
+
+  private _collisionListeners = new Map<string, PhysicsCollisionCallback>();
 
   constructor(gameObject: GameObject, options: RigidBodyOptions = {}) {
     super(gameObject, options);
@@ -51,400 +49,227 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       angularDamping: 0.1,
       lockRotation: false,
       enableCollisionDetection: false,
-      colliderShape: RAPIER.ShapeType.Cuboid,
+      colliderShape: 'box',
       ...options,
     };
 
     const scene = this.gameObject.scene;
 
-    if (!scene) {
-      logger({ message: 'RigidBody: GameObject is not part of a scene', type: 'error' });
-      return;
-    }
-
-    if (!scene.physics) {
-      logger({ message: 'RigidBody: Physics world not initialized', type: 'error' });
-      return;
-    }
-
-    if (scene.physics.isInitialized) {
-      this._createPhysicsBody();
-    } else {
-      scene.physics.events.once('physicsinitialized', () => {
-        this._createPhysicsBody();
-      });
-    }
+    if (!scene) throw new Error('RigidBody: GameObject is not part of a scene');
+    if (!scene.physics) throw new Error('RigidBody: Physics system not initialized in scene');
   }
 
-  public get collider(): RAPIER.Collider | undefined {
+  public getPhysicsCollider(): RAPIER.Collider | null {
     return this._collider;
   }
 
-  public get body(): RAPIER.RigidBody | undefined {
+  public getRigidBody(): RAPIER.RigidBody | null {
     return this._body;
   }
 
-  public applyForce(force: THREE.Vector3): void {
-    if (this._body) {
-      this._body.addForce({ x: force.x, y: force.y, z: force.z }, true);
-    }
+  public getLinearVelocity(): THREE.Vector3 {
+    if (!this._body) return new THREE.Vector3();
+    const vel = this._body.linvel();
+    return new THREE.Vector3(vel.x, vel.y, vel.z);
   }
 
-  public applyImpulse(impulse: THREE.Vector3): void {
-    if (this._body) {
-      this._body.applyImpulse({ x: impulse.x, y: impulse.y, z: impulse.z }, true);
-    }
-  }
-
-  public setVelocity(velocity: THREE.Vector3): void {
-    if (this._body) {
-      this._body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
-    }
+  public setLinearVelocity(velocity: THREE.Vector3): void {
+    const body = this._getBody();
+    body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
   }
 
   public setEulerRotation(euler: THREE.Euler): void {
-    if (this._body) {
-      const quat = new THREE.Quaternion().setFromEuler(euler);
-      this._body.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }, true);
-    }
+    const body = this._getBody();
+    const quat = new THREE.Quaternion().setFromEuler(euler);
+    body.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }, true);
   }
 
-  public getDebugMesh(): THREE.Mesh | undefined {
-    return this._colliderDebugMesh;
+  public applyForce(force: THREE.Vector3): void {
+    const body = this._getBody();
+    body.addForce({ x: force.x, y: force.y, z: force.z }, true);
   }
 
-  public getVelocity(): THREE.Vector3 {
-    if (this._body) {
-      const vel = this._body.linvel();
-      return new THREE.Vector3(vel.x, vel.y, vel.z);
-    }
-    return new THREE.Vector3();
+  public applyImpulse(impulse: THREE.Vector3): void {
+    const body = this._getBody();
+    body.applyImpulse({ x: impulse.x, y: impulse.y, z: impulse.z }, true);
   }
 
-  public destroy(): void {
-    const scene = this.gameObject.scene;
-    if (scene?.physics) {
-      scene.physics.removeBody(this.gameObject);
-    }
-
-    // Clear references to prevent use of destroyed physics objects
-    this._body = undefined;
-    this._collider = undefined;
-
-    // Remove debug mesh if it exists
-    if (this._colliderDebugMesh) {
-      this._colliderDebugMesh.removeFromParent();
-      this._colliderDebugMesh.geometry.dispose();
-      if (this._colliderDebugMesh.material instanceof THREE.Material) {
-        this._colliderDebugMesh.material.dispose();
-      }
-      this._colliderDebugMesh = undefined;
-      this._meshVisible = false;
-    }
-
-    super.destroy();
+  public updatePhysicsCollider(): void {
+    this._removePhysicsCollider();
+    this._collider = this._createPhysicsCollider();
   }
 
-  public toggleVisible(visible: boolean): void {
-    this._meshVisible = visible;
+  public toggleDebug(visible: boolean): void {
+    this._debugMeshVisible = visible;
     if (this._colliderDebugMesh) {
       this._colliderDebugMesh.visible = visible;
     }
   }
 
-  public getLinearVelocity(): THREE.Vector3 | null {
-    if (this._body) {
-      const vel = this._body.linvel();
-      return new THREE.Vector3(vel.x, vel.y, vel.z);
-    }
-    return null;
+  public addCollisionListener(id: string, callback: PhysicsCollisionCallback) {
+    const physics = this._getPhysicsManager();
+    this._collisionListeners.set(id, callback);
+    return physics.onCollision(callback);
   }
 
-  public setLinearVelocity(velocity: THREE.Vector3): void {
-    if (this._body) {
-      this._body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
+  public removeCollisionListener(id: string) {
+    const physics = this._getPhysicsManager();
+    const callback = this._collisionListeners.get(id);
+    if (callback) {
+      physics.offCollision(callback);
+      this._collisionListeners.delete(id);
+    } else {
+      logger({
+        message: `RigidBody: No collision listener found with id "${id}"`,
+        type: 'warn',
+      });
     }
   }
 
-  public onCollision(callback: PhysicsCollisionCallback) {
-    if (!this.gameObject.scene?.physics) {
-      logger({ message: 'RigidBody: Physics world not initialized', type: 'error' });
-      return;
+  protected override onAwake(): void {
+    super.onAwake();
+
+    const physicsManager = this._getPhysicsManager();
+    if (physicsManager.isInitialized) {
+      this._init();
+    } else {
+      physicsManager.events.once('physicsinitialized', () => {
+        this._init();
+      });
     }
-    return this.gameObject.scene.physics.onCollision(callback);
   }
 
-  private _createPhysicsBody(): void {
-    const scene = this.gameObject.scene;
-    const physicsWorld = scene?.physics?.world;
+  protected override onUpdate(_deltaTime: number): void {
+    super.onUpdate(_deltaTime);
+    // Sync game object's position and rotation with physics body
+    const body = this._body;
+    if (!body) return;
+    const translation = body.translation();
+    const rotation = body.rotation();
 
-    if (!physicsWorld) {
-      logger({ message: 'RigidBody: Physics world not initialized', type: 'error' });
-      return;
-    }
+    this.gameObject.position.set(translation.x, translation.y, translation.z);
+    this.gameObject.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+  }
+
+  protected override onDestroyed(): void {
+    super.onDestroyed();
+
+    // Remove physics collider
+    this._removePhysicsCollider();
+
+    // Remove debug mesh
+    this._removeDebugMesh();
+
+    // Remove body
+    this._removePhysicsBody();
+  }
+
+  private _createPhysicsBody(): RAPIER.RigidBody | null {
+    const world = this._getPhysicsWorld();
 
     // Create rigid body description
-    let bodyDesc: RAPIER.RigidBodyDesc;
+    const bodyDesc = getRigidBodyDescriptionForObject(this.gameObject, this.options);
+    const body = world.createRigidBody(bodyDesc);
 
-    switch (this.options.type) {
-      case 'static':
-        bodyDesc = RAPIER.RigidBodyDesc.fixed();
-        break;
-      case 'kinematic':
-        bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased();
-        break;
-      case 'dynamic':
-      default:
-        bodyDesc = RAPIER.RigidBodyDesc.dynamic();
-        break;
+    // Lock rotation if specified in options
+    if (this.options.lockRotation) {
+      body.lockRotations(true, false);
     }
 
-    // Set initial position and rotation
-    const pos = this.gameObject.position;
-    const quat = this.gameObject.quaternion;
+    const physics = this._getPhysicsManager();
+    physics.addBody(this.gameObject, body);
 
-    bodyDesc.setTranslation(pos.x, pos.y, pos.z);
-    bodyDesc.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w });
-
-    // Set damping
-    if (this.options.linearDamping) {
-      bodyDesc.setLinearDamping(this.options.linearDamping);
-    }
-
-    if (this.options.angularDamping) {
-      bodyDesc.setAngularDamping(this.options.angularDamping);
-    }
-
-    // Create the body
-    this._body = physicsWorld.createRigidBody(bodyDesc);
-
-    this._body.lockRotations(!!this.options.lockRotation, false);
-
-    // Create collider from mesh geometry
-    this._createCollider(physicsWorld);
-
-    // Register body with scene
-    scene.physics.addBody(this.gameObject, this._body);
+    return body;
   }
 
-  private _createCollider(world: RAPIER.World): void {
-    if (!this._body) return;
+  private _removePhysicsBody(): void {
+    const world = this._getPhysicsWorld();
 
-    // Find the first mesh in the GameObject
-    let mesh: THREE.Mesh | undefined;
-    this.gameObject.traverse((child) => {
-      if (!mesh && child instanceof THREE.Mesh) {
-        mesh = child;
-      }
-    });
-
-    if (!mesh?.geometry) {
-      logger({ message: 'RigidBody: No mesh geometry found', type: 'warn' });
-      return;
+    if (this._body) {
+      world.removeRigidBody(this._body);
+      this._body = null;
     }
 
-    // Get bounding box and size for collider calculations
-    mesh.geometry.computeBoundingBox();
-    const bbox = mesh.geometry.boundingBox!;
-    const size = new THREE.Vector3();
-    bbox.getSize(size);
-
-    // Calculate bounding box center to properly offset collider
-    const bboxCenter = new THREE.Vector3();
-    bbox.getCenter(bboxCenter);
-
-    // For certain flat geometries, adjust size calculation
-    if (mesh.geometry.type === 'PlaneGeometry' || mesh.geometry.type === 'RingGeometry') {
-      size.z = Math.max(0.01, size.z);
-      size.y = Math.max(0.01, size.y);
-      size.x = Math.max(0.01, size.x);
-    }
-
-    // Apply GameObject scale to collider size
-    size.multiply(this.gameObject.scale);
-    // Validate size - prevent NaN, Infinity, or zero values, but only if
-    // the mesh type requires valid dimensions
-    if (
-      !isFinite(size.x) ||
-      !isFinite(size.y) ||
-      !isFinite(size.z) ||
-      size.x <= 0 ||
-      size.y <= 0 ||
-      (size.z <= 0 &&
-        mesh.geometry.type !== 'PlaneGeometry' &&
-        mesh.geometry.type !== 'RingGeometry')
-    ) {
-      logger({
-        message: `RigidBody: Invalid collider size (${size.x}, ${size.y}, ${size.z})
-        for ${this.gameObject.name}`,
-        type: 'error',
-      });
-      return;
-    }
-
-    const shapeType = this.options.colliderShape ?? RAPIER.ShapeType.Cuboid;
-
-    // Create collider based on specified shape
-    const colliderDesc = this._getColliderDesc(shapeType, size);
-
-    // Set collider translation to match the bounding box center
-    // This ensures the collider is positioned correctly relative to the model's geometry
-    colliderDesc.setTranslation(bboxCenter.x, bboxCenter.y, bboxCenter.z);
-
-    // Set material properties
-    colliderDesc.setFriction(this.options.friction!);
-    colliderDesc.setRestitution(this.options.restitution!);
-    colliderDesc.setMass(this.options.mass!);
-
-    this._collider = world.createCollider(colliderDesc, this._body);
-
-    // Create debug visualization mesh
-    this._createColliderVisualization(shapeType, size, bboxCenter);
-
-    this.gameObject.events.trigger('colliderready');
+    const physics = this._getPhysicsManager();
+    physics.removeBody(this.gameObject);
   }
 
-  private _getColliderDesc(shapeType: RAPIER.ShapeType, size: THREE.Vector3): RAPIER.ColliderDesc {
-    switch (shapeType) {
-      case RAPIER.ShapeType.Ball: {
-        // Use the largest dimension as the radius
-        const radius = Math.max(size.x, size.y, size.z) / 2;
-        if (radius <= 0) {
-          logger({ message: 'RigidBody: Invalid ball radius', type: 'error' });
-          throw new Error('Invalid ball radius');
-        }
-        return RAPIER.ColliderDesc.ball(radius);
-      }
+  private _createPhysicsCollider(): RAPIER.Collider | null {
+    const body = this._getBody();
 
-      case RAPIER.ShapeType.Capsule: {
-        // Use Y as height, largest of X/Z as radius
-        const radius = Math.max(size.x, size.z) / 2;
-        const halfHeight = Math.max(0.01, size.y / 2 - radius); // Minimum 0.01 to prevent zero
-        if (radius <= 0 || halfHeight <= 0) {
-          logger({ message: 'RigidBody: Invalid capsule dimensions', type: 'error' });
-          throw new Error('Invalid capsule dimensions');
-        }
-        return RAPIER.ColliderDesc.capsule(halfHeight, radius);
-      }
-
-      case RAPIER.ShapeType.Cylinder: {
-        // Use Y as height, largest of X/Z as radius
-        const radius = Math.max(size.x, size.z) / 2;
-        const halfHeight = size.y / 2;
-        if (radius <= 0 || halfHeight <= 0) {
-          logger({ message: 'RigidBody: Invalid cylinder dimensions', type: 'error' });
-          throw new Error('Invalid cylinder dimensions');
-        }
-        return RAPIER.ColliderDesc.cylinder(halfHeight, radius);
-      }
-
-      case RAPIER.ShapeType.Cone: {
-        // Use Y as height, largest of X/Z as radius
-        const radius = Math.max(size.x, size.z) / 2;
-        const halfHeight = size.y / 2;
-        if (radius <= 0 || halfHeight <= 0) {
-          logger({ message: 'RigidBody: Invalid cone dimensions', type: 'error' });
-          throw new Error('Invalid cone dimensions');
-        }
-        return RAPIER.ColliderDesc.cone(halfHeight, radius);
-      }
-
-      case RAPIER.ShapeType.Cuboid:
-      default: {
-        // Default to box collider
-        const halfX = size.x / 2;
-        const halfY = size.y / 2;
-        const halfZ = size.z / 2;
-
-        if (halfX <= 0 || halfY <= 0 || halfZ <= 0) {
-          logger({ message: 'RigidBody: Invalid cuboid dimensions', type: 'error' });
-          throw new Error('Invalid cuboid dimensions');
-        }
-        return RAPIER.ColliderDesc.cuboid(halfX, halfY, halfZ);
-      }
-    }
-  }
-
-  private _createColliderVisualization(
-    shapeType: RAPIER.ShapeType,
-    size: THREE.Vector3,
-    bboxCenter: THREE.Vector3
-  ): void {
-    let geometry: THREE.BufferGeometry;
-
-    switch (shapeType) {
-      case RAPIER.ShapeType.Ball: {
-        // Ball: radius is max(x,y,z) / 2
-        const radius = Math.max(size.x, size.y, size.z) / 2;
-        geometry = new THREE.SphereGeometry(radius, 16, 12);
-        break;
-      }
-
-      case RAPIER.ShapeType.Capsule: {
-        // Capsule: Rapier takes halfHeight and radius
-        // halfHeight is (totalHeight/2) - radius
-        const radius = Math.max(size.x, size.z) / 2;
-        const halfHeight = Math.max(0.01, size.y / 2 - radius);
-        // THREE.CapsuleGeometry takes radius and length (not halfHeight)
-        geometry = new THREE.CapsuleGeometry(radius, halfHeight * 2, 8, 16);
-        break;
-      }
-
-      case RAPIER.ShapeType.Cylinder: {
-        // Cylinder: Rapier takes halfHeight and radius
-        const radius = Math.max(size.x, size.z) / 2;
-        const halfHeight = size.y / 2;
-        // THREE.CylinderGeometry takes full height, not halfHeight
-        geometry = new THREE.CylinderGeometry(radius, radius, halfHeight * 2, 16);
-        break;
-      }
-
-      case RAPIER.ShapeType.Cone: {
-        // Cone: Rapier takes halfHeight and radius
-        const radius = Math.max(size.x, size.z) / 2;
-        const halfHeight = size.y / 2;
-        // THREE.ConeGeometry takes full height, not halfHeight
-        geometry = new THREE.ConeGeometry(radius, halfHeight * 2, 16);
-        break;
-      }
-
-      case RAPIER.ShapeType.Cuboid:
-      default: {
-        // Cuboid: Rapier takes half extents, THREE takes full dimensions
-        const halfX = size.x / 2;
-        const halfY = size.y / 2;
-        const halfZ = size.z / 2;
-        // THREE.BoxGeometry expects full dimensions, so multiply by 2
-        geometry = new THREE.BoxGeometry(halfX * 2, halfY * 2, halfZ * 2);
-        break;
-      }
-    }
-
-    // Create wireframe material for visualization
-    const material = new THREE.MeshBasicMaterial({
-      color: 0x00ff00,
-      wireframe: true,
-      opacity: 1,
-    });
-
-    this._colliderDebugMesh = new THREE.Mesh(geometry, material);
-    this._colliderDebugMesh.name = 'ColliderDebug';
-    this._colliderDebugMesh.visible = this._meshVisible;
-
-    // CRITICAL: The size passed to this function already includes GameObject.scale
-    // But when we add the mesh as a child of GameObject, it will inherit scale again
-    // So we need to DIVIDE by the GameObject's scale to compensate
-    const inverseScale = new THREE.Vector3(
-      1 / this.gameObject.scale.x,
-      1 / this.gameObject.scale.y,
-      1 / this.gameObject.scale.z
+    const colliderDesc = getRigidBodyColliderDescription(
+      this.options.colliderShape || 'box',
+      this.gameObject,
+      this.options
     );
-    this._colliderDebugMesh.scale.copy(inverseScale);
 
-    // Position at the bounding box center to match collider offset
-    this._colliderDebugMesh.position.copy(bboxCenter);
+    const world = this._getPhysicsWorld();
+    const collider = world.createCollider(colliderDesc, body);
 
-    // Add to GameObject
+    // Create debug mesh from collider geometry
+    if (this._colliderDebugMesh) {
+      this.gameObject.remove(this._colliderDebugMesh);
+    }
+    this._colliderDebugMesh = this._createDebugMesh(collider);
+
     this.gameObject.add(this._colliderDebugMesh);
+
+    return collider;
+  }
+
+  private _removePhysicsCollider(): void {
+    const world = this._getPhysicsWorld();
+
+    if (this._collider) {
+      world.removeCollider(this._collider, false);
+      this._collider = null;
+    }
+  }
+
+  private _createDebugMesh(collider: RAPIER.Collider): THREE.Mesh {
+    const mesh = getMeshFromCollider(collider);
+    mesh.visible = this._debugMeshVisible;
+    mesh.name = `${this.gameObject.name}_ColliderDebugMesh`;
+    return mesh;
+  }
+
+  private _removeDebugMesh(): void {
+    if (this._colliderDebugMesh) {
+      this.gameObject.remove(this._colliderDebugMesh);
+      // Geometry and material will be disposed be the Scene's
+      // ResourceTracker when the mesh is removed from the scene.
+    } else {
+      logger({
+        message: 'RigidBody: No debug mesh to remove',
+        type: 'warn',
+      });
+    }
+  }
+
+  private _init(): void {
+    this._body = this._createPhysicsBody();
+    // Create physics collider from mesh geometry
+    this._collider = this._createPhysicsCollider();
+  }
+
+  private _getBody(): RAPIER.RigidBody {
+    if (!this._body) {
+      throw new Error('RigidBody: Physics body not initialized');
+    }
+    return this._body;
+  }
+
+  private _getPhysicsManager(): PhysicsManager {
+    if (!this.gameObject.scene?.physics) {
+      throw new Error('RigidBody: Physics manager not initialized in scene');
+    }
+    return this.gameObject.scene.physics;
+  }
+
+  private _getPhysicsWorld(): RAPIER.World {
+    if (!this.gameObject.scene?.physics?.world) {
+      throw new Error('RigidBody: Physics world not initialized');
+    }
+    return this.gameObject.scene.physics.world;
   }
 }

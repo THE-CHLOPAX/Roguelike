@@ -38,6 +38,11 @@ export class MovableRigidGameObject extends GameObject {
     this._options = options;
 
     this._currentSpeed = this.defaultSpeed;
+
+    this._rigidBody = this.addComponent(
+      RIGID_BODY_COMPONENT_ID,
+      new RigidBody(this, this._options.rigidBodyOptions)
+    );
   }
 
   public get currentSpeed(): number {
@@ -82,7 +87,7 @@ export class MovableRigidGameObject extends GameObject {
   }
 
   public toggleDebug(enabled: boolean): void {
-    this._rigidBody?.toggleVisible(enabled);
+    this._rigidBody?.toggleDebug(enabled);
   }
 
   public move(direction: THREE.Vector3, speed = this._currentSpeed): void {
@@ -136,14 +141,6 @@ export class MovableRigidGameObject extends GameObject {
       // Sync rotation to physics body so it's not overwritten
       this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
     }
-  }
-
-  protected override onAwake(): void {
-    super.onAwake();
-    this._rigidBody = this.addComponent(
-      RIGID_BODY_COMPONENT_ID,
-      new RigidBody(this, this._options.rigidBodyOptions)
-    );
   }
 
   protected override onUpdate(deltaTime: number): void {
