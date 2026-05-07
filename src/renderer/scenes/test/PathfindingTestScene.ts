@@ -16,8 +16,6 @@ const AGENT_RADIUS = 0.6; // Agent radius in world units
 const AGENT_HEIGHT = 2.0;
 
 export class PathfindingTestScene extends TestScene {
-  private _monk: Monk | null = null;
-
   constructor(options: TestSceneConstructorOptions) {
     super({
       ...options,
@@ -27,8 +25,6 @@ export class PathfindingTestScene extends TestScene {
     });
 
     const monk = new Monk(this);
-    this._monk = monk;
-
     this.add(monk);
 
     const skeleton = new Skeleton(this);

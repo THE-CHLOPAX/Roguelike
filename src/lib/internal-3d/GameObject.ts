@@ -8,6 +8,7 @@ import {
 
 import { Emitter } from './Emitter';
 import { Scene } from './Scene/Scene';
+import { isChildOfObject } from './utils/isChildOfObject';
 import { ResourceTracker } from './ResourceTracker/ResourceTracker';
 
 export class GameObject extends THREE.Object3D {
@@ -39,9 +40,24 @@ export class GameObject extends THREE.Object3D {
     return this._isAwake;
   }
 
+  public getGameObjectComponentByType<C extends GameObjectComponent>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type: new (...args: any[]) => C
+  ): C | undefined {
+    for (const component of this._gameObjectComponents.values()) {
+      if (component instanceof type) {
+        return component as C;
+      }
+    }
+    return undefined;
+  }
+
   public update(deltaTime: number): void {
-    if (this.scene?.children.includes(this) && !this.isAwake) {
-      this._onAwakeHandler();
+    const scene = this.scene;
+    if (scene) {
+      if (isChildOfObject(this, scene) && !this.isAwake) {
+        this._onAwakeHandler();
+      }
     }
 
     this._gameObjectComponents.forEach((component) => {
@@ -85,9 +101,7 @@ export class GameObject extends THREE.Object3D {
         message: `GameObject: Adding object to GameObject: ${object.name || object.type}`,
         type: 'info',
       });
-      const resourceTracker = new ResourceTracker();
-      resourceTracker.track(object);
-      this._resourceTrackerMap.set(object.uuid, resourceTracker);
+      this.addObjectResourceTracker(object);
     });
 
     return this;
@@ -101,14 +115,24 @@ export class GameObject extends THREE.Object3D {
         message: `GameObject: Removing object from GameObject: ${object.name || object.type}`,
         type: 'info',
       });
-      const resourceTracker = this._resourceTrackerMap.get(object.uuid);
-      if (resourceTracker) {
-        resourceTracker.dispose();
-        this._resourceTrackerMap.delete(object.uuid);
-      }
+      this.removeObjectResourceTracker(object);
     });
 
     return this;
+  }
+
+  public addObjectResourceTracker(object: THREE.Object3D): void {
+    const resourceTracker = new ResourceTracker();
+    resourceTracker.track(object);
+    this._resourceTrackerMap.set(object.uuid, resourceTracker);
+  }
+
+  public removeObjectResourceTracker(object: THREE.Object3D): void {
+    const resourceTracker = this._resourceTrackerMap.get(object.uuid);
+    if (resourceTracker) {
+      resourceTracker.dispose();
+      this._resourceTrackerMap.delete(object.uuid);
+    }
   }
 
   protected onAwake(): void {}

@@ -34,6 +34,11 @@ export function getRigidBodyColliderDescription(
   if (options?.restitution) colliderDesc.setRestitution(options.restitution);
   if (options?.mass) colliderDesc.setMass(options.mass);
 
+  // Set as sensor if requested (detects collisions but doesn't cause physical response)
+  if (options?.sensor) {
+    colliderDesc.setSensor(true);
+  }
+
   // Enable collision events if requested
   if (options?.enableCollisionDetection) {
     colliderDesc.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);

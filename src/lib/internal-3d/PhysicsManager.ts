@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
+import { RigidBody } from '@tgdf/internal-game-components';
 
 import { Emitter } from './Emitter';
+import { GameObject } from './GameObject';
 import { logger } from '../internal-ui/utils/logger';
 import { PhysicsCollisionCallback, PhysicsManagerEventsMap } from './types/physics';
 
@@ -22,8 +24,8 @@ export class PhysicsManager {
   private _world?: RAPIER.World;
   private _eventQueue?: RAPIER.EventQueue;
   private _collisionSubscribers: Set<PhysicsCollisionCallback> = new Set();
-  private _handlesMap: Map<RAPIER.RigidBodyHandle, THREE.Object3D> = new Map();
-  private _bodies: Map<THREE.Object3D, RAPIER.RigidBody> = new Map();
+  private _handlesMap: Map<RAPIER.RigidBodyHandle, GameObject> = new Map();
+  private _bodies: Map<GameObject, RigidBody> = new Map();
   private _events: Emitter<PhysicsManagerEventsMap> = new Emitter<PhysicsManagerEventsMap>();
   private _isInitialized: boolean = false;
 
@@ -37,7 +39,7 @@ export class PhysicsManager {
     return this._world;
   }
 
-  public get bodies(): Map<THREE.Object3D, RAPIER.RigidBody> | undefined {
+  public get bodies(): Map<GameObject, RigidBody> | undefined {
     if (!this._bodies) {
       logger({ message: 'Physics bodies map is not initialized for this scene', type: 'warn' });
       return undefined;
@@ -86,23 +88,42 @@ export class PhysicsManager {
     this._collisionSubscribers.delete(callback);
   }
 
-  public addBody(object: THREE.Object3D, body: RAPIER.RigidBody): void {
+  public addBody(object: GameObject, body: RigidBody): void {
     if (!this._bodies) {
       logger({ message: 'Physics bodies map is not initialized', type: 'warn' });
       return;
     }
+
+    const bodyHandle = body.getHandle();
+    if (bodyHandle === null) {
+      logger({
+        message: 'Cannot add body to PhysicsManager: RigidBody does not have a valid handle',
+        type: 'error',
+      });
+      return;
+    }
     this._bodies.set(object, body);
-    this._handlesMap.set(body.handle, object);
+    this._handlesMap.set(bodyHandle, object);
   }
 
-  public getObjectFromBody(body: RAPIER.RigidBody): THREE.Object3D | undefined {
+  public getObjectFromBody(body: RigidBody): GameObject | undefined {
     if (!this._bodies) return undefined;
-    return this._handlesMap.get(body.handle) || undefined;
+    const bodyHandle = body.getHandle();
+    if (bodyHandle === null) {
+      logger({
+        message: 'Cannot get object from body: RigidBody does not have a valid handle',
+        type: 'error',
+      });
+      return undefined;
+    }
+    return this._handlesMap.get(bodyHandle) || undefined;
   }
 
-  public getBodyFromHandle(handle: RAPIER.RigidBodyHandle): RAPIER.RigidBody | null {
+  public getBodyFromHandle(handle: RAPIER.RigidBodyHandle): RigidBody | null {
     if (!this._world) return null;
-    return this._world.getRigidBody(handle);
+    const object = this._handlesMap.get(handle);
+    if (!object) return null;
+    return this._bodies.get(object) || null;
   }
 
   public getObjectFromHandle(handle: RAPIER.RigidBodyHandle): THREE.Object3D | undefined {
@@ -111,16 +132,22 @@ export class PhysicsManager {
     return this.getObjectFromBody(body);
   }
 
-  public removeBody(object: THREE.Object3D): void {
+  public removeBody(object: GameObject): void {
     if (!this._bodies) {
       logger({ message: 'Physics bodies map is not initialized', type: 'warn' });
       return;
     }
     const body = this._bodies.get(object);
     if (body && this._world) {
-      this._world.removeRigidBody(body);
+      const rigidBody = body.getRigidBody();
+      const handle = body.getHandle();
+      if (rigidBody) {
+        this._world.removeRigidBody(rigidBody);
+      }
       this._bodies.delete(object);
-      this._handlesMap.delete(body.handle);
+      if (handle !== null) {
+        this._handlesMap.delete(handle);
+      }
     } else {
       logger({
         message: 'Physics Manager: unable to remove body - body not found for the given object',

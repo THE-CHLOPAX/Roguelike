@@ -6,16 +6,19 @@ import { HUMANOID_STATE_MACHINE } from './humanoidStateMachine';
 import { ModelRenderer } from '../../gameObjectComponents/ModelRenderer';
 import { StateController } from '../../gameObjectComponents/StateController';
 import { AnimationController } from '../../gameObjectComponents/AnimationController';
+import { HealthPointsController } from '../../gameObjectComponents/HealthPointsController';
 import { MovableRigidGameObject, MovableRigidGameObjectOptions } from '../MovableRigidGameObject';
 
 export type HumanoidOptions = MovableRigidGameObjectOptions & {
   model: THREE.Object3D;
+  initialHealthPoints?: number;
 };
 
 export class Humanoid extends MovableRigidGameObject {
   private _animationController: AnimationController;
   private _modelRenderer: ModelRenderer;
   private _stateController: StateController<HumanoidStates>;
+  private _healthPointsController: HealthPointsController;
 
   constructor(scene: Scene, options: HumanoidOptions) {
     super(scene, options);
@@ -39,10 +42,17 @@ export class Humanoid extends MovableRigidGameObject {
       })
     );
 
+    this._healthPointsController = this.addComponent(
+      'HealthPointsController',
+      new HealthPointsController(this, options.initialHealthPoints)
+    );
+
     // Set up state change listener to call overridable hook
     this.events.on('state:statechange', ({ newState, previousState }) => {
       this.onStateChange(newState as HumanoidStates, previousState as HumanoidStates | null);
     });
+
+    this.events.on('health:change', () => {});
 
     // Play initial state animation
     this.onStateChange(this._stateController.currentState as HumanoidStates, null);
