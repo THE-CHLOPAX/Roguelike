@@ -20,6 +20,8 @@ export class Entity extends MovableRigidGameObject {
   private _animationController: AnimationController;
   private _healthPointsController: HealthPointsController;
 
+  private _isDamageTweenRunning = false;
+
   constructor(scene: Scene, options: EntityOptions) {
     super(scene, options);
 
@@ -58,6 +60,7 @@ export class Entity extends MovableRigidGameObject {
   private _bindHealthPointsControllerEvents(): void {
     // Flash red on damage
     this.healthPointsController.onDamageTaken = () => {
+      if (this._isDamageTweenRunning) return;
       const modelMaterials = this.modelRenderer.getModelMaterials();
 
       if (!modelMaterials) return;
@@ -75,6 +78,12 @@ export class Entity extends MovableRigidGameObject {
             duration: 0.1,
             yoyo: true,
             repeat: 1,
+            onStart: () => {
+              this._isDamageTweenRunning = true;
+            },
+            onComplete: () => {
+              this._isDamageTweenRunning = false;
+            },
           });
         }
       });

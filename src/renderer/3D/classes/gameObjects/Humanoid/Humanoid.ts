@@ -33,14 +33,15 @@ export class Humanoid extends Entity {
     return this._stateController;
   }
 
-  public attack(variant: '1' | '2' | '3' | '4'): void {
-    this.stateController.setState(HumanoidStates[`ATTACKING_${variant}`]);
-    this.animationController.playAnimation(HumanoidStates[`ATTACKING_${variant}`], {
-      clampWhenFinished: true,
-      onComplete: () => {
-        this.stateController.setState(HumanoidStates.IDLE);
-      },
-    });
+  public attack(variant: '1' | '2' | '3' | '4'): boolean {
+    // Prevent attacking if current state is not interruptible
+    if (!this._canAutoTransition()) {
+      return false;
+    }
+
+    const attackState = HumanoidStates[`ATTACKING_${variant}`];
+    this.stateController.setState(attackState);
+    return true;
   }
 
   public move(direction: THREE.Vector3): void {

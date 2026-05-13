@@ -3,8 +3,8 @@ import { v4 as uuid } from 'uuid';
 import { traverseFind, isMesh, logger, GameObject, RigidBody } from '@tgdf';
 
 import { TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
-import { Monk } from '../../3D/classes/gameObjects/players/Monk';
 import { TestScene, TestSceneConstructorOptions } from './TestScene';
+import { Monk } from '../../3D/classes/gameObjects/players/Monk/Monk';
 import { Skeleton } from '../../3D/classes/gameObjects/mobs/Skeleton';
 import { NavMeshAgent } from '../../3D/classes/gameObjectComponents/NavMeshAgent';
 import { MouseInteractionObserver } from '../../3D/classes/gameObjectComponents/MouseInteractionObserver';
