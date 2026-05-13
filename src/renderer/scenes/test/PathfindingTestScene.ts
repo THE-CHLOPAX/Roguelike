@@ -3,8 +3,8 @@ import { v4 as uuid } from 'uuid';
 import { traverseFind, isMesh, logger, GameObject, RigidBody } from '@tgdf';
 
 import { TEST_FLOOR_PLANE_MESH_NAME } from '../../constants';
-import { Monk } from '../../3D/classes/gameObjects/players/Monk';
 import { TestScene, TestSceneConstructorOptions } from './TestScene';
+import { Monk } from '../../3D/classes/gameObjects/players/Monk/Monk';
 import { Skeleton } from '../../3D/classes/gameObjects/mobs/Skeleton';
 import { NavMeshAgent } from '../../3D/classes/gameObjectComponents/NavMeshAgent';
 import { MouseInteractionObserver } from '../../3D/classes/gameObjectComponents/MouseInteractionObserver';
@@ -16,8 +16,6 @@ const AGENT_RADIUS = 0.6; // Agent radius in world units
 const AGENT_HEIGHT = 2.0;
 
 export class PathfindingTestScene extends TestScene {
-  private _monk: Monk | null = null;
-
   constructor(options: TestSceneConstructorOptions) {
     super({
       ...options,
@@ -27,8 +25,6 @@ export class PathfindingTestScene extends TestScene {
     });
 
     const monk = new Monk(this);
-    this._monk = monk;
-
     this.add(monk);
 
     const skeleton = new Skeleton(this);

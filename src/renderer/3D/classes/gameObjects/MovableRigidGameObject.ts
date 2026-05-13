@@ -59,6 +59,11 @@ export class MovableRigidGameObject extends GameObject {
     }
   }
 
+  public get isMoving(): boolean {
+    const velocity = this.velocity;
+    return velocity ? velocity.length() > 0.1 : false;
+  }
+
   public get rigidBody(): RigidBody | null {
     return this._rigidBody;
   }

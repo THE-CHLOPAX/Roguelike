@@ -1,35 +1,16 @@
 import * as THREE from 'three';
 import { compareFloats, Scene } from '@tgdf';
 
+import { Entity, EntityOptions } from '../Entity';
 import { HumanoidStates, StateGroup } from '../../../types';
 import { HUMANOID_STATE_MACHINE } from './humanoidStateMachine';
-import { ModelRenderer } from '../../gameObjectComponents/ModelRenderer';
 import { StateController } from '../../gameObjectComponents/StateController';
-import { AnimationController } from '../../gameObjectComponents/AnimationController';
-import { MovableRigidGameObject, MovableRigidGameObjectOptions } from '../MovableRigidGameObject';
 
-export type HumanoidOptions = MovableRigidGameObjectOptions & {
-  model: THREE.Object3D;
-};
-
-export class Humanoid extends MovableRigidGameObject {
-  private _animationController: AnimationController;
-  private _modelRenderer: ModelRenderer;
+export class Humanoid extends Entity {
   private _stateController: StateController<HumanoidStates>;
 
-  constructor(scene: Scene, options: HumanoidOptions) {
+  constructor(scene: Scene, options: EntityOptions) {
     super(scene, options);
-
-    this._modelRenderer = this.addComponent(
-      'ModelRenderer',
-      new ModelRenderer(this, {
-        model: options.model,
-      })
-    );
-    this._animationController = this.addComponent(
-      'AnimationController',
-      new AnimationController(this, this._modelRenderer)
-    );
 
     this._stateController = this.addComponent(
       'StateController',
@@ -48,26 +29,19 @@ export class Humanoid extends MovableRigidGameObject {
     this.onStateChange(this._stateController.currentState as HumanoidStates, null);
   }
 
-  public get modelRenderer(): ModelRenderer {
-    return this._modelRenderer;
-  }
-
-  public get animationController(): AnimationController {
-    return this._animationController;
-  }
-
   public get stateController(): StateController<HumanoidStates> {
     return this._stateController;
   }
 
-  public attack(variant: '1' | '2' | '3' | '4'): void {
-    this.stateController.setState(HumanoidStates[`ATTACKING_${variant}`]);
-    this.animationController.playAnimation(HumanoidStates[`ATTACKING_${variant}`], {
-      clampWhenFinished: true,
-      onComplete: () => {
-        this.stateController.setState(HumanoidStates.IDLE);
-      },
-    });
+  public attack(variant: '1' | '2' | '3' | '4'): boolean {
+    // Prevent attacking if current state is not interruptible
+    if (!this._canAutoTransition()) {
+      return false;
+    }
+
+    const attackState = HumanoidStates[`ATTACKING_${variant}`];
+    this.stateController.setState(attackState);
+    return true;
   }
 
   public move(direction: THREE.Vector3): void {
