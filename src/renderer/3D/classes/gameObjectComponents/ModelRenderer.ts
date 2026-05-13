@@ -24,6 +24,39 @@ export class ModelRenderer extends GameObjectComponent {
     return this._model;
   }
 
+  public getModelMaterials(): THREE.Material[] | null {
+    if (!this._model) {
+      logger({
+        message: '[ModelRenderer] getModelMaterials failed: No model set on ModelRenderer.',
+        type: 'warn',
+      });
+      return null;
+    }
+
+    const materials: THREE.Material[] = [];
+    this._model.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        if (Array.isArray(mesh.material)) {
+          materials.push(...mesh.material);
+        } else {
+          materials.push(mesh.material);
+        }
+      }
+    });
+
+    if (materials.length === 0) {
+      logger({
+        message:
+          '[ModelRenderer] getModelMaterials warning: No mesh found in model hierarchy to retrieve material from.',
+        type: 'warn',
+      });
+      return null;
+    }
+
+    return materials;
+  }
+
   public setModel(model: THREE.Object3D | null): void {
     if (model === this._model) return;
 
@@ -32,11 +65,30 @@ export class ModelRenderer extends GameObjectComponent {
     }
 
     this._model = model;
+
+    // Clone materials to prevent shared material mutations across instances
+    if (this._model) {
+      this._cloneMaterials(this._model);
+    }
+
     this.onModelChange(this._model);
 
     if (this._model) {
       this.gameObject.add(this._model);
     }
+  }
+
+  private _cloneMaterials(object: THREE.Object3D): void {
+    object.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map((mat) => mat.clone());
+        } else {
+          mesh.material = mesh.material.clone();
+        }
+      }
+    });
   }
 
   public addAttachment(options: AddAttachmentOptions): void {

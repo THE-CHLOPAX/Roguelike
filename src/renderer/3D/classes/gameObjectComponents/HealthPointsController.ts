@@ -1,11 +1,5 @@
 import { GameObject, GameObjectComponent, logger } from '@tgdf';
 
-declare module '@tgdf' {
-  export interface GameObjectEventMap<T = unknown> {
-    'health:change': { newState: T; previousState: T };
-  }
-}
-
 export class HealthPointsController extends GameObjectComponent {
   private _healthPoints: number;
   private _initialHealthPoints: number;
@@ -30,7 +24,7 @@ export class HealthPointsController extends GameObjectComponent {
   }
 
   public inflictDamage(amount: number): void {
-    if (amount <= 0) {
+    if (amount < 0) {
       logger({
         message: '[HealthPointsController] Damage amount must be positive',
         type: 'warn',
@@ -39,14 +33,15 @@ export class HealthPointsController extends GameObjectComponent {
     }
     this._healthPoints = Math.max(this._healthPoints - amount, 0);
     this._isDead = this._healthPoints === 0;
-    this.gameObject.events.trigger('health:change', {
-      newState: this._healthPoints,
-      previousState: this._healthPoints + amount,
-    });
+
+    this.onDamageTaken();
+    if (this._isDead) {
+      this.onDeath();
+    }
   }
 
   public healDamage(amount: number): void {
-    if (amount <= 0) {
+    if (amount < 0) {
       logger({
         message: '[HealthPointsController] Heal amount must be positive',
         type: 'warn',
@@ -56,9 +51,20 @@ export class HealthPointsController extends GameObjectComponent {
     // Allow overhealing
     this._healthPoints = this._healthPoints + amount;
     this._isDead = this._healthPoints === 0;
-    this.gameObject.events.trigger('health:change', {
-      newState: this._healthPoints,
-      previousState: this._healthPoints - amount,
-    });
+
+    this.onHeal();
   }
+
+  public resetHealth(): void {
+    this._healthPoints = this._initialHealthPoints;
+    this._isDead = false;
+
+    this.onHeal();
+  }
+
+  public onHeal() {}
+
+  public onDamageTaken() {}
+
+  public onDeath() {}
 }
