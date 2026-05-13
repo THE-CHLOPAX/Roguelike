@@ -10,10 +10,10 @@ export class Hitbox extends GameObject {
 
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(size.x, size.y, size.z),
-      new THREE.MeshBasicMaterial({ visible: false })
+      new THREE.MeshBasicMaterial()
     );
 
-    mesh.visible = false; // Ensure the hitbox mesh is invisible
+    mesh.visible = false;
 
     this.add(mesh);
 
@@ -33,8 +33,6 @@ export class Hitbox extends GameObject {
         colliderShape: 'box',
       })
     );
-
-    this._rigidBody.toggleDebug(true);
   }
 
   public getRigidBody(): RigidBody | null {

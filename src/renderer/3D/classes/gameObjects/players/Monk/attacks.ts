@@ -22,8 +22,8 @@ export const kick = (instance: Monk): void => {
     return;
   }
 
-  const HITBOX_DELAY = 0.5; // Delay in milliseconds before the hitbox is attached
-  const HITBOX_DURATION = 0.5; // Duration in milliseconds for which the hitbox remains active
+  const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
+  const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active
 
   instance.attackTimeline = gsap
     .timeline()
@@ -42,6 +42,7 @@ export const kick = (instance: Monk): void => {
 
   instance.animationController.playAnimation(HumanoidStates.ATTACKING_1, {
     clampWhenFinished: true,
+    playbackRate: 1.3,
     onComplete: () => {
       instance.removeHitbox();
       instance.attackTimeline = null;
