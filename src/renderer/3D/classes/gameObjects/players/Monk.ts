@@ -32,8 +32,6 @@ export class Monk extends Humanoid {
       new WSADControls({
         gameObject: this,
         camera: scene.camera,
-        keyboardInput: scene.keyboardInput,
-        mouseInput: scene.mouseInput,
       })
     );
   }

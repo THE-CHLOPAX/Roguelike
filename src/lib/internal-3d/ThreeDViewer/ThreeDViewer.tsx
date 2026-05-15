@@ -1,6 +1,6 @@
 import Stats from 'stats.js';
 import * as THREE from 'three';
-import { Scene, useGraphicsStore } from '@tgdf';
+import { Input, Scene, useGraphicsStore } from '@tgdf';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
@@ -86,7 +86,7 @@ export function ThreeDViewer({
   const pauseRendering = useCallback(
     (targetRenderer: THREE.WebGLRenderer) => {
       targetRenderer.setAnimationLoop(null);
-      scene.disableInput();
+      Input.getInstance().disableAllInput();
     },
     [scene]
   );
@@ -95,7 +95,7 @@ export function ThreeDViewer({
     (targetRenderer: THREE.WebGLRenderer) => {
       clockRef.current.oldTime = performance.now();
       targetRenderer.setAnimationLoop(rendererLoop);
-      scene.enableInput();
+      Input.getInstance().enableAllInput();
     },
     [scene, rendererLoop]
   );

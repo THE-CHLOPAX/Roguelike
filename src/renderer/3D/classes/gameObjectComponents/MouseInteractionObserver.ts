@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { GameObject, GameObjectComponent, logger } from '@tgdf';
+import { GameObject, GameObjectComponent, Input, logger } from '@tgdf';
 
 export class MouseInteractionObserver extends GameObjectComponent {
   private _raycaster: THREE.Raycaster;
-  private _mouseInput = this.getMouseInput();
+  private _input = Input.getInstance();
   private _meshes: THREE.Mesh[] | null = null;
 
   private _leftClickCallback: ((intersections: THREE.Intersection[]) => void) | null = null;
@@ -16,13 +16,9 @@ export class MouseInteractionObserver extends GameObjectComponent {
     this._raycaster = new THREE.Raycaster();
     this._meshes = meshes || null;
 
-    if (!this._mouseInput) {
-      throw new Error('MouseInteractionObserver requires MouseInput from the scene');
-    }
-
-    this._mouseInput.addMouseClickListener('left', this._onClickHandler);
-    this._mouseInput.addMouseClickListener('right', this._onClickHandler);
-    this._mouseInput.addMouseClickListener('middle', this._onClickHandler);
+    this._input.addMouseClickListener('left', this._onClickHandler);
+    this._input.addMouseClickListener('right', this._onClickHandler);
+    this._input.addMouseClickListener('middle', this._onClickHandler);
   }
 
   public onLeftClick(callback: (intersections: THREE.Intersection[]) => void): void {
@@ -40,11 +36,9 @@ export class MouseInteractionObserver extends GameObjectComponent {
   // Should we add onHover? Do we need this in the game?
 
   protected onDestroyed(): void {
-    if (!this._mouseInput) return;
-
-    this._mouseInput.removeMouseClickListener('left', this._onClickHandler);
-    this._mouseInput.removeMouseClickListener('right', this._onClickHandler);
-    this._mouseInput.removeMouseClickListener('middle', this._onClickHandler);
+    this._input.removeMouseClickListener('left', this._onClickHandler);
+    this._input.removeMouseClickListener('right', this._onClickHandler);
+    this._input.removeMouseClickListener('middle', this._onClickHandler);
   }
 
   private _onClickHandler = (e: MouseEvent) => {
@@ -63,14 +57,6 @@ export class MouseInteractionObserver extends GameObjectComponent {
   };
 
   private _castRay(): THREE.Intersection[] {
-    if (!this._mouseInput) {
-      logger({
-        message: 'Mouse input not available for MouseInteractionObserver',
-        type: 'error',
-      });
-      return [];
-    }
-
     const camera = this.gameObject.scene?.camera;
 
     if (!camera) {
@@ -81,7 +67,7 @@ export class MouseInteractionObserver extends GameObjectComponent {
       return [];
     }
 
-    const mousePos = new THREE.Vector2(this._mouseInput.mouseX, this._mouseInput.mouseY);
+    const mousePos = new THREE.Vector2(this._input.mouseX, this._input.mouseY);
     const mousePosNormalized = new THREE.Vector2(
       (mousePos.x / window.innerWidth) * 2 - 1,
       -(mousePos.y / window.innerHeight) * 2 + 1

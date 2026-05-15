@@ -1,9 +1,10 @@
 import * as THREE from 'three';
+import { logger } from '@tgdf';
 import { init } from '@recast-navigation/core';
-import { logger, KeyboardInput, MouseInput } from '@tgdf';
 
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
+import { Input } from '../../internal-input/Input';
 import { PhysicsManager } from '../PhysicsManager';
 import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
 import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
@@ -14,8 +15,7 @@ export abstract class Scene extends THREE.Scene {
 
   private _emitter = new Emitter<SceneEventsMap>();
   private _renderer: THREE.WebGLRenderer | null = null;
-  private _keyboardInput?: KeyboardInput;
-  private _mouseInput?: MouseInput;
+  private _input: Input;
 
   private _physicsManager?: PhysicsManager;
   private _navMeshManager?: NavMeshManager;
@@ -24,18 +24,33 @@ export abstract class Scene extends THREE.Scene {
   constructor(options?: SceneConstructorOptions) {
     super();
 
-    this._keyboardInput = options?.keyboardHandlers;
-    this._mouseInput = options?.mouseHandlers;
+    // Get the global Input singleton instance
+    this._input = Input.getInstance();
 
     if (options?.physics) this._initializePhysicsWorld(options.physics.gravity);
   }
 
-  public get keyboardInput(): KeyboardInput | undefined {
-    return this._keyboardInput;
+  /**
+   * Access the global Input instance for keyboard, mouse, and gamepad handling.
+   * @deprecated Use `Input.getInstance()` or `input` singleton directly instead.
+   */
+  public get keyboardInput(): Input {
+    return this._input;
   }
 
-  public get mouseInput(): MouseInput | undefined {
-    return this._mouseInput;
+  /**
+   * Access the global Input instance for keyboard, mouse, and gamepad handling.
+   * @deprecated Use `Input.getInstance()` or `input` singleton directly instead.
+   */
+  public get mouseInput(): Input {
+    return this._input;
+  }
+
+  /**
+   * Access the global Input instance for keyboard, mouse, and gamepad handling.
+   */
+  public get input(): Input {
+    return this._input;
   }
 
   public get events(): Emitter<SceneEventsMap> {
@@ -124,16 +139,6 @@ export abstract class Scene extends THREE.Scene {
     });
 
     return this;
-  }
-
-  public disableInput(): void {
-    this._keyboardInput?.disable();
-    this._mouseInput?.disable();
-  }
-
-  public enableInput(): void {
-    this._keyboardInput?.enable();
-    this._mouseInput?.enable();
   }
 
   public async initializeNavMeshManager(
