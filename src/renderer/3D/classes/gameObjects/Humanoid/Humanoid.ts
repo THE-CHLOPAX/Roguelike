@@ -1,3 +1,4 @@
+import { gsap } from 'gsap';
 import * as THREE from 'three';
 import { compareFloats, Scene } from '@tgdf';
 
@@ -7,6 +8,8 @@ import { HUMANOID_STATE_MACHINE } from './humanoidStateMachine';
 import { StateController } from '../../gameObjectComponents/StateController';
 
 export class Humanoid extends Entity {
+  public attackTimeline: gsap.core.Timeline | null = null;
+
   private _stateController: StateController<HumanoidStates>;
 
   constructor(scene: Scene, options: EntityOptions) {
@@ -44,7 +47,7 @@ export class Humanoid extends Entity {
     return true;
   }
 
-  public move(direction: THREE.Vector3): void {
+  public override move(direction: THREE.Vector3): void {
     if (this.movementDisabled) return;
     super.move(direction);
 
@@ -59,11 +62,33 @@ export class Humanoid extends Entity {
     }
   }
 
+  public override moveTo(position: THREE.Vector3, speed?: number): void {
+    if (this.movementDisabled) return;
+
+    const currentState = this.stateController.currentState;
+    if (currentState) {
+      const stateConfig = this.stateController.getStateConfig(currentState);
+      if (stateConfig?.stateGroup === StateGroup.ACTION) {
+        this.stateController.setState(HumanoidStates.IDLE);
+      }
+    }
+
+    super.moveTo(position, speed);
+  }
+
   protected onStateChange(newState: HumanoidStates, _previousState: HumanoidStates | null): void {
     const currentStateConfig = this.stateController.getStateConfig(newState);
 
     if (currentStateConfig?.stateGroup === StateGroup.MOVEMENT) {
       this.animationController.playAnimation(newState, { loop: true });
+    } else if (currentStateConfig?.stateGroup === StateGroup.ACTION) {
+      // Play action animations (like attacks) once, then return to IDLE
+      this.animationController.playAnimation(newState, {
+        loop: false,
+        onComplete: () => {
+          this.stateController.setState(HumanoidStates.IDLE);
+        },
+      });
     }
   }
 
@@ -81,7 +106,7 @@ export class Humanoid extends Entity {
 
     const velocity = this.velocity.length();
     const velocityEpsilon = 0.01;
-    const walkThreshold = 0.1;
+    const walkThreshold = 0.3;
 
     // Determine target movement state based on velocity
     let targetState: HumanoidStates | null = null;

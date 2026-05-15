@@ -1,17 +1,13 @@
-import * as THREE from 'three';
 import { getModelFromStore } from '@tgdf';
 
 import { kick } from './attacks';
+import { Player } from '../Player';
 import { Hitbox } from '../../Hitbox';
 import { MODELS } from '../../../../constants';
-import { DamageHitbox } from '../../DamageHitbox';
-import { Humanoid } from '../../Humanoid/Humanoid';
 import { TestScene } from '../../../../../scenes/test/TestScene';
 import { WSADControls } from '../../../gameObjectComponents/controls/WSADControls';
 
-export class Monk extends Humanoid {
-  public attackTimeline: gsap.core.Timeline | null = null;
-
+export class Monk extends Player {
   private _attackHitbox: Hitbox | null = null;
 
   constructor(scene: TestScene) {
@@ -69,21 +65,5 @@ export class Monk extends Humanoid {
         break;
     }
     return true;
-  }
-
-  public addHitbox(size: THREE.Vector3, damage: number, parentName: string): void {
-    if (this._attackHitbox || !this.scene) return;
-    this._attackHitbox = new DamageHitbox(this.scene, size, this, damage);
-    this._attackHitbox.toggleDebug(true);
-    this.modelRenderer.addAttachment({
-      object: this._attackHitbox,
-      parentName: parentName,
-    });
-  }
-
-  public removeHitbox(): void {
-    if (!this._attackHitbox || !this.scene) return;
-    this.modelRenderer.removeAttachment(this._attackHitbox);
-    this._attackHitbox = null;
   }
 }

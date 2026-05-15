@@ -1,24 +1,24 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
 
-import { Monk } from './Monk';
-import { HumanoidStates } from '../../../../types';
+import { Skeleton } from './Skeleton';
+import { HumanoidStates } from '../../../../../3D/types';
 import { onBeforeAttack } from '../../../../../3D/utils/onBeforeAttack';
 
-export const kick = (instance: Monk): void => {
+export const punch = (instance: Skeleton) => {
   onBeforeAttack(instance);
 
-  const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
-  const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active
+  const HITBOX_DELAY = 0.7; // Delay in milliseconds before the hitbox is attached
+  const HITBOX_DURATION = 0.8; // Duration in milliseconds for which the hitbox remains active
 
   instance.attackTimeline = gsap
     .timeline()
     .call(
       () =>
         instance.damageHitboxController.attachDamageHitbox(
-          new THREE.Vector3(0.3, 1, 0.3),
+          new THREE.Vector3(0.3, 0.3, 0.3),
           10,
-          'Ctrl_Foot_IK_Right'
+          'Ctrl_Hand_IK_Right'
         ),
       [],
       HITBOX_DELAY
