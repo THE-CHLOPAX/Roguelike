@@ -1,98 +1,35 @@
 import { GamepadAxis, GamepadButton } from './Gamepad/GamepadMappings';
 
 export class GamepadInput {
-  private _gamepadButtonDownHandlers = new Map<
-    GamepadButton,
-    Set<{ handler: () => void; once?: boolean }>
-  >();
-  private _gamepadButtonUpHandlers = new Map<
-    GamepadButton,
-    Set<{ handler: () => void; once?: boolean }>
-  >();
-  private _gamepadButtonPressHandlers = new Map<
-    GamepadButton,
-    Set<{ handler: (pressed: boolean, value: number) => void; threshold: number; once?: boolean }>
-  >();
-  private _gamepadAxisMoveHandlers = new Map<
-    GamepadAxis | number,
-    Set<{ callback: (value: number) => void; once?: boolean }>
-  >();
-  private _gamepadAnyInteractionHandlers = new Set<{ handler: () => void; once?: boolean }>();
+  private _pressedButtons = new Set<GamepadButton>();
+  private _axisValues = new Map<GamepadAxis | number, number>();
   private _gamepadDisabled = false;
+  private _onInputCallback?: () => void;
+
+  public initialize(onInputCallback?: () => void): void {
+    this._onInputCallback = onInputCallback;
+    // Gamepad uses polling, not event listeners
+  }
 
   public dispose(): void {
-    this._gamepadButtonDownHandlers.clear();
-    this._gamepadButtonUpHandlers.clear();
-    this._gamepadButtonPressHandlers.clear();
-    this._gamepadAxisMoveHandlers.clear();
-    this._gamepadAnyInteractionHandlers.clear();
+    this._pressedButtons.clear();
+    this._axisValues.clear();
   }
 
-  public addGamepadButtonDownListener(
-    button: GamepadButton,
-    handler: () => void,
-    once?: boolean
-  ): () => void {
-    if (!this._gamepadButtonDownHandlers.has(button)) {
-      this._gamepadButtonDownHandlers.set(button, new Set());
-    }
-    const record = { handler, once };
-    this._gamepadButtonDownHandlers.get(button)!.add(record);
-    return () => this._gamepadButtonDownHandlers.get(button)?.delete(record);
+  public isButtonPressed(button: GamepadButton): boolean {
+    return this._pressedButtons.has(button);
   }
 
-  public addGamepadButtonUpListener(
-    button: GamepadButton,
-    handler: () => void,
-    once?: boolean
-  ): () => void {
-    if (!this._gamepadButtonUpHandlers.has(button)) {
-      this._gamepadButtonUpHandlers.set(button, new Set());
-    }
-    const record = { handler, once };
-    this._gamepadButtonUpHandlers.get(button)!.add(record);
-    return () => this._gamepadButtonUpHandlers.get(button)?.delete(record);
+  public getAxisValue(axis: GamepadAxis | number): number {
+    return this._axisValues.get(axis) ?? 0;
   }
 
-  public addGamepadButtonPressListener(
-    button: GamepadButton,
-    handler: (pressed: boolean, value: number) => void,
-    threshold: number = 0,
-    once?: boolean
-  ): () => void {
-    if (!this._gamepadButtonPressHandlers.has(button)) {
-      this._gamepadButtonPressHandlers.set(button, new Set());
-    }
-    const record = { handler, threshold, once };
-    this._gamepadButtonPressHandlers.get(button)!.add(record);
-    return () => this._gamepadButtonPressHandlers.get(button)?.delete(record);
+  public get pressedButtons(): Set<GamepadButton> {
+    return new Set(this._pressedButtons);
   }
 
-  public addGamepadAxisMoveListener(
-    axis: GamepadAxis | number,
-    callback: (value: number) => void,
-    once?: boolean
-  ): () => void {
-    if (!this._gamepadAxisMoveHandlers.has(axis)) {
-      this._gamepadAxisMoveHandlers.set(axis, new Set());
-    }
-    const record = { callback, once };
-    this._gamepadAxisMoveHandlers.get(axis)!.add(record);
-    return () => this._gamepadAxisMoveHandlers.get(axis)?.delete(record);
-  }
-
-  public onGamepadInteraction(handler: () => void, once?: boolean): () => void {
-    const record = { handler, once };
-    this._gamepadAnyInteractionHandlers.add(record);
-    return () => this._gamepadAnyInteractionHandlers.delete(record);
-  }
-
-  public removeAllListeners(): void {
-    this._gamepadButtonDownHandlers.clear();
-    this._gamepadButtonUpHandlers.clear();
-    this._gamepadButtonPressHandlers.clear();
-    this._gamepadAxisMoveHandlers.clear();
-    this._gamepadAnyInteractionHandlers.clear();
+  public get axisValues(): Map<GamepadAxis | number, number> {
+    return new Map(this._axisValues);
   }
 
   public disable(): void {
@@ -107,24 +44,39 @@ export class GamepadInput {
     return this._gamepadDisabled;
   }
 
-  // Getters for handlers (useful if the Input class needs to poll gamepad state)
-  public get buttonDownHandlers() {
-    return this._gamepadButtonDownHandlers;
-  }
+  // Called by Input singleton during update/poll cycle
+  public updateState(
+    buttonStates: Map<GamepadButton, boolean>,
+    axisStates: Map<GamepadAxis | number, number>
+  ): void {
+    if (this._gamepadDisabled) return;
 
-  public get buttonUpHandlers() {
-    return this._gamepadButtonUpHandlers;
-  }
+    let hasChanges = false;
 
-  public get buttonPressHandlers() {
-    return this._gamepadButtonPressHandlers;
-  }
+    // Update button states
+    for (const [button, pressed] of buttonStates) {
+      const wasPressed = this._pressedButtons.has(button);
+      if (pressed && !wasPressed) {
+        this._pressedButtons.add(button);
+        hasChanges = true;
+      } else if (!pressed && wasPressed) {
+        this._pressedButtons.delete(button);
+        hasChanges = true;
+      }
+    }
 
-  public get axisMoveHandlers() {
-    return this._gamepadAxisMoveHandlers;
-  }
+    // Update axis values
+    for (const [axis, value] of axisStates) {
+      const oldValue = this._axisValues.get(axis) ?? 0;
+      if (Math.abs(value - oldValue) > 0.01) {
+        // Threshold for axis change
+        this._axisValues.set(axis, value);
+        hasChanges = true;
+      }
+    }
 
-  public get anyInteractionHandlers() {
-    return this._gamepadAnyInteractionHandlers;
+    if (hasChanges) {
+      this._onInputCallback?.();
+    }
   }
 }

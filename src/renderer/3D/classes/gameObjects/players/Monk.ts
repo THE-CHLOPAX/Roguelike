@@ -3,7 +3,6 @@ import { getModelFromStore } from '@tgdf';
 import { MODELS } from '../../../constants';
 import { Humanoid } from '../Humanoid/Humanoid';
 import { TestScene } from '../../../../scenes/test/TestScene';
-import { WSADControls } from '../../gameObjectComponents/controls/WSADControls';
 
 export class Monk extends Humanoid {
   constructor(scene: TestScene) {
@@ -26,13 +25,5 @@ export class Monk extends Humanoid {
         colliderShape: 'box',
       },
     });
-
-    this.addComponent(
-      'WSADControls',
-      new WSADControls({
-        gameObject: this,
-        camera: scene.camera,
-      })
-    );
   }
 }

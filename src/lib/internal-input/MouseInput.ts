@@ -1,4 +1,4 @@
-import { ButtonMatcher, MouseButton, MouseHandlerRecord } from '@tgdf';
+import { MouseButton } from '@tgdf';
 
 function getButtonName(button: number): MouseButton | null {
   switch (button) {
@@ -13,28 +13,16 @@ function getButtonName(button: number): MouseButton | null {
   }
 }
 
-function matchesButton(matcher: ButtonMatcher, e: MouseEvent): boolean {
-  if (typeof matcher === 'function') return matcher(e);
-
-  const buttonName = getButtonName(e.button);
-  if (!buttonName) return false;
-
-  if (typeof matcher === 'string') return buttonName === matcher;
-  if (Array.isArray(matcher)) return matcher.includes(buttonName);
-  return false;
-}
-
 export class MouseInput {
   private _mouseX = 0;
   private _mouseY = 0;
-  private _mouseScrollHandlers = new Set<(e: WheelEvent) => void>();
-  private _mouseMoveHandlers = new Set<(e: MouseEvent) => void>();
-  private _mouseClickHandlers = new Set<MouseHandlerRecord>();
-  private _mouseUpHandlers = new Set<MouseHandlerRecord>();
-  private _mouseAnyInteractionHandlers = new Set<(e: MouseEvent) => void>();
+  private _wheelDelta = 0;
+  private _pressedButtons = new Set<MouseButton>();
   private _mouseDisabled = false;
+  private _onInputCallback?: () => void;
 
-  public initialize(): void {
+  public initialize(onInputCallback?: () => void): void {
+    this._onInputCallback = onInputCallback;
     window.addEventListener('wheel', this._onMouseScroll);
     window.addEventListener('mousemove', this._onMouseMove);
     window.addEventListener('mousedown', this._onMouseClick);
@@ -47,11 +35,7 @@ export class MouseInput {
     window.removeEventListener('mousedown', this._onMouseClick);
     window.removeEventListener('mouseup', this._onMouseUp);
 
-    this._mouseScrollHandlers.clear();
-    this._mouseMoveHandlers.clear();
-    this._mouseClickHandlers.clear();
-    this._mouseUpHandlers.clear();
-    this._mouseAnyInteractionHandlers.clear();
+    this._pressedButtons.clear();
   }
 
   public get mouseX(): number {
@@ -62,103 +46,16 @@ export class MouseInput {
     return this._mouseY;
   }
 
-  public addMouseScrollListener(handler: (e: WheelEvent) => void, once?: boolean): () => void {
-    const wrappedHandler = (e: WheelEvent) => {
-      handler(e);
-      if (once) {
-        this._mouseScrollHandlers.delete(wrappedHandler);
-      }
-    };
-    this._mouseScrollHandlers.add(wrappedHandler);
-    return () => this._mouseScrollHandlers.delete(wrappedHandler);
+  public get wheelDelta(): number {
+    return this._wheelDelta;
   }
 
-  public addMouseMoveListener(handler: (e: MouseEvent) => void, once?: boolean): () => void {
-    const wrappedHandler = (e: MouseEvent) => {
-      handler(e);
-      if (once) {
-        this._mouseMoveHandlers.delete(wrappedHandler);
-      }
-    };
-    this._mouseMoveHandlers.add(wrappedHandler);
-    return () => this._mouseMoveHandlers.delete(wrappedHandler);
+  public isButtonPressed(button: MouseButton): boolean {
+    return this._pressedButtons.has(button);
   }
 
-  public addMouseClickListener(
-    matcher: ButtonMatcher,
-    handler: (e: MouseEvent) => void,
-    once?: boolean
-  ): () => void {
-    const wrappedHandler = (e: MouseEvent) => {
-      handler(e);
-      if (once) {
-        this._mouseClickHandlers.delete(record);
-      }
-    };
-    const record: MouseHandlerRecord = { matcher, handler: wrappedHandler };
-    this._mouseClickHandlers.add(record);
-    return () => this._mouseClickHandlers.delete(record);
-  }
-
-  public addMouseUpListener(
-    matcher: ButtonMatcher,
-    handler: (e: MouseEvent) => void,
-    once?: boolean
-  ): () => void {
-    const wrappedHandler = (e: MouseEvent) => {
-      handler(e);
-      if (once) {
-        this._mouseUpHandlers.delete(record);
-      }
-    };
-    const record: MouseHandlerRecord = { matcher, handler: wrappedHandler };
-    this._mouseUpHandlers.add(record);
-    return () => this._mouseUpHandlers.delete(record);
-  }
-
-  public onMouseInteraction(handler: (e: MouseEvent) => void, once?: boolean): () => void {
-    const wrappedHandler = (e: MouseEvent) => {
-      handler(e);
-      if (once) {
-        this._mouseAnyInteractionHandlers.delete(wrappedHandler);
-      }
-    };
-    this._mouseAnyInteractionHandlers.add(wrappedHandler);
-    return () => this._mouseAnyInteractionHandlers.delete(wrappedHandler);
-  }
-
-  public removeMouseScrollListener(handler: (e: WheelEvent) => void): void {
-    this._mouseScrollHandlers.delete(handler);
-  }
-
-  public removeMouseMoveListener(handler: (e: MouseEvent) => void): void {
-    this._mouseMoveHandlers.delete(handler);
-  }
-
-  public removeMouseClickListener(matcher: ButtonMatcher, handler: (e: MouseEvent) => void): void {
-    for (const rec of this._mouseClickHandlers) {
-      if (rec.matcher === matcher && rec.handler === handler) {
-        this._mouseClickHandlers.delete(rec);
-        break;
-      }
-    }
-  }
-
-  public removeMouseUpListener(matcher: ButtonMatcher, handler: (e: MouseEvent) => void): void {
-    for (const rec of this._mouseUpHandlers) {
-      if (rec.matcher === matcher && rec.handler === handler) {
-        this._mouseUpHandlers.delete(rec);
-        break;
-      }
-    }
-  }
-
-  public removeAllListeners(): void {
-    this._mouseScrollHandlers.clear();
-    this._mouseMoveHandlers.clear();
-    this._mouseClickHandlers.clear();
-    this._mouseUpHandlers.clear();
-    this._mouseAnyInteractionHandlers.clear();
+  public get pressedButtons(): Set<MouseButton> {
+    return new Set(this._pressedButtons);
   }
 
   public disable(): void {
@@ -172,13 +69,8 @@ export class MouseInput {
   private _onMouseScroll = (e: WheelEvent): void => {
     if (this._mouseDisabled) return;
 
-    for (const handler of this._mouseScrollHandlers) {
-      try {
-        handler(e);
-      } catch {
-        // swallow handler errors
-      }
-    }
+    this._wheelDelta = e.deltaY;
+    this._onInputCallback?.();
   };
 
   private _onMouseMove = (e: MouseEvent): void => {
@@ -187,54 +79,28 @@ export class MouseInput {
 
     if (this._mouseDisabled) return;
 
-    // Fire anyInteraction listeners
-    for (const handler of this._mouseAnyInteractionHandlers) {
-      try {
-        handler(e);
-      } catch {
-        // swallow handler errors
-      }
-    }
-
-    for (const handler of this._mouseMoveHandlers) {
-      try {
-        handler(e);
-      } catch {
-        // swallow handler errors
-      }
-    }
+    this._onInputCallback?.();
   };
 
   private _onMouseClick = (e: MouseEvent): void => {
     if (this._mouseDisabled) return;
 
-    // Fire anyInteraction listeners
-    for (const handler of this._mouseAnyInteractionHandlers) {
-      try {
-        handler(e);
-      } catch {
-        // swallow handler errors
-      }
+    const buttonName = getButtonName(e.button);
+    if (buttonName) {
+      this._pressedButtons.add(buttonName);
     }
 
-    for (const rec of this._mouseClickHandlers) {
-      try {
-        if (matchesButton(rec.matcher, e)) rec.handler(e);
-      } catch {
-        // swallow handler errors
-      }
-    }
+    this._onInputCallback?.();
   };
 
   private _onMouseUp = (e: MouseEvent): void => {
     if (this._mouseDisabled) return;
 
-    for (const rec of this._mouseUpHandlers) {
-      try {
-        if (matchesButton(rec.matcher, e)) rec.handler(e);
-      } catch {
-        // swallow handler errors
-      }
+    const buttonName = getButtonName(e.button);
+    if (buttonName) {
+      this._pressedButtons.delete(buttonName);
     }
+
+    this._onInputCallback?.();
   };
 }

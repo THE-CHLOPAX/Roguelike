@@ -1,3 +1,6 @@
+import { logger, type GameObject } from '@tgdf';
+
+import { InputState } from './types';
 import { MouseInput } from './MouseInput';
 import { GamepadInput } from './GamepadInput';
 import { KeyboardInput } from './KeyboardInput';
@@ -15,6 +18,7 @@ export class Input {
   private _gamepad: GamepadInput = new GamepadInput();
 
   private _initialized = false;
+  private _gameObjects: Set<GameObject> = new Set();
 
   /**
    * Get the singleton instance of Input.
@@ -26,6 +30,45 @@ export class Input {
       Input._instance._initialize();
     }
     return Input._instance;
+  }
+
+  /**
+   * Register a GameObject to receive input callbacks
+   */
+  public registerGameObject(gameObject: GameObject): void {
+    this._gameObjects.add(gameObject);
+  }
+
+  /**
+   * Unregister a GameObject from receiving input callbacks
+   */
+  public unregisterGameObject(gameObject: GameObject): void {
+    this._gameObjects.delete(gameObject);
+  }
+
+  /**
+   * Get the current input state
+   */
+  public getState(): InputState {
+    return {
+      keyboard: {
+        pressedKeys: this._keyboard.pressedKeys,
+        isKeyPressed: (key: string) => this._keyboard.isKeyPressed(key),
+      },
+      mouse: {
+        x: this._mouse.mouseX,
+        y: this._mouse.mouseY,
+        pressedButtons: this._mouse.pressedButtons,
+        isButtonPressed: (button) => this._mouse.isButtonPressed(button),
+        wheelDelta: this._mouse.wheelDelta,
+      },
+      gamepad: {
+        pressedButtons: this._gamepad.pressedButtons,
+        axisValues: this._gamepad.axisValues,
+        isButtonPressed: (button) => this._gamepad.isButtonPressed(button),
+        getAxisValue: (axis) => this._gamepad.getAxisValue(axis),
+      },
+    };
   }
 
   public get keyboard(): KeyboardInput {
@@ -58,13 +101,35 @@ export class Input {
   private _initialize(): void {
     if (this._initialized) return;
 
-    // Initialize keyboard input
-    this._keyboard.initialize();
+    const onInput = () => this._notifyGameObjects();
 
-    // Initialize mouse input
-    this._mouse.initialize();
+    // Initialize keyboard input with callback
+    this._keyboard.initialize(onInput);
+
+    // Initialize mouse input with callback
+    this._mouse.initialize(onInput);
+
+    // Initialize gamepad input with callback
+    this._gamepad.initialize(onInput);
 
     this._initialized = true;
+  }
+
+  /**
+   * Notify all registered GameObjects of input changes
+   */
+  private _notifyGameObjects(): void {
+    const state = this.getState();
+    for (const gameObject of this._gameObjects) {
+      try {
+        gameObject.onInput(state);
+      } catch (error) {
+        logger({
+          message: `Error in GameObject.onInput: ${error}`,
+          type: 'error',
+        });
+      }
+    }
   }
 
   /**
@@ -74,66 +139,10 @@ export class Input {
     this._keyboard.dispose();
     this._mouse.dispose();
     this._gamepad.dispose();
+    this._gameObjects.clear();
 
     this._initialized = false;
   }
-
-  // ==================== KEYBOARD METHODS (delegated to KeyboardInput) ====================
-  // These are convenience methods that delegate to the keyboard instance
-  // For direct access, use input.keyboard.methodName()
-
-  public addKeyDownListener = this._keyboard.addKeyDownListener.bind(this._keyboard);
-  public addKeyPressListener = this._keyboard.addKeyPressListener.bind(this._keyboard);
-  public addKeyUpListener = this._keyboard.addKeyUpListener.bind(this._keyboard);
-  public onKeyboardInteraction = this._keyboard.onKeyboardInteraction.bind(this._keyboard);
-  public removeKeyDownListener = this._keyboard.removeKeyDownListener.bind(this._keyboard);
-  public removeKeyPressListener = this._keyboard.removeKeyPressListener.bind(this._keyboard);
-  public removeKeyUpListener = this._keyboard.removeKeyUpListener.bind(this._keyboard);
-  public removeAllKeyboardListeners = this._keyboard.removeAllListeners.bind(this._keyboard);
-  public disableKeyboard = this._keyboard.disable.bind(this._keyboard);
-  public enableKeyboard = this._keyboard.enable.bind(this._keyboard);
-
-  // ==================== MOUSE METHODS (delegated to MouseInput) ====================
-  // These are convenience methods that delegate to the mouse instance
-  // For direct access, use input.mouse.methodName()
-
-  public get mouseX(): number {
-    return this._mouse.mouseX;
-  }
-
-  public get mouseY(): number {
-    return this._mouse.mouseY;
-  }
-
-  public addMouseScrollListener = this._mouse.addMouseScrollListener.bind(this._mouse);
-  public addMouseMoveListener = this._mouse.addMouseMoveListener.bind(this._mouse);
-  public addMouseClickListener = this._mouse.addMouseClickListener.bind(this._mouse);
-  public addMouseUpListener = this._mouse.addMouseUpListener.bind(this._mouse);
-  public onMouseInteraction = this._mouse.onMouseInteraction.bind(this._mouse);
-  public removeMouseScrollListener = this._mouse.removeMouseScrollListener.bind(this._mouse);
-  public removeMouseMoveListener = this._mouse.removeMouseMoveListener.bind(this._mouse);
-  public removeMouseClickListener = this._mouse.removeMouseClickListener.bind(this._mouse);
-  public removeMouseUpListener = this._mouse.removeMouseUpListener.bind(this._mouse);
-  public removeAllMouseListeners = this._mouse.removeAllListeners.bind(this._mouse);
-  public disableMouse = this._mouse.disable.bind(this._mouse);
-  public enableMouse = this._mouse.enable.bind(this._mouse);
-
-  // ==================== GAMEPAD METHODS (delegated to GamepadInput) ====================
-  // These are convenience methods that delegate to the gamepad instance
-  // For direct access, use input.gamepad.methodName()
-
-  public addGamepadButtonDownListener = this._gamepad.addGamepadButtonDownListener.bind(
-    this._gamepad
-  );
-  public addGamepadButtonUpListener = this._gamepad.addGamepadButtonUpListener.bind(this._gamepad);
-  public addGamepadButtonPressListener = this._gamepad.addGamepadButtonPressListener.bind(
-    this._gamepad
-  );
-  public addGamepadAxisMoveListener = this._gamepad.addGamepadAxisMoveListener.bind(this._gamepad);
-  public onGamepadInteraction = this._gamepad.onGamepadInteraction.bind(this._gamepad);
-  public removeAllGamepadListeners = this._gamepad.removeAllListeners.bind(this._gamepad);
-  public disableGamepad = this._gamepad.disable.bind(this._gamepad);
-  public enableGamepad = this._gamepad.enable.bind(this._gamepad);
 }
 
 // Export a singleton instance for direct imports

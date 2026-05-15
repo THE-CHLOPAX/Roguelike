@@ -1,4 +1,4 @@
-import { AxisListener, ButtonListener, GamepadButtonState, GamepadInput } from '../types';
+import { AxisListener, ButtonListener, GamepadButtonState } from '../types';
 import {
   GAMEPAD_BUTTON_MAPPING,
   GAMEPAD_AXIS_MAPPING,
@@ -12,7 +12,7 @@ const DEFAULT_PRESS_THRESHOLD_MS = 50;
  * Class representing a connected gamepad instance
  * Manages gamepad state and emits events for button presses and axis changes
  */
-export class GamepadInstance implements GamepadInput {
+export class GamepadInstance {
   private _disabled: boolean = false;
   private _gamepad: Gamepad;
   private _previousButtonStates: Map<number, GamepadButtonState>;

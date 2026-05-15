@@ -3,6 +3,8 @@ import {
   GameObjectComponent,
   GameObjectConstructorOptions,
   GameObjectEventMap,
+  Input,
+  InputState,
   logger,
 } from '@tgdf';
 
@@ -21,6 +23,8 @@ export class GameObject extends THREE.Object3D {
     super();
     this._scene = scene;
     this._gameObjectComponents = new Map<string, GameObjectComponent>();
+
+    Input.getInstance().registerGameObject(this);
   }
 
   public get scene(): Scene | undefined {
@@ -67,6 +71,9 @@ export class GameObject extends THREE.Object3D {
   }
 
   public destroy(): void {
+    // Unregister from Input singleton
+    Input.getInstance().unregisterGameObject(this);
+
     this._gameObjectComponents.forEach((component) => {
       component.destroy();
     });
@@ -114,6 +121,8 @@ export class GameObject extends THREE.Object3D {
   protected onAwake(): void {}
 
   protected onUpdate(_deltaTime: number): void {}
+
+  public onInput(_inputState: InputState): void {}
 
   protected onDestroyed(): void {}
 
