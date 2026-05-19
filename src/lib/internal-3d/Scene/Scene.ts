@@ -4,7 +4,6 @@ import { init } from '@recast-navigation/core';
 
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
-import { Input } from '../../internal-input/Input';
 import { PhysicsManager } from '../PhysicsManager';
 import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
 import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
@@ -15,7 +14,6 @@ export abstract class Scene extends THREE.Scene {
 
   private _emitter = new Emitter<SceneEventsMap>();
   private _renderer: THREE.WebGLRenderer | null = null;
-  private _input: Input;
 
   private _physicsManager?: PhysicsManager;
   private _navMeshManager?: NavMeshManager;
@@ -24,33 +22,7 @@ export abstract class Scene extends THREE.Scene {
   constructor(options?: SceneConstructorOptions) {
     super();
 
-    // Get the global Input singleton instance
-    this._input = Input.getInstance();
-
     if (options?.physics) this._initializePhysicsWorld(options.physics.gravity);
-  }
-
-  /**
-   * Access the global Input instance for keyboard, mouse, and gamepad handling.
-   * @deprecated Use `Input.getInstance()` or `input` singleton directly instead.
-   */
-  public get keyboardInput(): Input {
-    return this._input;
-  }
-
-  /**
-   * Access the global Input instance for keyboard, mouse, and gamepad handling.
-   * @deprecated Use `Input.getInstance()` or `input` singleton directly instead.
-   */
-  public get mouseInput(): Input {
-    return this._input;
-  }
-
-  /**
-   * Access the global Input instance for keyboard, mouse, and gamepad handling.
-   */
-  public get input(): Input {
-    return this._input;
   }
 
   public get events(): Emitter<SceneEventsMap> {
@@ -102,6 +74,10 @@ export abstract class Scene extends THREE.Scene {
 
     childrenToRemove.forEach((child) => {
       this.remove(child);
+
+      if (child instanceof GameObject) {
+        child.destroy();
+      }
     });
 
     this._resourceTrackerMap.clear();
@@ -130,6 +106,10 @@ export abstract class Scene extends THREE.Scene {
         type: 'info',
       });
       super.remove(object);
+
+      if (object instanceof GameObject) {
+        object.destroy();
+      }
 
       const resourceTracker = this._resourceTrackerMap.get(object.uuid);
       if (resourceTracker) {

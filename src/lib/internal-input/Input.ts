@@ -120,9 +120,17 @@ export class Input {
    */
   private _notifyGameObjects(): void {
     const state = this.getState();
+
     for (const gameObject of this._gameObjects) {
       try {
         gameObject.onInput(state);
+
+        const gameObjectComponents = gameObject.gameObjectComponents;
+        if (gameObjectComponents) {
+          gameObjectComponents.forEach((component) => {
+            component.onInput(state);
+          });
+        }
       } catch (error) {
         logger({
           message: `Error in GameObject.onInput: ${error}`,

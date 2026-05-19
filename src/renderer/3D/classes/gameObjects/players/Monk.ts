@@ -1,10 +1,11 @@
 import { getModelFromStore } from '@tgdf';
 
+import { Player } from './Player';
 import { MODELS } from '../../../constants';
-import { Humanoid } from '../Humanoid/Humanoid';
+import { IdleState } from '../../states/IdleState';
 import { TestScene } from '../../../../scenes/test/TestScene';
 
-export class Monk extends Humanoid {
+export class Monk extends Player {
   constructor(scene: TestScene) {
     const monkModel = getModelFromStore(MODELS.MONK.id);
 
@@ -25,5 +26,7 @@ export class Monk extends Humanoid {
         colliderShape: 'box',
       },
     });
+
+    this.stateController.currentState = new IdleState(this);
   }
 }

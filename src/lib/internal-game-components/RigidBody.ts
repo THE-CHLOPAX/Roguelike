@@ -152,16 +152,16 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   }
 
   protected override onDestroyed(): void {
-    super.onDestroyed();
-
-    // Remove physics collider
-    this._removePhysicsCollider();
+    // If physics world is still available, remove body and collider from physics world
+    if (this.gameObject.scene?.physics?.world) {
+      this._removePhysicsCollider();
+      this._removePhysicsBody();
+    }
 
     // Remove debug mesh
     this._removeDebugMesh();
 
-    // Remove body
-    this._removePhysicsBody();
+    super.onDestroyed();
   }
 
   private _createPhysicsBody(): RAPIER.RigidBody | null {

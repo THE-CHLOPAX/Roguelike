@@ -86,7 +86,7 @@ export function ThreeDViewer({
   const pauseRendering = useCallback(
     (targetRenderer: THREE.WebGLRenderer) => {
       targetRenderer.setAnimationLoop(null);
-      Input.getInstance().disableAllInput();
+      Input.disableAllInput();
     },
     [scene]
   );
@@ -95,7 +95,7 @@ export function ThreeDViewer({
     (targetRenderer: THREE.WebGLRenderer) => {
       clockRef.current.oldTime = performance.now();
       targetRenderer.setAnimationLoop(rendererLoop);
-      Input.getInstance().enableAllInput();
+      Input.enableAllInput();
     },
     [scene, rendererLoop]
   );

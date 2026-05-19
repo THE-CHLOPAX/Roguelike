@@ -1,4 +1,4 @@
-import { Scene, GameObject } from '@tgdf';
+import { Scene, GameObject, InputState } from '@tgdf';
 
 export abstract class GameObjectComponent<T = unknown> {
   private _gameObject: GameObject;
@@ -36,4 +36,6 @@ export abstract class GameObjectComponent<T = unknown> {
   protected onAwake(): void {}
 
   protected onDestroyed(): void {}
+
+  public onInput(_inputState: InputState): void {}
 }

@@ -1,4 +1,4 @@
-export enum HumanoidStates {
+export enum Animations {
   IDLE = 'idle',
   WALKING = 'walk',
   RUNNING = 'run',

@@ -24,7 +24,7 @@ export class GameObject extends THREE.Object3D {
     this._scene = scene;
     this._gameObjectComponents = new Map<string, GameObjectComponent>();
 
-    Input.getInstance().registerGameObject(this);
+    Input.registerGameObject(this);
   }
 
   public get scene(): Scene | undefined {
@@ -72,7 +72,7 @@ export class GameObject extends THREE.Object3D {
 
   public destroy(): void {
     // Unregister from Input singleton
-    Input.getInstance().unregisterGameObject(this);
+    Input.unregisterGameObject(this);
 
     this._gameObjectComponents.forEach((component) => {
       component.destroy();
