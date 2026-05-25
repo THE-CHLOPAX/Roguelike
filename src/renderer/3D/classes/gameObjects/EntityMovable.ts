@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GameObjectComponent, logger, RigidBody, Scene } from '@tgdf';
+import { GameObjectComponent, logger, Scene } from '@tgdf';
 
 import { Entity, EntityOptions } from './Entity';
 import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';

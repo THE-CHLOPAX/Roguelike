@@ -2,11 +2,7 @@ import { TestScene, TestSceneConstructorOptions } from './TestScene';
 import { Monk } from '../../3D/classes/gameObjects/players/Monk/Monk';
 import { Skeleton } from '../../3D/classes/gameObjects/mobs/Skeleton';
 import { NavMeshAgent } from '../../3D/classes/gameObjectComponents/NavMeshAgent';
-import {
-  NAVMESH_AGENT_HEIGHT,
-  NAVMESH_AGENT_RADIUS,
-  MAIN_ENEMY_CROWD_ID,
-} from 'src/renderer/constants';
+import { NAVMESH_AGENT_HEIGHT, NAVMESH_AGENT_RADIUS, MAIN_ENEMY_CROWD_ID } from '../../constants';
 
 export class PathfindingTestScene extends TestScene {
   constructor(options: TestSceneConstructorOptions) {
