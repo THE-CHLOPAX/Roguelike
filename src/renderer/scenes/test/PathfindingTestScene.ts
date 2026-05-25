@@ -2,10 +2,11 @@ import { TestScene, TestSceneConstructorOptions } from './TestScene';
 import { Monk } from '../../3D/classes/gameObjects/players/Monk/Monk';
 import { Skeleton } from '../../3D/classes/gameObjects/mobs/Skeleton';
 import { NavMeshAgent } from '../../3D/classes/gameObjectComponents/NavMeshAgent';
-
-// NavMesh configuration
-const AGENT_RADIUS = 0.6; // Agent radius in world units
-const AGENT_HEIGHT = 2.0;
+import {
+  NAVMESH_AGENT_HEIGHT,
+  NAVMESH_AGENT_RADIUS,
+  MAIN_ENEMY_CROWD_ID,
+} from 'src/renderer/constants';
 
 export class PathfindingTestScene extends TestScene {
   constructor(options: TestSceneConstructorOptions) {
@@ -25,20 +26,20 @@ export class PathfindingTestScene extends TestScene {
     this.add(skeleton);
 
     this.initializeNavMeshManager(this.floorPlane, {
-      agentHeight: AGENT_HEIGHT,
-      agentRadius: AGENT_RADIUS,
+      agentHeight: NAVMESH_AGENT_HEIGHT,
+      agentRadius: NAVMESH_AGENT_RADIUS,
     }).then(() => {
-      const crowd = this.navMeshManager!.addCrowd('main-crowd', {
+      const crowd = this.navMeshManager!.addCrowd(MAIN_ENEMY_CROWD_ID, {
         maxAgents: 100,
-        maxAgentRadius: AGENT_RADIUS,
+        maxAgentRadius: NAVMESH_AGENT_RADIUS,
       });
 
       if (crowd) {
         skeleton.addComponent(
           'NavMeshAgent',
           new NavMeshAgent(skeleton, crowd, {
-            radius: AGENT_RADIUS,
-            height: AGENT_HEIGHT,
+            radius: NAVMESH_AGENT_RADIUS,
+            height: NAVMESH_AGENT_HEIGHT,
           })
         );
       }

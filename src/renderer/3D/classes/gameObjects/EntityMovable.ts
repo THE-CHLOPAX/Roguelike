@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GameObjectComponent, logger, Scene } from '@tgdf';
+import { GameObjectComponent, logger, RigidBody, Scene } from '@tgdf';
 
 import { Entity, EntityOptions } from './Entity';
 import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
@@ -34,10 +34,6 @@ export class EntityMovable extends Entity {
     return this._currentSpeed;
   }
 
-  public get isMoving(): boolean {
-    return (this.velocity?.length() ?? 0) > 0.1;
-  }
-
   public get velocity(): THREE.Vector3 | null {
     if (this._navMeshAgent) {
       return this._navMeshAgent.velocity;
@@ -46,6 +42,11 @@ export class EntityMovable extends Entity {
     } else {
       return null;
     }
+  }
+
+  public get isMoving(): boolean {
+    const velocity = this.velocity;
+    return velocity ? velocity.length() > 0.1 : false;
   }
 
   public get movementDisabled(): boolean {

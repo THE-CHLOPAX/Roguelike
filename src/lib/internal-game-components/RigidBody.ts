@@ -21,12 +21,18 @@ export type RigidBodyOptions = {
   angularDamping?: number; // Rotation resistance
   lockRotation?: boolean;
   colliderShape?: RigidBodyShape;
+  sensor?: boolean; // If true, the collider will not produce physical responses but can still trigger collision events
   enableCollisionDetection?: boolean;
 };
 
+export type RigidBodyCollisionCallback = (
+  thisBody: RigidBody,
+  otherBody: RigidBody,
+  started: boolean
+) => void;
+
 export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   public static BodyType = RAPIER.RigidBodyType;
-  public static ShapeType = RAPIER.ShapeType;
   public static ActiveEvents = RAPIER.ActiveEvents;
 
   private _body: RAPIER.RigidBody | null = null;
@@ -50,6 +56,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       lockRotation: false,
       enableCollisionDetection: false,
       colliderShape: 'box',
+      sensor: false,
       ...options,
     };
 
@@ -63,14 +70,30 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     return this._collider;
   }
 
+  public getDebugMesh(): THREE.Mesh | null {
+    return this._colliderDebugMesh;
+  }
+
   public getRigidBody(): RAPIER.RigidBody | null {
     return this._body;
+  }
+
+  public getHandle(): RAPIER.RigidBodyHandle | null {
+    return this._body ? this._body.handle : null;
   }
 
   public getLinearVelocity(): THREE.Vector3 {
     if (!this._body) return new THREE.Vector3();
     const vel = this._body.linvel();
     return new THREE.Vector3(vel.x, vel.y, vel.z);
+  }
+
+  public getTranslation(): THREE.Vector3 {
+    if (this._body) {
+      const translation = this._body.translation();
+      return new THREE.Vector3(translation.x, translation.y, translation.z);
+    }
+    return new THREE.Vector3();
   }
 
   public setLinearVelocity(velocity: THREE.Vector3): void {
@@ -106,10 +129,36 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     }
   }
 
-  public addCollisionListener(id: string, callback: PhysicsCollisionCallback) {
+  public addCollisionListener(id: string, callback: RigidBodyCollisionCallback) {
     const physics = this._getPhysicsManager();
-    this._collisionListeners.set(id, callback);
-    return physics.onCollision(callback);
+
+    // Get this body's handle
+    const thisHandle = this._body?.handle;
+    if (!thisHandle) {
+      throw new Error('RigidBody: Cannot add collision listener before body is initialized');
+    }
+
+    // Wrap the callback to convert handles to GameObjects
+    const wrappedCallback: PhysicsCollisionCallback = (handle1, handle2, started) => {
+      // Check if this collision involves our body
+      if (handle1 !== thisHandle && handle2 !== thisHandle) {
+        return; // Not our collision
+      }
+
+      // Determine which is the other body
+      const otherHandle = handle1 === thisHandle ? handle2 : handle1;
+
+      // Get GameObjects from handles
+      const thisBody = physics.getBodyFromHandle(thisHandle);
+      const otherBody = physics.getBodyFromHandle(otherHandle);
+
+      if (thisBody && otherBody) {
+        callback(thisBody, otherBody, started);
+      }
+    };
+
+    this._collisionListeners.set(id, wrappedCallback);
+    return physics.onCollision(wrappedCallback);
   }
 
   public removeCollisionListener(id: string) {
@@ -141,14 +190,31 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
   protected override onUpdate(_deltaTime: number): void {
     super.onUpdate(_deltaTime);
-    // Sync game object's position and rotation with physics body
     const body = this._body;
     if (!body) return;
-    const translation = body.translation();
-    const rotation = body.rotation();
 
-    this.gameObject.position.set(translation.x, translation.y, translation.z);
-    this.gameObject.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    // For kinematic bodies, sync physics position TO visual
+    if (this.options.type === 'kinematic') {
+      const worldPos = new THREE.Vector3();
+      const worldQuat = new THREE.Quaternion();
+      this.gameObject.getWorldPosition(worldPos);
+      this.gameObject.getWorldQuaternion(worldQuat);
+
+      body.setNextKinematicTranslation({ x: worldPos.x, y: worldPos.y, z: worldPos.z });
+      body.setNextKinematicRotation({
+        x: worldQuat.x,
+        y: worldQuat.y,
+        z: worldQuat.z,
+        w: worldQuat.w,
+      });
+    } else {
+      // For dynamic/static bodies, sync visual position TO physics
+      const translation = body.translation();
+      const rotation = body.rotation();
+
+      this.gameObject.position.set(translation.x, translation.y, translation.z);
+      this.gameObject.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    }
   }
 
   protected override onDestroyed(): void {
@@ -175,9 +241,6 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     if (this.options.lockRotation) {
       body.lockRotations(true, false);
     }
-
-    const physics = this._getPhysicsManager();
-    physics.addBody(this.gameObject, body);
 
     return body;
   }
@@ -250,6 +313,10 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     this._body = this._createPhysicsBody();
     // Create physics collider from mesh geometry
     this._collider = this._createPhysicsCollider();
+
+    // Register body with physics manager
+    const physics = this._getPhysicsManager();
+    physics.addBody(this.gameObject, this);
   }
 
   private _getBody(): RAPIER.RigidBody {
