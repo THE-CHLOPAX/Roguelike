@@ -34,6 +34,10 @@ export class EntityMovable extends Entity {
     return this._currentSpeed;
   }
 
+  public get isMoving(): boolean {
+    return (this.velocity?.length() ?? 0) > 0.1;
+  }
+
   public get velocity(): THREE.Vector3 | null {
     if (this._navMeshAgent) {
       return this._navMeshAgent.velocity;

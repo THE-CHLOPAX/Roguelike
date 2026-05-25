@@ -4,6 +4,7 @@ import { GameObject, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
 import { AnimationController } from '../gameObjectComponents/AnimationController';
+import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 
 export type EntityOptions = {
   model: THREE.Object3D;
@@ -17,6 +18,7 @@ export class Entity extends GameObject {
   private _animationController: AnimationController;
   private _modelRenderer: ModelRenderer;
   private _stateController: StateController;
+  private _damageHitboxController: DamageHitboxController;
 
   private _rigidBody: RigidBody | null = null;
   private _currentRotation: number = 0;
@@ -43,6 +45,11 @@ export class Entity extends GameObject {
       new RigidBody(this, this._options.rigidBodyOptions)
     );
 
+    this._damageHitboxController = this.addComponent(
+      'DamageHitboxController',
+      new DamageHitboxController(this, this._modelRenderer)
+    );
+
     this._stateController = this.addComponent('StateController', new StateController(this));
   }
 
@@ -56,6 +63,10 @@ export class Entity extends GameObject {
 
   public get animationController(): AnimationController {
     return this._animationController;
+  }
+
+  public get damageHitboxController(): DamageHitboxController {
+    return this._damageHitboxController;
   }
 
   public get rigidBody(): RigidBody | null {

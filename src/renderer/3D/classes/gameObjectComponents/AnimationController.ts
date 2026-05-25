@@ -17,7 +17,7 @@ export type AnimationPlayOptions = {
 };
 export class AnimationController extends GameObjectComponent {
   private _currentAction: THREE.AnimationAction | null = null;
-  private _currentActionOnComplete: ((event: THREE.Event) => void) | null = null;
+  private _currentActionOnComplete: ((event?: THREE.Event) => void) | null = null;
   private _animations: THREE.AnimationClip[] = [];
   private _animationMixer: THREE.AnimationMixer | null = null;
   private _actions: Map<string, THREE.AnimationAction> = new Map();
@@ -49,6 +49,7 @@ export class AnimationController extends GameObjectComponent {
     // Fade out and stop the previous action
     if (this._currentAction && this._currentAction !== action) {
       this._currentAction.fadeOut(0.2);
+      this._onActionInterrupted(this._currentAction);
     }
 
     // Apply playback rate if specified
@@ -85,7 +86,19 @@ export class AnimationController extends GameObjectComponent {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
     this._currentAction = null;
+    console.log('Stopping animation:', animationName);
     action.stop();
+  }
+
+  protected override onUpdate(deltaTime: number): void {
+    if (this._animationMixer) {
+      this._animationMixer.update(deltaTime);
+    }
+  }
+
+  protected override onDestroyed(): void {
+    this._disposeAnimationMixer();
+    this._animations = [];
   }
 
   private _getAnimationAction(animationName: string): THREE.AnimationAction | null {
@@ -142,14 +155,11 @@ export class AnimationController extends GameObjectComponent {
     }
   }
 
-  protected override onUpdate(deltaTime: number): void {
-    if (this._animationMixer) {
-      this._animationMixer.update(deltaTime);
+  private _onActionInterrupted(action: THREE.AnimationAction): void {
+    // If the interrupted action has an onComplete callback, we should call it to ensure proper cleanup
+    if (this._currentActionOnComplete && action === this._currentAction) {
+      this._currentActionOnComplete();
+      this._currentActionOnComplete = null;
     }
-  }
-
-  protected override onDestroyed(): void {
-    this._disposeAnimationMixer();
-    this._animations = [];
   }
 }
