@@ -54,6 +54,11 @@ export abstract class Scene extends THREE.Scene {
     if (this._renderer !== renderer) this.events.trigger('rendererChange', { renderer });
     this._renderer = renderer;
 
+    // Update camera
+    if ('update' in this.camera) {
+      (this.camera as { update: () => void }).update();
+    }
+
     // Update all GameObjects
     this.traverse((child) => {
       if (child instanceof GameObject) {

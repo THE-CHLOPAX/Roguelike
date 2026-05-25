@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 
 import { CameraMoveToOptions } from './types';
+import { CAMERA_POSITION_OFFSET } from '../../constants';
+
+const DEFAULT_CAMERA_LERP = 0.025;
 
 export type OrtographicCameraOptions = {
   options: {
@@ -26,6 +29,8 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
   private _zoom: { min: number; max: number } = { min: 0.1, max: 1 };
   private _pivotPoint: THREE.Vector3 | null = null;
 
+  private _followTarget: THREE.Object3D | null = null;
+
   constructor({ options = {}, zoom }: OrtographicCameraOptions) {
     super(
       options.left ?? -1,
@@ -39,6 +44,9 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     if (zoom) {
       this._zoom = zoom;
     }
+
+    // Initialize pivot point to avoid null reference issues
+    this._pivotPoint = new THREE.Vector3();
 
     this.rotation.order = 'YXZ';
     this.up.set(0, 1, 0);
@@ -82,5 +90,46 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     } else {
       this.position.copy(targetPosition);
     }
+  }
+
+  public follow(target: THREE.Object3D): void {
+    this._followTarget = target;
+    // Initialize pivot point to target's position when starting to follow
+    this._pivotPoint!.copy(target.position);
+  }
+
+  public stopFollowing(): void {
+    this._followTarget = null;
+    this._pivotPoint = new THREE.Vector3();
+  }
+
+  public update(): void {
+    this._followCameraTarget();
+  }
+
+  private _followCameraTarget(): void {
+    if (!this._followTarget) return;
+
+    // Keep camera positioned above the player - create new Vector3 to avoid reference issues
+    const targetPosition = new THREE.Vector3(
+      this._followTarget.position.x,
+      this._followTarget.position.y,
+      this._followTarget.position.z
+    );
+
+    // Update pivot point to follow the player
+    this._pivotPoint!.copy(targetPosition);
+
+    // Rotate offset by camera's Y rotation around the pivot point
+    const rotatedOffset = CAMERA_POSITION_OFFSET.clone().applyAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      this.rotation.y
+    );
+
+    // Move camera to the rotated offset position
+    this.moveTo(targetPosition, {
+      offset: rotatedOffset,
+      lerp: DEFAULT_CAMERA_LERP,
+    });
   }
 }

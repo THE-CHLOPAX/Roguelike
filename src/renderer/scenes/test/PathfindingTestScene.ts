@@ -1,5 +1,5 @@
-import { Monk } from '../../3D/classes/gameObjects/players/Monk';
 import { TestScene, TestSceneConstructorOptions } from './TestScene';
+import { Monk } from '../../3D/classes/gameObjects/players/Monk/Monk';
 import { Skeleton } from '../../3D/classes/gameObjects/mobs/Skeleton';
 import { NavMeshAgent } from '../../3D/classes/gameObjectComponents/NavMeshAgent';
 
@@ -18,6 +18,8 @@ export class PathfindingTestScene extends TestScene {
 
     const monk = new Monk(this);
     this.add(monk);
+
+    this.camera.follow(monk);
 
     const skeleton = new Skeleton(this);
     this.add(skeleton);

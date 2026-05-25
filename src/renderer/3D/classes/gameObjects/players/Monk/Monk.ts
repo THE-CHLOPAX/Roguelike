@@ -1,9 +1,10 @@
 import { getModelFromStore } from '@tgdf';
 
-import { Player } from './Player';
-import { MODELS } from '../../../constants';
-import { IdleState } from '../../states/IdleState';
-import { TestScene } from '../../../../scenes/test/TestScene';
+import { attack } from './attack';
+import { Player } from '../Player';
+import { MODELS } from '../../../../constants';
+import { IdleState } from '../../../sharedStates/IdleState';
+import { TestScene } from '../../../../../scenes/test/TestScene';
 
 export class Monk extends Player {
   constructor(scene: TestScene) {
@@ -27,6 +28,6 @@ export class Monk extends Player {
       },
     });
 
-    this.stateController.currentState = new IdleState(this);
+    this.stateController.currentState = new IdleState(this, attack);
   }
 }

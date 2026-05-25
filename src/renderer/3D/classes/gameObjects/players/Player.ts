@@ -1,14 +1,9 @@
 import { Scene } from '@tgdf';
 
-import { Humanoid, HumanoidOptions } from '../Humanoid/Humanoid';
-import { KeyboardControls } from '../../gameObjectComponents/KeyboardControls';
+import { EntityMovable, EntityMovableOptions } from '../EntityMovable';
 
-export class Player extends Humanoid {
-  private _controls: KeyboardControls;
-
-  constructor(scene: Scene, options: HumanoidOptions) {
+export class Player extends EntityMovable {
+  constructor(scene: Scene, options: EntityMovableOptions) {
     super(scene, options);
-
-    this._controls = this.addComponent('KeyboardControls', new KeyboardControls(this));
   }
 }

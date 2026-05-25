@@ -1,6 +1,6 @@
 import { GameObjectComponent, InputState } from '@tgdf';
 
-import { State } from '../states/State';
+import { State } from '../sharedStates/State';
 import { Entity } from '../gameObjects/Entity';
 
 export class StateController extends GameObjectComponent {

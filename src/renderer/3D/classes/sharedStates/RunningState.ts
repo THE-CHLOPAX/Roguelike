@@ -1,0 +1,80 @@
+import * as THREE from 'three';
+import { Input, InputState, logger } from '@tgdf';
+
+import { Animations } from '../../types';
+import { State, IdleState, SprintingState } from './index';
+import { EntityMovable } from '../gameObjects/EntityMovable';
+import { mapInputToControls } from '../../utils/mapInputToControls';
+
+export class RunningState extends State {
+  constructor(public entity: EntityMovable) {
+    super(entity);
+  }
+
+  public override onEnter(): void {
+    this.entity.animationController.playAnimation(Animations.RUNNING, { loop: true });
+  }
+
+  public override onExit(): void {}
+
+  public override onInput(inputState: InputState): State {
+    const controlState = mapInputToControls(inputState);
+    if (controlState === 'sprint') {
+      return new SprintingState(this.entity);
+    }
+
+    if (controlState === null) {
+      return new IdleState(this.entity);
+    }
+
+    return this;
+  }
+
+  public override onUpdate(_deltaTime: number): State {
+    const direction = new THREE.Vector3();
+    // Update movement direction based on input
+    if (Input.keyboard.isKeyPressed('w')) {
+      direction.z = -1;
+    }
+    if (Input.keyboard.isKeyPressed('s')) {
+      direction.z = 1;
+    }
+    if (Input.keyboard.isKeyPressed('a')) {
+      direction.x = -1;
+    }
+    if (Input.keyboard.isKeyPressed('d')) {
+      direction.x = 1;
+    }
+    this._moveEntity(direction);
+    return this;
+  }
+
+  private _moveEntity(direction: THREE.Vector3): void {
+    const moveVector = direction.clone();
+
+    moveVector.normalize();
+
+    // Apply only Y-axis rotation from camera using forward/right vectors
+    const cameraForward = new THREE.Vector3();
+
+    if (!this.entity.scene || !this.entity.scene.camera) {
+      logger({
+        message: 'KeyboardControls: No camera found in the scene.',
+        type: 'error',
+      });
+      return;
+    }
+
+    this.entity.scene.camera.getWorldDirection(cameraForward);
+    cameraForward.y = 0;
+    cameraForward.normalize();
+
+    const cameraRight = new THREE.Vector3().crossVectors(cameraForward, new THREE.Vector3(0, 1, 0));
+
+    const rotatedMove = new THREE.Vector3();
+    rotatedMove.addScaledVector(cameraRight, moveVector.x);
+    rotatedMove.addScaledVector(cameraForward, -moveVector.z);
+
+    this.entity.move(rotatedMove);
+  }
+}

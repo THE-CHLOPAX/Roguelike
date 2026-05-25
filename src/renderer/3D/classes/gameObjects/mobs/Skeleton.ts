@@ -1,10 +1,10 @@
 import { getModelFromStore } from '@tgdf';
 
 import { MODELS } from '../../../constants';
-import { Humanoid } from '../Humanoid/Humanoid';
+import { EntityMovable } from '../EntityMovable';
 import { TestScene } from '../../../../scenes/test/TestScene';
 
-export class Skeleton extends Humanoid {
+export class Skeleton extends EntityMovable {
   constructor(scene: TestScene) {
     const skeletonModel = getModelFromStore(MODELS.SKELETON.id);
 

@@ -1,13 +1,12 @@
+import { Entity } from './classes/gameObjects/Entity';
+
 export enum Animations {
   IDLE = 'idle',
   WALKING = 'walk',
   RUNNING = 'run',
   SPRINTING = 'sprint',
   JUMPING = 'jump',
-  ATTACKING_1 = 'attack-1',
-  ATTACKING_2 = 'attack-2',
-  ATTACKING_3 = 'attack-3',
-  ATTACKING_4 = 'attack-4',
+  ATTACKING = 'attack',
   FALLING = 'fall',
   DEAD = 'dead',
 }
@@ -30,3 +29,5 @@ export type StateConfig<T> = {
   stateGroup: StateGroup;
   interruptible: boolean;
 };
+
+export type AttackAction = (entity: Entity) => Promise<void>;
