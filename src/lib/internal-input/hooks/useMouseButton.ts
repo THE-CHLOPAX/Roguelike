@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { Input } from '@tgdf';
+import { useEffect, DependencyList } from 'react';
 
-import { MouseButton } from '../types';
-import { useInputState } from './useInputState';
+import { InputNotifiable } from '../Input';
+import { InputState, MouseButton } from '../types';
 
 /**
  * Hook that executes a callback when a specific mouse button is pressed.
@@ -24,13 +25,20 @@ import { useInputState } from './useInputState';
 export function useMouseButton(
   button: MouseButton,
   callback: () => void,
-  deps: React.DependencyList = []
+  deps: DependencyList = []
 ): void {
-  const inputState = useInputState();
-
+  const notifiableObject: InputNotifiable = {
+    onInputNotify: (inputState: InputState) => {
+      if (inputState.mouse.isButtonPressed(button)) {
+        callback();
+      }
+    },
+  };
   useEffect(() => {
-    if (inputState.mouse.isButtonPressed(button)) {
-      callback();
-    }
-  }, [inputState, button, ...deps]);
+    Input.registerNotifiable(notifiableObject);
+
+    return () => {
+      Input.unregisterNotifiable(notifiableObject);
+    };
+  }, [button, callback, ...deps]);
 }

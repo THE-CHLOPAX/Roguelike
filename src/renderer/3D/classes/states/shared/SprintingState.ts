@@ -26,7 +26,7 @@ export class SprintingState extends RunningState {
       return new IdleState(this.entity);
     }
 
-    if (controlState === 'run') {
+    if (controlState?.type === 'run') {
       return new RunningState(this.entity);
     }
 

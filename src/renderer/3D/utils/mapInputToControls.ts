@@ -1,6 +1,13 @@
+import * as THREE from 'three';
 import { InputState, GamepadButton } from '@tgdf';
 
-export type ControlsState = null | 'run' | 'sprint' | 'attack';
+export type ControlsState =
+  | null
+  | {
+      type: 'run' | 'sprint';
+      direction: THREE.Vector3;
+    }
+  | { type: 'attack' };
 
 const AXIS_DEADZONE = 0.15;
 
@@ -16,30 +23,41 @@ export function mapInputToControls(inputState: InputState): ControlsState {
         inputState.keyboard.isKeyPressed(key) ||
         inputState.gamepad.isButtonPressed(key as GamepadButton)
       ) {
-        return attack as ControlsState;
+        return { type: 'attack' };
       }
     }
   }
 
   // Priority 2: Check for sprint
+  const getMovementDirection = () => {
+    const direction = new THREE.Vector3();
+
+    if (inputState.keyboard.isKeyPressed('KeyW')) direction.z -= 1;
+    if (inputState.keyboard.isKeyPressed('KeyS')) direction.z += 1;
+    if (inputState.keyboard.isKeyPressed('KeyA')) direction.x -= 1;
+    if (inputState.keyboard.isKeyPressed('KeyD')) direction.x += 1;
+
+    const leftStickX = inputState.gamepad.getAxisValue('LEFT_STICK_X');
+    const leftStickY = inputState.gamepad.getAxisValue('LEFT_STICK_Y');
+
+    if (Math.abs(leftStickY) > AXIS_DEADZONE) {
+      direction.z += leftStickY;
+    }
+    if (Math.abs(leftStickX) > AXIS_DEADZONE) {
+      direction.x += leftStickX;
+    }
+    return direction;
+  };
+
   if (inputState.keyboard.isKeyPressed('ShiftLeft') || inputState.gamepad.isButtonPressed('RB')) {
-    return 'sprint';
+    return { type: 'sprint', direction: getMovementDirection() };
   }
 
   // Priority 3: Check for run (movement keys/sticks)
-  const hasKeyboardMovement =
-    inputState.keyboard.isKeyPressed('KeyW') ||
-    inputState.keyboard.isKeyPressed('KeyS') ||
-    inputState.keyboard.isKeyPressed('KeyA') ||
-    inputState.keyboard.isKeyPressed('KeyD');
+  const hasMovementDirection = getMovementDirection().length() > 0;
 
-  const leftStickX = inputState.gamepad.getAxisValue('LEFT_STICK_X');
-  const leftStickY = inputState.gamepad.getAxisValue('LEFT_STICK_Y');
-  const hasGamepadMovement =
-    Math.abs(leftStickX) > AXIS_DEADZONE || Math.abs(leftStickY) > AXIS_DEADZONE;
-
-  if (hasKeyboardMovement || hasGamepadMovement) {
-    return 'run';
+  if (hasMovementDirection) {
+    return { type: 'run', direction: getMovementDirection() };
   }
 
   return null;

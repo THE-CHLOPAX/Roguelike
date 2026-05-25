@@ -1,9 +1,13 @@
-import { logger, type GameObject } from '@tgdf';
+import { logger } from '@tgdf';
 
 import { InputState } from './types';
 import { MouseInput } from './MouseInput';
 import { GamepadInput } from './GamepadInput';
 import { KeyboardInput } from './KeyboardInput';
+
+export type InputNotifiable = {
+  onInputNotify(inputState: InputState): void;
+};
 
 /**
  * Singleton Input class that manages keyboard, mouse, and gamepad inputs.
@@ -18,7 +22,21 @@ export class Input {
   private _gamepad: GamepadInput = new GamepadInput();
 
   private _initialized = false;
-  private _gameObjects: Set<GameObject> = new Set();
+  private _notifiables: Set<InputNotifiable> = new Set();
+  private _inputState: InputState = {
+    keyboard: {
+      isKeyPressed: (key: string) => this._keyboard.isKeyPressed(key),
+    },
+    mouse: {
+      x: this._mouse.mouseX,
+      y: this._mouse.mouseY,
+      isButtonPressed: (button) => this._mouse.isButtonPressed(button),
+    },
+    gamepad: {
+      isButtonPressed: (button) => this._gamepad.isButtonPressed(button),
+      getAxisValue: (axis) => this._gamepad.getAxisValue(axis),
+    },
+  };
 
   /**
    * Get the singleton instance of Input.
@@ -35,40 +53,22 @@ export class Input {
   /**
    * Register a GameObject to receive input callbacks
    */
-  public registerGameObject(gameObject: GameObject): void {
-    this._gameObjects.add(gameObject);
+  public registerNotifiable(notifiable: InputNotifiable): void {
+    this._notifiables.add(notifiable);
   }
 
   /**
    * Unregister a GameObject from receiving input callbacks
    */
-  public unregisterGameObject(gameObject: GameObject): void {
-    this._gameObjects.delete(gameObject);
+  public unregisterNotifiable(notifiable: InputNotifiable): void {
+    this._notifiables.delete(notifiable);
   }
 
   /**
    * Get the current input state
    */
   public getState(): InputState {
-    return {
-      keyboard: {
-        pressedKeys: this._keyboard.pressedKeys,
-        isKeyPressed: (key: string) => this._keyboard.isKeyPressed(key),
-      },
-      mouse: {
-        x: this._mouse.mouseX,
-        y: this._mouse.mouseY,
-        pressedButtons: this._mouse.pressedButtons,
-        isButtonPressed: (button) => this._mouse.isButtonPressed(button),
-        wheelDelta: this._mouse.wheelDelta,
-      },
-      gamepad: {
-        pressedButtons: this._gamepad.pressedButtons,
-        axisValues: this._gamepad.axisValues,
-        isButtonPressed: (button) => this._gamepad.isButtonPressed(button),
-        getAxisValue: (axis) => this._gamepad.getAxisValue(axis),
-      },
-    };
+    return this._inputState;
   }
 
   public get keyboard(): KeyboardInput {
@@ -101,7 +101,7 @@ export class Input {
   private _initialize(): void {
     if (this._initialized) return;
 
-    const onInput = () => this._notifyGameObjects();
+    const onInput = () => this._notifyObjects();
 
     // Initialize keyboard input with callback
     this._keyboard.initialize(onInput);
@@ -116,24 +116,17 @@ export class Input {
   }
 
   /**
-   * Notify all registered GameObjects of input changes
+   * Notify all registered InputNotifiables of input changes
    */
-  private _notifyGameObjects(): void {
+  private _notifyObjects(): void {
     const state = this.getState();
 
-    for (const gameObject of this._gameObjects) {
+    for (const notifiable of this._notifiables) {
       try {
-        gameObject.onInput(state);
-
-        const gameObjectComponents = gameObject.gameObjectComponents;
-        if (gameObjectComponents) {
-          gameObjectComponents.forEach((component) => {
-            component.onInput(state);
-          });
-        }
+        notifiable.onInputNotify(state);
       } catch (error) {
         logger({
-          message: `Error in GameObject.onInput: ${error}`,
+          message: `Error in InputNotifiable.onInputNotify: ${error}`,
           type: 'error',
         });
       }
@@ -147,7 +140,7 @@ export class Input {
     this._keyboard.dispose();
     this._mouse.dispose();
     this._gamepad.dispose();
-    this._gameObjects.clear();
+    this._notifiables.clear();
 
     this._initialized = false;
   }

@@ -21,8 +21,6 @@ export { logger } from './internal-ui/utils/logger';
 
 // Internal Input
 export * from './internal-input/types';
-export * from './internal-input/hooks/useInput';
-export * from './internal-input/hooks/useInputState';
 export * from './internal-input/hooks/useKeyPress';
 export * from './internal-input/hooks/useMouseButton';
 export * from './internal-input/Gamepad/GamepadInstance';

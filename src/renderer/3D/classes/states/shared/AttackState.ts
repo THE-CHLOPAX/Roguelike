@@ -35,7 +35,7 @@ export class AttackState extends State {
 
     if (
       !this._attackInProgress &&
-      (this._controlState === 'run' || this._controlState === 'sprint')
+      (this._controlState?.type === 'run' || this._controlState?.type === 'sprint')
     ) {
       return new RunningState(this.entity);
     }

@@ -10,19 +10,14 @@ export type ButtonMatcher = MouseButton | MouseButton[] | ((e: MouseEvent) => bo
 
 export type InputState = {
   keyboard: {
-    pressedKeys: Set<string>;
     isKeyPressed: (key: string) => boolean;
   };
   mouse: {
     x: number;
     y: number;
-    pressedButtons: Set<MouseButton>;
     isButtonPressed: (button: MouseButton) => boolean;
-    wheelDelta: number;
   };
   gamepad: {
-    pressedButtons: Set<GamepadButtonName>;
-    axisValues: Map<GamepadAxisName | number, number>;
     isButtonPressed: (button: GamepadButtonName) => boolean;
     getAxisValue: (axis: GamepadAxisName | number) => number;
   };

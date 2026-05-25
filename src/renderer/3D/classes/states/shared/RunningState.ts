@@ -18,12 +18,13 @@ export class RunningState extends State {
   public override onExit(): void {}
 
   public override onInput(inputState: InputState): State {
-    const controlState = mapInputToControls(inputState);
-    if (controlState === 'sprint') {
+    const controlsState = mapInputToControls(inputState);
+
+    if (controlsState?.type === 'sprint') {
       return new SprintingState(this.entity);
     }
 
-    if (controlState === null) {
+    if (controlsState === null) {
       return new IdleState(this.entity);
     }
 
@@ -31,21 +32,10 @@ export class RunningState extends State {
   }
 
   public override onUpdate(_deltaTime: number): State {
-    const direction = new THREE.Vector3();
-    // Update movement direction based on input
-    if (Input.keyboard.isKeyPressed('w')) {
-      direction.z = -1;
-    }
-    if (Input.keyboard.isKeyPressed('s')) {
-      direction.z = 1;
-    }
-    if (Input.keyboard.isKeyPressed('a')) {
-      direction.x = -1;
-    }
-    if (Input.keyboard.isKeyPressed('d')) {
-      direction.x = 1;
-    }
-    this._moveEntity(direction);
+    const controlState = mapInputToControls(Input.getState());
+    if (controlState === null || !('direction' in controlState)) return this;
+
+    this._moveEntity(controlState.direction);
     return this;
   }
 

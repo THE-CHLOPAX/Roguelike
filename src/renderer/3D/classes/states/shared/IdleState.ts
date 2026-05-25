@@ -19,11 +19,11 @@ export class IdleState extends State {
   public override onInput(inputState: InputState): State {
     const controlState = mapInputToControls(inputState);
 
-    if (controlState === 'run' || controlState === 'sprint') {
+    if (controlState?.type === 'run' || controlState?.type === 'sprint') {
       return new RunningState(this.entity);
     }
 
-    if (controlState === 'attack') {
+    if (controlState?.type === 'attack') {
       return new AttackState(this.entity);
     }
 

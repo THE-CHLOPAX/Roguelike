@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { Input, InputState } from '@tgdf';
+import { useEffect, DependencyList } from 'react';
 
-import { useInputState } from './useInputState';
+import { InputNotifiable } from '../Input';
 
 /**
  * Hook that executes a callback when a specific key is pressed.
@@ -20,16 +21,20 @@ import { useInputState } from './useInputState';
  * }
  * ```
  */
-export function useKeyPress(
-  key: string,
-  callback: () => void,
-  deps: React.DependencyList = []
-): void {
-  const inputState = useInputState();
+export function useKeyPress(key: string, callback: () => void, deps: DependencyList = []): void {
+  const notifiableObject: InputNotifiable = {
+    onInputNotify: (inputState: InputState) => {
+      if (inputState.keyboard.isKeyPressed(key)) {
+        callback();
+      }
+    },
+  };
 
   useEffect(() => {
-    if (inputState.keyboard.isKeyPressed(key)) {
-      callback();
-    }
-  }, [inputState, ...deps]);
+    Input.registerNotifiable(notifiableObject);
+
+    return () => {
+      Input.unregisterNotifiable(notifiableObject);
+    };
+  }, [key, callback, ...deps]);
 }
