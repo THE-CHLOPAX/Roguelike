@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { Input, InputState, logger } from '@tgdf';
 
-import { Animations } from '../../types';
-import { State, IdleState, SprintingState } from './index';
-import { EntityMovable } from '../gameObjects/EntityMovable';
-import { mapInputToControls } from '../../utils/mapInputToControls';
+import { Animations } from '../../../types';
+import { State, IdleState, SprintingState } from '../index';
+import { EntityMovable } from '../../gameObjects/EntityMovable';
+import { mapInputToControls } from '../../../utils/mapInputToControls';
 
 export class RunningState extends State {
   constructor(public entity: EntityMovable) {

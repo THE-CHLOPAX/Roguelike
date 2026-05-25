@@ -1,14 +1,17 @@
 import * as THREE from 'three';
 import { GameObject, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
+import { AttackAction } from '../../types';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
 import { AnimationController } from '../gameObjectComponents/AnimationController';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
+import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
 
 export type EntityOptions = {
   model: THREE.Object3D;
   rigidBodyOptions?: RigidBodyOptions;
+  attackAction?: AttackAction;
 };
 
 const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
@@ -19,15 +22,16 @@ export class Entity extends GameObject {
   private _modelRenderer: ModelRenderer;
   private _stateController: StateController;
   private _damageHitboxController: DamageHitboxController;
+  private _healthPointsController: HealthPointsController;
 
   private _rigidBody: RigidBody | null = null;
   private _currentRotation: number = 0;
-  private _options: EntityOptions;
 
-  constructor(scene: Scene, options: EntityOptions) {
+  constructor(
+    scene: Scene,
+    public options: EntityOptions
+  ) {
     super({ scene });
-
-    this._options = options;
 
     this._modelRenderer = this.addComponent(
       'ModelRenderer',
@@ -42,7 +46,7 @@ export class Entity extends GameObject {
 
     this._rigidBody = this.addComponent(
       RIGID_BODY_COMPONENT_ID,
-      new RigidBody(this, this._options.rigidBodyOptions)
+      new RigidBody(this, this.options.rigidBodyOptions)
     );
 
     this._damageHitboxController = this.addComponent(
@@ -50,7 +54,16 @@ export class Entity extends GameObject {
       new DamageHitboxController(this, this._modelRenderer)
     );
 
+    this._healthPointsController = this.addComponent(
+      'HealthPointsController',
+      new HealthPointsController(this)
+    );
+
     this._stateController = this.addComponent('StateController', new StateController(this));
+  }
+
+  public get attackAction(): AttackAction | undefined {
+    return this.options.attackAction;
   }
 
   public get stateController(): StateController {
@@ -67,6 +80,10 @@ export class Entity extends GameObject {
 
   public get damageHitboxController(): DamageHitboxController {
     return this._damageHitboxController;
+  }
+
+  public get healthPointsController(): HealthPointsController {
+    return this._healthPointsController;
   }
 
   public get rigidBody(): RigidBody | null {

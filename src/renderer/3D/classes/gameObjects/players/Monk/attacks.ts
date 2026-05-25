@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Entity } from '../../Entity';
 import { AttackAction } from '../../../../types';
 
-export const attack: AttackAction = (entity: Entity) =>
+export const kick: AttackAction = (entity: Entity) =>
   new Promise<void>((resolve) => {
     const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
     const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active

@@ -3,23 +3,13 @@ import { Crowd } from '@recast-navigation/core';
 
 import { punch } from './attacks';
 import { MODELS } from '../../../../constants';
-import { Humanoid } from '../../Humanoid/Humanoid';
+import { EntityMovable } from '../../EntityMovable';
+import { AIIdleState } from '../../../states/index';
 import { MAIN_ENEMY_CROWD_ID } from '../../../../../constants';
 import { TestScene } from '../../../../../scenes/test/TestScene';
 import { NavMeshAgent } from '../../../gameObjectComponents/NavMeshAgent';
-import { DamageHitboxController } from '../../../gameObjectComponents/DamageHitboxController';
-import {
-  AIEnemyController,
-  AIEnemyControllerOptions,
-} from '../../../gameObjectComponents/AIEnemyController';
 
-const SKELETON_AI_OPTIONS: AIEnemyControllerOptions = {
-  detectionRadius: 8,
-};
-
-export class Skeleton extends Humanoid {
-  public damageHitboxController: DamageHitboxController;
-
+export class Skeleton extends EntityMovable {
   constructor(scene: TestScene) {
     const skeletonModel = getModelFromStore(MODELS.SKELETON.id);
 
@@ -42,14 +32,12 @@ export class Skeleton extends Humanoid {
         colliderShape: 'box',
         enableCollisionDetection: true,
       },
+      attackAction: punch,
     });
 
     this.name = 'Skeleton';
 
-    this.damageHitboxController = this.addComponent(
-      'DamageHitboxController',
-      new DamageHitboxController(this, this.modelRenderer)
-    );
+    this.stateController.currentState = new AIIdleState(this);
 
     const navMeshManager = scene.navMeshManager;
     if (!navMeshManager) {
@@ -70,30 +58,6 @@ export class Skeleton extends Humanoid {
     }
   }
 
-  public override attack(variant: '1' | '2' | '3' | '4'): boolean {
-    if (!super.attack(variant)) return false;
-
-    switch (variant) {
-      // Kick
-      case '1':
-        punch(this);
-        break;
-      // Punch
-      case '2':
-        // Implement punch logic here
-        break;
-      // Special Attack 1
-      case '3':
-        // Implement special attack 1 logic here
-        break;
-      // Special Attack 2
-      case '4':
-        // Implement special attack 2 logic here
-        break;
-    }
-    return true;
-  }
-
   private _initialize = (crowd: Crowd): void => {
     this.addComponent(
       'NavMeshAgent',
@@ -102,6 +66,5 @@ export class Skeleton extends Humanoid {
         height: 2.0,
       })
     );
-    this.addComponent('AIEnemyController', new AIEnemyController(this, SKELETON_AI_OPTIONS));
   };
 }

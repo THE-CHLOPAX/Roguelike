@@ -1,9 +1,9 @@
 import { getModelFromStore } from '@tgdf';
 
-import { attack } from './attack';
+import { kick } from './attacks';
 import { Player } from '../Player';
 import { MODELS } from '../../../../constants';
-import { IdleState } from '../../../sharedStates/IdleState';
+import { IdleState } from '../../../states/index';
 import { TestScene } from '../../../../../scenes/test/TestScene';
 
 export class Monk extends Player {
@@ -26,8 +26,9 @@ export class Monk extends Player {
         lockRotation: true,
         colliderShape: 'box',
       },
+      attackAction: kick,
     });
 
-    this.stateController.currentState = new IdleState(this, attack);
+    this.stateController.currentState = new IdleState(this);
   }
 }
