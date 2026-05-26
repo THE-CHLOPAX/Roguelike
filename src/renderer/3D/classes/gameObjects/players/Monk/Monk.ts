@@ -1,19 +1,11 @@
-import * as THREE from 'three';
 import { getModelFromStore } from '@tgdf';
 
-import { kick } from './attacks';
-import { Hitbox } from '../../Hitbox';
+import { Player } from '../Player';
 import { MODELS } from '../../../../constants';
-import { DamageHitbox } from '../../DamageHitbox';
-import { Humanoid } from '../../Humanoid/Humanoid';
+import { IdleState } from './states/IdleState';
 import { TestScene } from '../../../../../scenes/test/TestScene';
-import { WSADControls } from '../../../gameObjectComponents/controls/WSADControls';
 
-export class Monk extends Humanoid {
-  public attackTimeline: gsap.core.Timeline | null = null;
-
-  private _attackHitbox: Hitbox | null = null;
-
+export class Monk extends Player {
   constructor(scene: TestScene) {
     const monkModel = getModelFromStore(MODELS.MONK.id);
 
@@ -32,58 +24,9 @@ export class Monk extends Humanoid {
         linearDamping: 0,
         lockRotation: true,
         colliderShape: 'box',
-        enableCollisionDetection: true,
       },
     });
 
-    this.addComponent(
-      'WSADControls',
-      new WSADControls({
-        gameObject: this,
-        camera: scene.camera,
-        keyboardInput: scene.keyboardInput,
-        mouseInput: scene.mouseInput,
-      })
-    );
-  }
-
-  public override attack(variant: '1' | '2' | '3' | '4'): boolean {
-    if (!super.attack(variant)) return false;
-
-    switch (variant) {
-      // Kick
-      case '1':
-        kick(this);
-        break;
-      // Punch
-      case '2':
-        // Implement punch logic here
-        break;
-      // Special Attack 1
-      case '3':
-        // Implement special attack 1 logic here
-        break;
-      // Special Attack 2
-      case '4':
-        // Implement special attack 2 logic here
-        break;
-    }
-    return true;
-  }
-
-  public addHitbox(size: THREE.Vector3, damage: number, parentName: string): void {
-    if (this._attackHitbox || !this.scene) return;
-    this._attackHitbox = new DamageHitbox(this.scene, size, this, damage);
-    this._attackHitbox.toggleDebug(true);
-    this.modelRenderer.addAttachment({
-      object: this._attackHitbox,
-      parentName: parentName,
-    });
-  }
-
-  public removeHitbox(): void {
-    if (!this._attackHitbox || !this.scene) return;
-    this.modelRenderer.removeAttachment(this._attackHitbox);
-    this._attackHitbox = null;
+    this.stateController.currentState = new IdleState(this);
   }
 }

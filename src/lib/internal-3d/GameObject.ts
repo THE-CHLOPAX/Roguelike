@@ -3,15 +3,18 @@ import {
   GameObjectComponent,
   GameObjectConstructorOptions,
   GameObjectEventMap,
+  Input,
+  InputState,
   logger,
 } from '@tgdf';
 
 import { Emitter } from './Emitter';
 import { Scene } from './Scene/Scene';
+import { InputNotifiable } from '../internal-input/Input';
 import { isChildOfObject } from './utils/isChildOfObject';
 import { ResourceTracker } from './ResourceTracker/ResourceTracker';
 
-export class GameObject extends THREE.Object3D {
+export class GameObject extends THREE.Object3D implements InputNotifiable {
   private _gameObjectComponents: Map<string, GameObjectComponent>;
   private _scene: Scene;
   private _emitter: Emitter<GameObjectEventMap> = new Emitter<GameObjectEventMap>();
@@ -22,6 +25,8 @@ export class GameObject extends THREE.Object3D {
     super();
     this._scene = scene;
     this._gameObjectComponents = new Map<string, GameObjectComponent>();
+
+    Input.registerNotifiable(this);
   }
 
   public get scene(): Scene | undefined {
@@ -83,6 +88,9 @@ export class GameObject extends THREE.Object3D {
   }
 
   public destroy(): void {
+    // Unregister from Input singleton
+    Input.unregisterNotifiable(this);
+
     this._gameObjectComponents.forEach((component) => {
       component.destroy();
     });
@@ -135,11 +143,21 @@ export class GameObject extends THREE.Object3D {
     }
   }
 
+  public onInputNotify(_inputState: InputState): void {
+    this.onInput(_inputState);
+
+    this._gameObjectComponents.forEach((component) => {
+      component.onInput(_inputState);
+    });
+  }
+
   protected onAwake(): void {}
 
   protected onUpdate(_deltaTime: number): void {}
 
   protected onDestroyed(): void {}
+
+  protected onInput(_inputState: InputState): void {}
 
   private _onAwakeHandler = () => {
     this._isAwake = true;

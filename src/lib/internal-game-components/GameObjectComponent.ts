@@ -1,4 +1,4 @@
-import { Scene, GameObject, KeyboardInput, MouseInput } from '@tgdf';
+import { Scene, GameObject, InputState } from '@tgdf';
 
 export abstract class GameObjectComponent<T = unknown> {
   private _gameObject: GameObject;
@@ -31,17 +31,11 @@ export abstract class GameObjectComponent<T = unknown> {
     return this.gameObject.scene;
   }
 
-  protected getKeyboardInput(): KeyboardInput | undefined {
-    return this.gameObject.scene?.keyboardInput;
-  }
-
-  protected getMouseInput(): MouseInput | undefined {
-    return this.gameObject.scene?.mouseInput;
-  }
-
   protected onUpdate(_deltaTime: number): void {}
 
   protected onAwake(): void {}
 
   protected onDestroyed(): void {}
+
+  public onInput(_inputState: InputState): void {}
 }

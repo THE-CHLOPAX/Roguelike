@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react';
-import {
-  executeAsyncOperationsWithProgress,
-  Scene,
-  SceneConstructorOptions,
-  useKeyboard,
-  useMouse,
-} from '@tgdf';
+import { executeAsyncOperationsWithProgress, Scene, SceneConstructorOptions } from '@tgdf';
 
 export type UseLoadSceneProps = {
   sceneClass: new (options: SceneConstructorOptions) => Scene;
-  sceneParams?: Omit<SceneConstructorOptions, 'keyboardHandlers' | 'mouseHandlers'>;
+  sceneParams?: SceneConstructorOptions;
   asyncPreloadOperations?: Array<Promise<unknown>>;
 };
 
@@ -24,9 +18,6 @@ export function useLoadScene({
   sceneParams,
   asyncPreloadOperations = [],
 }: UseLoadSceneProps): UseLoadSceneResult {
-  const keyboardInput = useKeyboard();
-  const mouseInput = useMouse();
-
   const [scene, setScene] = useState<Scene | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -50,11 +41,7 @@ export function useLoadScene({
   // Instantiate scene once assets are loaded
   useEffect(() => {
     if (loadingProgress === 1 && loading) {
-      const newScene = new sceneClass({
-        ...sceneParams,
-        keyboardHandlers: keyboardInput,
-        mouseHandlers: mouseInput,
-      });
+      const newScene = new sceneClass({ ...sceneParams });
       setScene(newScene);
       setLoading(false);
     }

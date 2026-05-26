@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { InternalButton, useKeyboard, useViewsStore } from '@tgdf';
+import { InternalButton, useKeyPress, useViewsStore } from '@tgdf';
 
 import * as views from '../ui/views';
 
@@ -9,15 +8,12 @@ export type BackToViewLayoutProps = {
 };
 
 export function BackToViewLayout({ backToView, children }: BackToViewLayoutProps) {
-  const { addKeyDownListener } = useKeyboard();
-
-  useEffect(() => {
-    addKeyDownListener('Escape', () => {
-      setView(backToView);
-    });
-  }, []);
-
   const { setView } = useViewsStore();
+
+  // Listen for Escape key to go back
+  useKeyPress('Escape', () => {
+    setView(backToView);
+  });
 
   return (
     <>

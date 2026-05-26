@@ -1,3 +1,5 @@
+import { Input } from './internal-input/Input';
+
 // Ipc handle
 export { ipc } from './ipc';
 
@@ -19,12 +21,15 @@ export { logger } from './internal-ui/utils/logger';
 
 // Internal Input
 export * from './internal-input/types';
-export * from './internal-input/hooks/useKeyboard';
-export * from './internal-input/hooks/useMouse';
+export * from './internal-input/hooks/useKeyPress';
+export * from './internal-input/hooks/useMouseButton';
 export * from './internal-input/Gamepad/GamepadInstance';
 export * from './internal-input/Gamepad/GamepadMappings';
 export * from './internal-input/hooks/useGamepadNavigation';
 export * from './internal-input/hooks/useGamepadIndicator';
+
+const AppInput = Input.getInstance();
+export { AppInput as Input };
 
 // Internal 3D
 export * from './internal-3d/Emitter';

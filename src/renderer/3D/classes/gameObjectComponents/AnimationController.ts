@@ -86,7 +86,6 @@ export class AnimationController extends GameObjectComponent {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
     this._currentAction = null;
-    console.log('Stopping animation:', animationName);
     action.stop();
   }
 

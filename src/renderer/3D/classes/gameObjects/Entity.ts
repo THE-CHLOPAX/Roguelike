@@ -1,29 +1,35 @@
-import { gsap } from 'gsap';
-import { Scene } from '@tgdf';
 import * as THREE from 'three';
+import { GameObject, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
+import { StateController } from '../gameObjectComponents/StateController';
 import { AnimationController } from '../gameObjectComponents/AnimationController';
+import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
-import {
-  MovableRigidGameObject,
-  MovableRigidGameObjectOptions,
-} from '../gameObjects/MovableRigidGameObject';
 
-export type EntityOptions = MovableRigidGameObjectOptions & {
+export type EntityOptions = {
   model: THREE.Object3D;
-  initialHealthPoints?: number;
+  rigidBodyOptions?: RigidBodyOptions;
 };
 
-export class Entity extends MovableRigidGameObject {
-  private _modelRenderer: ModelRenderer;
+const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
+const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
+
+export class Entity extends GameObject {
   private _animationController: AnimationController;
+  private _modelRenderer: ModelRenderer;
+  private _stateController: StateController;
+  private _damageHitboxController: DamageHitboxController;
   private _healthPointsController: HealthPointsController;
 
-  private _isDamageTweenRunning = false;
+  private _rigidBody: RigidBody | null = null;
+  private _currentRotation: number = 0;
 
-  constructor(scene: Scene, options: EntityOptions) {
-    super(scene, options);
+  constructor(
+    scene: Scene,
+    public options: EntityOptions
+  ) {
+    super({ scene });
 
     this._modelRenderer = this.addComponent(
       'ModelRenderer',
@@ -31,18 +37,31 @@ export class Entity extends MovableRigidGameObject {
         model: options.model,
       })
     );
-
     this._animationController = this.addComponent(
       'AnimationController',
       new AnimationController(this, this._modelRenderer)
     );
 
-    this._healthPointsController = this.addComponent(
-      'HealthPointsController',
-      new HealthPointsController(this, options.initialHealthPoints)
+    this._rigidBody = this.addComponent(
+      RIGID_BODY_COMPONENT_ID,
+      new RigidBody(this, this.options.rigidBodyOptions)
     );
 
-    this._bindHealthPointsControllerEvents();
+    this._damageHitboxController = this.addComponent(
+      'DamageHitboxController',
+      new DamageHitboxController(this, this._modelRenderer)
+    );
+
+    this._healthPointsController = this.addComponent(
+      'HealthPointsController',
+      new HealthPointsController(this)
+    );
+
+    this._stateController = this.addComponent('StateController', new StateController(this));
+  }
+
+  public get stateController(): StateController {
+    return this._stateController;
   }
 
   public get modelRenderer(): ModelRenderer {
@@ -53,40 +72,42 @@ export class Entity extends MovableRigidGameObject {
     return this._animationController;
   }
 
+  public get damageHitboxController(): DamageHitboxController {
+    return this._damageHitboxController;
+  }
+
   public get healthPointsController(): HealthPointsController {
     return this._healthPointsController;
   }
 
-  private _bindHealthPointsControllerEvents(): void {
-    // Flash red on damage
-    this.healthPointsController.onDamageTaken = () => {
-      if (this._isDamageTweenRunning) return;
-      const modelMaterials = this.modelRenderer.getModelMaterials();
+  public get rigidBody(): RigidBody | null {
+    return this._rigidBody;
+  }
 
-      if (!modelMaterials) return;
+  public toggleDebug(enabled: boolean): void {
+    this._rigidBody?.toggleDebug(enabled);
+  }
 
-      modelMaterials.forEach((material) => {
-        if (!('color' in material)) return;
-
-        const color = material.color;
-
-        if (color instanceof THREE.Color) {
-          gsap.to(color, {
-            r: 1,
-            g: 0,
-            b: 0,
-            duration: 0.1,
-            yoyo: true,
-            repeat: 1,
-            onStart: () => {
-              this._isDamageTweenRunning = true;
-            },
-            onComplete: () => {
-              this._isDamageTweenRunning = false;
-            },
-          });
-        }
+  public rotateTowards(direction: THREE.Vector3): void {
+    if (!this._rigidBody) {
+      logger({
+        message: 'Cannot rotate using Rigidbody because it is not initialized.',
+        type: 'error',
       });
-    };
+      return;
+    }
+
+    if (direction.x !== 0 || direction.z !== 0) {
+      const targetRotation = Math.atan2(direction.x, direction.z);
+
+      // Lerp rotation for smooth turning
+      const delta = targetRotation - this._currentRotation;
+      // Find the shortest angle difference and normalize to [-PI, PI]
+      const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
+      this._currentRotation += shortestAngle * ROTATION_LERP_FACTOR;
+
+      // Sync rotation to physics body so it's not overwritten
+      this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
+    }
   }
 }

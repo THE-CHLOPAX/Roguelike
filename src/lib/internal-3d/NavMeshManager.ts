@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Scene, logger } from '@tgdf';
+import { Emitter, Scene, logger } from '@tgdf';
 import { BoxObstacle, Crowd, NavMesh, TileCache } from '@recast-navigation/core';
 import { CrowdHelper, DebugDrawer, TileCacheHelper } from '@recast-navigation/three';
 
@@ -14,6 +14,11 @@ export type NavMeshManagerOptions = {
 
 type ObstacleUserData = {
   obstacle: BoxObstacle;
+};
+
+export type NavMeshManagerEventsMap = {
+  crowdadded: { crowdId: string; crowd: Crowd };
+  crowdremoved: { crowdId: string };
 };
 
 const DEFAULT_CELL_SIZE = 0.2; // Smaller = more precision
@@ -35,6 +40,7 @@ export class NavMeshManager {
   private _debugTileCache: TileCacheHelper | null = null;
 
   private _options: Required<NavMeshManagerOptions>;
+  private _events: Emitter<NavMeshManagerEventsMap> = new Emitter();
 
   constructor(scene: Scene, floorObject: THREE.Object3D, options?: NavMeshManagerOptions) {
     this._scene = scene;
@@ -46,6 +52,10 @@ export class NavMeshManager {
     };
 
     this._generateTileCacheFromObject(floorObject);
+  }
+
+  public get events(): Emitter<NavMeshManagerEventsMap> {
+    return this._events;
   }
 
   public update(deltaTime: number): void {
@@ -155,6 +165,7 @@ export class NavMeshManager {
     });
 
     this._crowdMap.set(id, crowd);
+    this._events.trigger('crowdadded', { crowdId: id, crowd });
 
     return crowd;
   }
@@ -228,6 +239,10 @@ export class NavMeshManager {
 
   public removeCrowd(id: string): void {
     this.toggleCrowdDebug(id, false);
+    const crowd = this._crowdMap.get(id);
+    if (crowd) {
+      this._events.trigger('crowdremoved', { crowdId: id });
+    }
     this._crowdMap.delete(id);
   }
 

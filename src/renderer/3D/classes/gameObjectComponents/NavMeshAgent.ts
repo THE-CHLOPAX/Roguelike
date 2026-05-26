@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GameObjectComponent, logger } from '@tgdf';
 import { Crowd, CrowdAgent, CrowdAgentParams } from '@recast-navigation/core';
 
-import { MovableRigidGameObject } from '../gameObjects/MovableRigidGameObject';
+import { EntityMovable } from '../gameObjects/EntityMovable';
 
 /**
  * Those are arbitrary, tunable values that were
@@ -19,11 +19,7 @@ export class NavMeshAgent extends GameObjectComponent {
 
   private _options?: Partial<CrowdAgentParams>;
 
-  constructor(
-    gameObject: MovableRigidGameObject,
-    crowd: Crowd,
-    options?: Partial<CrowdAgentParams>
-  ) {
+  constructor(gameObject: EntityMovable, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
     super(gameObject);
 
     this._crowd = crowd;
@@ -100,8 +96,8 @@ export class NavMeshAgent extends GameObjectComponent {
       .divideScalar(VELOCITY_MULTIPLIER);
   }
 
-  public override get gameObject(): MovableRigidGameObject {
-    return super.gameObject as MovableRigidGameObject;
+  public override get gameObject(): EntityMovable {
+    return super.gameObject as EntityMovable;
   }
 
   protected override onAwake(): void {

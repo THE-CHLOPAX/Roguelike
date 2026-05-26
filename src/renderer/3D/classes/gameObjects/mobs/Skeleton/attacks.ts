@@ -4,19 +4,19 @@ import * as THREE from 'three';
 import { Entity } from '../../Entity';
 import { AttackAction } from '../../../../types';
 
-export const kick: AttackAction = (entity: Entity) =>
+export const punch: AttackAction = (entity: Entity) =>
   new Promise<void>((resolve) => {
-    const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
-    const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active
+    const HITBOX_DELAY = 0.7; // Delay in milliseconds before the hitbox is attached
+    const HITBOX_DURATION = 0.8; // Duration in milliseconds for which the hitbox remains active
 
     const timeline = gsap
       .timeline()
       .call(
         () =>
           entity.damageHitboxController.attachDamageHitbox(
-            new THREE.Vector3(0.3, 1, 0.3),
+            new THREE.Vector3(0.3, 0.3, 0.3),
             10,
-            'Ctrl_Foot_IK_Right'
+            'Ctrl_Hand_IK_Right'
           ),
         [],
         HITBOX_DELAY
@@ -33,9 +33,9 @@ export const kick: AttackAction = (entity: Entity) =>
       clampWhenFinished: true,
       playbackRate: 1.3,
       onComplete: () => {
-        resolve();
         entity.damageHitboxController.removeDamageHitbox();
         timeline.kill();
+        resolve();
       },
     });
   });

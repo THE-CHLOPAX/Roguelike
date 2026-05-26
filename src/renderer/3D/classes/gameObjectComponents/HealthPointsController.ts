@@ -1,11 +1,15 @@
-import { GameObject, GameObjectComponent, logger } from '@tgdf';
+import gsap from 'gsap';
+import * as THREE from 'three';
+import { GameObjectComponent, logger } from '@tgdf';
+
+import { Entity } from '../gameObjects/Entity';
 
 export class HealthPointsController extends GameObjectComponent {
   private _healthPoints: number;
   private _initialHealthPoints: number;
   private _isDead: boolean = false;
 
-  constructor(gameObject: GameObject, initialHealthPoints: number = 100) {
+  constructor(gameObject: Entity, initialHealthPoints: number = 100) {
     super(gameObject);
     this._initialHealthPoints = initialHealthPoints;
     this._healthPoints = initialHealthPoints;
@@ -17,6 +21,10 @@ export class HealthPointsController extends GameObjectComponent {
 
   public get initialHealthPoints(): number {
     return this._initialHealthPoints;
+  }
+
+  public override get gameObject(): Entity {
+    return super.gameObject as Entity;
   }
 
   public get isDead(): boolean {
@@ -34,7 +42,9 @@ export class HealthPointsController extends GameObjectComponent {
     this._healthPoints = Math.max(this._healthPoints - amount, 0);
     this._isDead = this._healthPoints === 0;
 
+    this._onDamageTaken();
     this.onDamageTaken();
+
     if (this._isDead) {
       this.onDeath();
     }
@@ -67,4 +77,28 @@ export class HealthPointsController extends GameObjectComponent {
   public onDamageTaken() {}
 
   public onDeath() {}
+
+  private _onDamageTaken() {
+    // Flash red on damage
+    const modelMaterials = this.gameObject.modelRenderer.getModelMaterials();
+
+    if (!modelMaterials) return;
+
+    modelMaterials.forEach((material) => {
+      if (!('color' in material)) return;
+
+      const color = material.color;
+
+      if (color instanceof THREE.Color) {
+        gsap.to(color, {
+          r: 1,
+          g: 0,
+          b: 0,
+          duration: 0.1,
+          yoyo: true,
+          repeat: 1,
+        });
+      }
+    });
+  }
 }

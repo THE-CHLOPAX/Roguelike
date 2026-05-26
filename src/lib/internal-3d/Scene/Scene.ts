@@ -1,6 +1,6 @@
 import * as THREE from 'three';
+import { logger } from '@tgdf';
 import { init } from '@recast-navigation/core';
-import { logger, KeyboardInput, MouseInput } from '@tgdf';
 
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
@@ -14,8 +14,6 @@ export abstract class Scene extends THREE.Scene {
 
   private _emitter = new Emitter<SceneEventsMap>();
   private _renderer: THREE.WebGLRenderer | null = null;
-  private _keyboardInput?: KeyboardInput;
-  private _mouseInput?: MouseInput;
 
   private _physicsManager?: PhysicsManager;
   private _navMeshManager?: NavMeshManager;
@@ -24,18 +22,7 @@ export abstract class Scene extends THREE.Scene {
   constructor(options?: SceneConstructorOptions) {
     super();
 
-    this._keyboardInput = options?.keyboardHandlers;
-    this._mouseInput = options?.mouseHandlers;
-
     if (options?.physics) this._initializePhysicsWorld(options.physics.gravity);
-  }
-
-  public get keyboardInput(): KeyboardInput | undefined {
-    return this._keyboardInput;
-  }
-
-  public get mouseInput(): MouseInput | undefined {
-    return this._mouseInput;
   }
 
   public get events(): Emitter<SceneEventsMap> {
@@ -67,6 +54,11 @@ export abstract class Scene extends THREE.Scene {
     if (this._renderer !== renderer) this.events.trigger('rendererChange', { renderer });
     this._renderer = renderer;
 
+    // Update camera
+    if ('update' in this.camera) {
+      (this.camera as { update: () => void }).update();
+    }
+
     // Update all GameObjects
     this.traverse((child) => {
       if (child instanceof GameObject) {
@@ -87,6 +79,10 @@ export abstract class Scene extends THREE.Scene {
 
     childrenToRemove.forEach((child) => {
       this.remove(child);
+
+      if (child instanceof GameObject) {
+        child.destroy();
+      }
     });
 
     this._resourceTrackerMap.clear();
@@ -116,6 +112,10 @@ export abstract class Scene extends THREE.Scene {
       });
       super.remove(object);
 
+      if (object instanceof GameObject) {
+        object.destroy();
+      }
+
       const resourceTracker = this._resourceTrackerMap.get(object.uuid);
       if (resourceTracker) {
         resourceTracker.dispose();
@@ -124,16 +124,6 @@ export abstract class Scene extends THREE.Scene {
     });
 
     return this;
-  }
-
-  public disableInput(): void {
-    this._keyboardInput?.disable();
-    this._mouseInput?.disable();
-  }
-
-  public enableInput(): void {
-    this._keyboardInput?.enable();
-    this._mouseInput?.enable();
   }
 
   public async initializeNavMeshManager(
