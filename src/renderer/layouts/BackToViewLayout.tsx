@@ -11,13 +11,9 @@ export function BackToViewLayout({ backToView, children }: BackToViewLayoutProps
   const { setView } = useViewsStore();
 
   // Listen for Escape key to go back
-  useKeyPress(
-    'Escape',
-    () => {
-      setView(backToView);
-    },
-    [backToView, setView]
-  );
+  useKeyPress('Escape', () => {
+    setView(backToView);
+  });
 
   return (
     <>

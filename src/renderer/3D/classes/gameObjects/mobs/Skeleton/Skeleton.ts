@@ -1,7 +1,6 @@
 import { getModelFromStore } from '@tgdf';
 import { Crowd } from '@recast-navigation/core';
 
-import { punch } from './attacks';
 import { MODELS } from '../../../../constants';
 import { EntityMovable } from '../../EntityMovable';
 import { AIIdleState } from '../../../states/index';
@@ -32,7 +31,6 @@ export class Skeleton extends EntityMovable {
         colliderShape: 'box',
         enableCollisionDetection: true,
       },
-      attackAction: punch,
     });
 
     this.name = 'Skeleton';
@@ -44,21 +42,31 @@ export class Skeleton extends EntityMovable {
       throw new Error('NavMeshManager not found in scene');
     }
 
-    // Crowd already there
     const existingCrowd = navMeshManager.getCrowd(MAIN_ENEMY_CROWD_ID);
+    // Crowd already there
     if (existingCrowd) {
       this._initialize(existingCrowd);
     } else {
       // Crowd not added yet - wait for it
-      navMeshManager.events.on('crowdadded', ({ crowdId, crowd }) => {
-        if (crowdId === MAIN_ENEMY_CROWD_ID) {
-          this._initialize(crowd);
-        }
-      });
+      navMeshManager.events.on('crowdadded', this._onCrowdAdded);
     }
   }
 
-  private _initialize = (crowd: Crowd): void => {
+  protected override onDestroyed(): void {
+    const navMeshManager = this.scene?.navMeshManager;
+    if (navMeshManager) {
+      navMeshManager.events.off('crowdadded', this._onCrowdAdded);
+    }
+    super.onDestroyed();
+  }
+
+  private _onCrowdAdded = ({ crowdId, crowd }: { crowdId: string; crowd: Crowd }) => {
+    if (crowdId === MAIN_ENEMY_CROWD_ID) {
+      this._initialize(crowd);
+    }
+  };
+
+  private _initialize(crowd: Crowd): void {
     this.addComponent(
       'NavMeshAgent',
       new NavMeshAgent(this, crowd, {
@@ -66,5 +74,5 @@ export class Skeleton extends EntityMovable {
         height: 2.0,
       })
     );
-  };
+  }
 }

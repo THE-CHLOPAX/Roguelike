@@ -1,9 +1,10 @@
 import { InputState } from '@tgdf';
 
-import { Animations } from '../../../types';
-import { State, IdleState, RunningState } from '../index';
-import { EntityMovable } from '../../gameObjects/EntityMovable';
-import { mapInputToControls } from '../../../utils/mapInputToControls';
+import { State } from '../../../../states/State';
+import { IdleState, RunningState } from './index';
+import { EntityMovable } from '../../../EntityMovable';
+import { AnimationClipNamesShared } from '../../../../../types';
+import { mapInputToControls } from '../../../../../utils/mapInputToControls';
 
 export class SprintingState extends RunningState {
   constructor(public entity: EntityMovable) {
@@ -11,7 +12,7 @@ export class SprintingState extends RunningState {
   }
 
   public override onEnter(): void {
-    this.entity.animationController.playAnimation(Animations.SPRINTING, { loop: true });
+    this.entity.animationController.playAnimation(AnimationClipNamesShared.SPRINT, { loop: true });
     this.entity.toggleSprint(true);
   }
 
@@ -22,11 +23,11 @@ export class SprintingState extends RunningState {
   public override onInput(inputState: InputState): State {
     const controlState = mapInputToControls(inputState);
 
-    if (controlState === null) {
+    if (controlState.type === 'idle') {
       return new IdleState(this.entity);
     }
 
-    if (controlState?.type === 'run') {
+    if (controlState.type === 'run') {
       return new RunningState(this.entity);
     }
 

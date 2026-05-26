@@ -9,7 +9,7 @@ export const kick: AttackAction = (entity: Entity) =>
     const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
     const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active
 
-    gsap
+    const timeline = gsap
       .timeline()
       .call(
         () =>
@@ -33,8 +33,9 @@ export const kick: AttackAction = (entity: Entity) =>
       clampWhenFinished: true,
       playbackRate: 1.3,
       onComplete: () => {
-        entity.damageHitboxController.removeDamageHitbox();
         resolve();
+        entity.damageHitboxController.removeDamageHitbox();
+        timeline.kill();
       },
     });
   });

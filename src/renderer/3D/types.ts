@@ -1,14 +1,13 @@
 import { Entity } from './classes/gameObjects/Entity';
 
-export enum Animations {
+export enum AnimationClipNamesShared {
   IDLE = 'idle',
-  WALKING = 'walk',
-  RUNNING = 'run',
-  SPRINTING = 'sprint',
-  JUMPING = 'jump',
-  ATTACKING = 'attack',
-  FALLING = 'fall',
-  DEAD = 'dead',
+  WALK = 'walk',
+  RUN = 'run',
+  SPRINT = 'sprint',
+  JUMP = 'jump',
+  FALL = 'fall',
+  DIE = 'die',
 }
 
 export enum StateGroup {

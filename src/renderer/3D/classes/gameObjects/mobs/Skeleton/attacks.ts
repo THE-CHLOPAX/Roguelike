@@ -9,7 +9,7 @@ export const punch: AttackAction = (entity: Entity) =>
     const HITBOX_DELAY = 0.7; // Delay in milliseconds before the hitbox is attached
     const HITBOX_DURATION = 0.8; // Duration in milliseconds for which the hitbox remains active
 
-    gsap
+    const timeline = gsap
       .timeline()
       .call(
         () =>
@@ -34,6 +34,7 @@ export const punch: AttackAction = (entity: Entity) =>
       playbackRate: 1.3,
       onComplete: () => {
         entity.damageHitboxController.removeDamageHitbox();
+        timeline.kill();
         resolve();
       },
     });

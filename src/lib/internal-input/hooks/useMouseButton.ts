@@ -1,5 +1,5 @@
 import { Input } from '@tgdf';
-import { useEffect, DependencyList } from 'react';
+import { useEffect } from 'react';
 
 import { InputNotifiable } from '../Input';
 import { InputState, MouseButton } from '../types';
@@ -9,7 +9,6 @@ import { InputState, MouseButton } from '../types';
  *
  * @param button - The mouse button to listen for
  * @param callback - Function to call when the button is pressed
- * @param deps - Dependency array for the callback (like useEffect)
  *
  * @example
  * ```tsx
@@ -22,11 +21,7 @@ import { InputState, MouseButton } from '../types';
  * }
  * ```
  */
-export function useMouseButton(
-  button: MouseButton,
-  callback: () => void,
-  deps: DependencyList = []
-): void {
+export function useMouseButton(button: MouseButton, callback: () => void): void {
   const notifiableObject: InputNotifiable = {
     onInputNotify: (inputState: InputState) => {
       if (inputState.mouse.isButtonPressed(button)) {
@@ -40,5 +35,5 @@ export function useMouseButton(
     return () => {
       Input.unregisterNotifiable(notifiableObject);
     };
-  }, [button, callback, ...deps]);
+  }, []);
 }

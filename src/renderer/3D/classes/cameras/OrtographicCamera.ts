@@ -27,7 +27,7 @@ export type OrtographicCameraOptions = {
  */
 export class OrtographicCamera extends THREE.OrthographicCamera {
   private _zoom: { min: number; max: number } = { min: 0.1, max: 1 };
-  private _pivotPoint: THREE.Vector3 | null = null;
+  private _pivotPoint: THREE.Vector3 = new THREE.Vector3();
 
   private _followTarget: THREE.Object3D | null = null;
 
@@ -44,9 +44,6 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     if (zoom) {
       this._zoom = zoom;
     }
-
-    // Initialize pivot point to avoid null reference issues
-    this._pivotPoint = new THREE.Vector3();
 
     this.rotation.order = 'YXZ';
     this.up.set(0, 1, 0);

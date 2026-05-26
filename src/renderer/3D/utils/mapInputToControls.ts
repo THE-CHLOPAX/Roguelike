@@ -2,28 +2,31 @@ import * as THREE from 'three';
 import { InputState, GamepadButton } from '@tgdf';
 
 export type ControlsState =
-  | null
+  | { type: 'idle' }
   | {
       type: 'run' | 'sprint';
       direction: THREE.Vector3;
     }
-  | { type: 'attack' };
+  | { type: 'action-up' | 'action-down' | 'action-left' | 'action-right' };
 
 const AXIS_DEADZONE = 0.15;
 
 export function mapInputToControls(inputState: InputState): ControlsState {
-  // Priority 1: Check for attack inputs
-  const attackMappings = {
-    attack: ['ArrowUp', 'DPAD_UP'],
-  };
+  // Priority 1: Check for action inputs
+  const actionMappings = {
+    'action-up': ['ArrowUp', 'DPAD_UP'],
+    'action-down': ['ArrowDown', 'DPAD_DOWN'],
+    'action-left': ['ArrowLeft', 'DPAD_LEFT'],
+    'action-right': ['ArrowRight', 'DPAD_RIGHT'],
+  } as const;
 
-  for (const attack of Object.keys(attackMappings)) {
-    for (const key of attackMappings[attack as keyof typeof attackMappings]) {
+  for (const action of Object.keys(actionMappings)) {
+    for (const key of actionMappings[action as keyof typeof actionMappings]) {
       if (
         inputState.keyboard.isKeyPressed(key) ||
         inputState.gamepad.isButtonPressed(key as GamepadButton)
       ) {
-        return { type: 'attack' };
+        return { type: action as keyof typeof actionMappings };
       }
     }
   }
@@ -60,5 +63,5 @@ export function mapInputToControls(inputState: InputState): ControlsState {
     return { type: 'run', direction: getMovementDirection() };
   }
 
-  return null;
+  return { type: 'idle' };
 }

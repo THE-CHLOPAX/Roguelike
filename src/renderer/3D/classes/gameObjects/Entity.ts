@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GameObject, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
-import { AttackAction } from '../../types';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
 import { AnimationController } from '../gameObjectComponents/AnimationController';
@@ -11,7 +10,6 @@ import { HealthPointsController } from '../gameObjectComponents/HealthPointsCont
 export type EntityOptions = {
   model: THREE.Object3D;
   rigidBodyOptions?: RigidBodyOptions;
-  attackAction?: AttackAction;
 };
 
 const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
@@ -60,10 +58,6 @@ export class Entity extends GameObject {
     );
 
     this._stateController = this.addComponent('StateController', new StateController(this));
-  }
-
-  public get attackAction(): AttackAction | undefined {
-    return this.options.attackAction;
   }
 
   public get stateController(): StateController {

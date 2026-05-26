@@ -24,12 +24,14 @@ export class MouseInput {
   public initialize(onInputCallback?: () => void): void {
     this._onInputCallback = onInputCallback;
     window.addEventListener('wheel', this._onMouseScroll);
+    window.addEventListener('mousemove', this._onMouseMove);
     window.addEventListener('mousedown', this._onMouseClick);
     window.addEventListener('mouseup', this._onMouseUp);
   }
 
   public dispose(): void {
     window.removeEventListener('wheel', this._onMouseScroll);
+    window.removeEventListener('mousemove', this._onMouseMove);
     window.removeEventListener('mousedown', this._onMouseClick);
     window.removeEventListener('mouseup', this._onMouseUp);
 
@@ -63,6 +65,11 @@ export class MouseInput {
   public enable(): void {
     this._mouseDisabled = false;
   }
+
+  private _onMouseMove = (e: MouseEvent): void => {
+    this._mouseX = e.clientX;
+    this._mouseY = e.clientY;
+  };
 
   private _onMouseScroll = (e: WheelEvent): void => {
     if (this._mouseDisabled) return;

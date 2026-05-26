@@ -1,5 +1,5 @@
 import { Input, InputState } from '@tgdf';
-import { useEffect, DependencyList } from 'react';
+import { useEffect, useState } from 'react';
 
 import { InputNotifiable } from '../Input';
 
@@ -8,7 +8,6 @@ import { InputNotifiable } from '../Input';
  *
  * @param key - The key to listen for (case-insensitive, can be key or code)
  * @param callback - Function to call when the key is pressed
- * @param deps - Dependency array for the callback (like useEffect)
  *
  * @example
  * ```tsx
@@ -21,14 +20,20 @@ import { InputNotifiable } from '../Input';
  * }
  * ```
  */
-export function useKeyPress(key: string, callback: () => void, deps: DependencyList = []): void {
+export function useKeyPress(key: string, callback: () => void): void {
+  const [isPressed, setIsPressed] = useState(false);
+
   const notifiableObject: InputNotifiable = {
     onInputNotify: (inputState: InputState) => {
-      if (inputState.keyboard.isKeyPressed(key)) {
-        callback();
-      }
+      setIsPressed(inputState.keyboard.isKeyPressed(key));
     },
   };
+
+  useEffect(() => {
+    if (isPressed) {
+      callback();
+    }
+  }, [isPressed]);
 
   useEffect(() => {
     Input.registerNotifiable(notifiableObject);
@@ -36,5 +41,5 @@ export function useKeyPress(key: string, callback: () => void, deps: DependencyL
     return () => {
       Input.unregisterNotifiable(notifiableObject);
     };
-  }, [key, callback, ...deps]);
+  }, []);
 }

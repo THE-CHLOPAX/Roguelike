@@ -1,7 +1,7 @@
 import { GameObjectComponent, InputState } from '@tgdf';
 
-import { State } from '../states/State';
 import { Entity } from '../gameObjects/Entity';
+import { State } from '../../classes/states/State';
 
 export class StateController extends GameObjectComponent {
   constructor(gameObject: Entity) {
