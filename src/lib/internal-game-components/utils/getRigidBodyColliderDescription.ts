@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
-import { getObjectBbox } from '@tgdf/internal-3d/utils/getObjectBbox';
 
 import { RigidBodyOptions, RigidBodyShape } from '../RigidBody';
 
@@ -9,9 +8,11 @@ export function getRigidBodyColliderDescription(
   object: THREE.Object3D,
   options?: RigidBodyOptions
 ): RAPIER.ColliderDesc {
-  const bbox = getObjectBbox(object);
+  const bbox = new THREE.Box3().setFromObject(object);
   const size = new THREE.Vector3();
   bbox.getSize(size);
+
+  console.log('Calculated bounding box size for collider:', size);
 
   let colliderDesc: RAPIER.ColliderDesc;
 

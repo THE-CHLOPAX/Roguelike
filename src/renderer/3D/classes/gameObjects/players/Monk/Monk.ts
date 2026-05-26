@@ -23,7 +23,7 @@ export class Monk extends Player {
         friction: 0,
         linearDamping: 0,
         lockRotation: true,
-        colliderShape: 'box',
+        colliderShape: 'cylinder',
       },
     });
 

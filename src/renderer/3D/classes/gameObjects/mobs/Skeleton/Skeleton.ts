@@ -28,7 +28,7 @@ export class Skeleton extends EntityMovable {
         friction: 0,
         linearDamping: 0,
         lockRotation: true,
-        colliderShape: 'box',
+        colliderShape: 'cylinder',
         enableCollisionDetection: true,
       },
     });

@@ -235,6 +235,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
     // Create rigid body description
     const bodyDesc = getRigidBodyDescriptionForObject(this.gameObject, this.options);
+    console.log('Creating RigidBody with description:', bodyDesc);
     const body = world.createRigidBody(bodyDesc);
 
     // Lock rotation if specified in options

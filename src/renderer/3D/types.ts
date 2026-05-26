@@ -1,12 +1,14 @@
 import { Entity } from './classes/gameObjects/Entity';
 
 export enum AnimationClipNamesShared {
+  SPAWN = 'spawn',
   IDLE = 'idle',
   WALK = 'walk',
   RUN = 'run',
   SPRINT = 'sprint',
   JUMP = 'jump',
   FALL = 'fall',
+  HIT = 'hit',
   DIE = 'die',
 }
 
