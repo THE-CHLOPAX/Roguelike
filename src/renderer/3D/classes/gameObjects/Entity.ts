@@ -3,13 +3,17 @@ import { GameObject, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
-import { AnimationController } from '../gameObjectComponents/AnimationController';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
+import {
+  AnimationController,
+  AnimationControllerOptions,
+} from '../gameObjectComponents/AnimationController';
 
 export type EntityOptions = {
   model: THREE.Object3D;
   rigidBodyOptions?: RigidBodyOptions;
+  animationControllerOptions?: AnimationControllerOptions;
 };
 
 const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
@@ -22,6 +26,7 @@ export class Entity extends GameObject {
   private _damageHitboxController: DamageHitboxController;
   private _healthPointsController: HealthPointsController;
 
+  private _spawnPosition: THREE.Vector3 = new THREE.Vector3();
   private _rigidBody: RigidBody | null = null;
   private _currentRotation: number = 0;
 
@@ -39,7 +44,7 @@ export class Entity extends GameObject {
     );
     this._animationController = this.addComponent(
       'AnimationController',
-      new AnimationController(this, this._modelRenderer)
+      new AnimationController(this, this._modelRenderer, options.animationControllerOptions)
     );
 
     this._rigidBody = this.addComponent(
@@ -84,6 +89,10 @@ export class Entity extends GameObject {
     return this._rigidBody;
   }
 
+  public get spawnPosition(): THREE.Vector3 {
+    return this._spawnPosition;
+  }
+
   public toggleDebug(enabled: boolean): void {
     this._rigidBody?.toggleDebug(enabled);
   }
@@ -109,5 +118,9 @@ export class Entity extends GameObject {
       // Sync rotation to physics body so it's not overwritten
       this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
     }
+  }
+
+  protected override onAwake(): void {
+    this._spawnPosition.copy(this.position);
   }
 }

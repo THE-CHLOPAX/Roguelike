@@ -51,6 +51,7 @@ export { GameObjectComponent } from './internal-game-components/GameObjectCompon
 export * from './internal-math/utils/clamp';
 export * from './internal-math/utils/compareFloats';
 export * from './internal-math/utils/filterBelow';
+export * from './internal-math/utils/randFromRange';
 
 // Internal Utils
 export * from './utils';

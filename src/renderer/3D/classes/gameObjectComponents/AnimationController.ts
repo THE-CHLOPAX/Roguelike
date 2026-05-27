@@ -15,6 +15,13 @@ export type AnimationPlayOptions = {
   clampWhenFinished?: boolean;
   onComplete?: () => void;
 };
+
+export type AnimationControllerOptions = {
+  playbackRates?: Record<string, number>;
+  fadeOutDurations?: Record<string, number>;
+};
+
+const DEFAULT_FADE_OUT_DURATION = 0.2; // seconds
 export class AnimationController extends GameObjectComponent {
   private _currentAction: THREE.AnimationAction | null = null;
   private _currentActionOnComplete: ((event?: THREE.Event) => void) | null = null;
@@ -22,7 +29,11 @@ export class AnimationController extends GameObjectComponent {
   private _animationMixer: THREE.AnimationMixer | null = null;
   private _actions: Map<string, THREE.AnimationAction> = new Map();
 
-  constructor(gameObject: GameObject, modelRenderer: ModelRenderer) {
+  constructor(
+    gameObject: GameObject,
+    modelRenderer: ModelRenderer,
+    private _options?: AnimationControllerOptions
+  ) {
     super(gameObject);
 
     const currentModel = modelRenderer.getModel();
@@ -48,15 +59,18 @@ export class AnimationController extends GameObjectComponent {
 
     // Fade out and stop the previous action
     if (this._currentAction && this._currentAction !== action) {
-      this._currentAction.fadeOut(0.2);
+      const fadeOutDuration =
+        this._options?.fadeOutDurations?.[this._currentAction.getClip().name] ??
+        DEFAULT_FADE_OUT_DURATION;
+      this._currentAction.fadeOut(fadeOutDuration);
       this._onActionInterrupted(this._currentAction);
     }
 
     // Apply playback rate if specified
-    if (options?.playbackRate !== undefined) {
-      const baseDuration = action.getClip().duration;
-      action.setDuration(baseDuration / options.playbackRate);
-    }
+    const playbackRate =
+      options?.playbackRate ?? this._options?.playbackRates?.[animationName] ?? 1;
+    const baseDuration = action.getClip().duration;
+    action.setDuration(baseDuration / playbackRate);
 
     if (options?.loop === true) {
       action.setLoop(THREE.LoopRepeat, Infinity);

@@ -4,6 +4,7 @@ import { Crowd } from '@recast-navigation/core';
 import { MODELS } from '../../../../constants';
 import { EntityMovable } from '../../EntityMovable';
 import { AIIdleState } from '../../../states/index';
+import { AnimationClipNamesShared } from '../../../../types';
 import { MAIN_ENEMY_CROWD_ID } from '../../../../../constants';
 import { TestScene } from '../../../../../scenes/test/TestScene';
 import { NavMeshAgent } from '../../../gameObjectComponents/NavMeshAgent';
@@ -22,7 +23,7 @@ export class Skeleton extends EntityMovable {
       model: skeletonModel,
       speed: 2.5,
       sprintSpeed: 4,
-      walkSpeed: 1,
+      walkSpeed: 0.5,
       rigidBodyOptions: {
         mass: 0.1,
         friction: 0,
@@ -31,11 +32,17 @@ export class Skeleton extends EntityMovable {
         colliderShape: 'cylinder',
         enableCollisionDetection: true,
       },
+      animationControllerOptions: {
+        playbackRates: {
+          [AnimationClipNamesShared.WALK]: 1.5,
+        },
+        fadeOutDurations: {
+          [AnimationClipNamesShared.IDLE]: 0.1,
+        },
+      },
     });
 
     this.name = 'Skeleton';
-
-    this.stateController.currentState = new AIIdleState(this);
 
     const navMeshManager = scene.navMeshManager;
     if (!navMeshManager) {
@@ -67,12 +74,29 @@ export class Skeleton extends EntityMovable {
   };
 
   private _initialize(crowd: Crowd): void {
-    this.addComponent(
+    const navMeshAgent = this.addComponent(
       'NavMeshAgent',
       new NavMeshAgent(this, crowd, {
         radius: 0.6,
         height: 2.0,
       })
     );
+
+    const sceneNavMesh = this.scene?.navMeshManager?.navMesh;
+    if (!sceneNavMesh) {
+      throw new Error('NavMesh not found in scene NavMeshManager');
+    }
+
+    this.stateController.currentState = new AIIdleState(this, {
+      navMeshAgent,
+      navMesh: sceneNavMesh,
+      roaming: {
+        radius: 5,
+        interval: {
+          min: 3000,
+          max: 7000,
+        },
+      },
+    });
   }
 }

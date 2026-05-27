@@ -16,8 +16,13 @@ const VELOCITY_MULTIPLIER = 2.4;
 export class NavMeshAgent extends GameObjectComponent {
   private _crowd: Crowd;
   private _agentInstance: CrowdAgent | null = null;
-
   private _options?: Partial<CrowdAgentParams>;
+
+  private _currentMovePromise: {
+    resolve: () => void;
+    reject: (reason?: unknown) => void;
+    target: THREE.Vector3;
+  } | null = null;
 
   constructor(gameObject: EntityMovable, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
     super(gameObject);
@@ -26,10 +31,16 @@ export class NavMeshAgent extends GameObjectComponent {
     this._options = options;
   }
 
-  public requestMoveTarget(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): void {
+  public moveTo(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): Promise<void> {
     if (!this._agentInstance) {
       this._logNoAgentError();
-      return;
+      return Promise.reject(new Error('NavMeshAgent instance not initialized yet.'));
+    }
+
+    // If there's an active movement, resolve it (interrupted)
+    if (this._currentMovePromise) {
+      this._currentMovePromise.resolve();
+      this._currentMovePromise = null;
     }
 
     this._agentInstance.setParameters({
@@ -37,21 +48,33 @@ export class NavMeshAgent extends GameObjectComponent {
       maxAcceleration: speed * ACCELERATION_MULTIPLIER,
     });
     this._agentInstance.requestMoveTarget(target);
+
+    // Create a new promise for this movement
+    return new Promise<void>((resolve, reject) => {
+      this._currentMovePromise = {
+        resolve,
+        reject,
+        target: target.clone(),
+      };
+    });
   }
 
-  public resetMoveTarget(): void {
+  public resetMovementTarget(): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return;
     }
 
+    // Resolve any active movement promise (interrupted)
+    if (this._currentMovePromise) {
+      this._currentMovePromise.resolve();
+      this._currentMovePromise = null;
+    }
+
     this._agentInstance.resetMoveTarget();
   }
 
-  public requestMoveDirection(
-    direction: THREE.Vector3,
-    speed = this.gameObject.defaultSpeed
-  ): void {
+  public move(direction: THREE.Vector3, speed = this.gameObject.defaultSpeed): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return;
@@ -82,18 +105,8 @@ export class NavMeshAgent extends GameObjectComponent {
     return new THREE.Vector3().copy(this._agentInstance.position());
   }
 
-  public get velocity(): THREE.Vector3 {
-    if (!this._agentInstance) {
-      this._logNoAgentError();
-      return new THREE.Vector3();
-    }
-
-    // There's a discrepancy between NavMeshAgent velocity and actual velocity
-    // of the game object when using Rigidbody movement, so we need to apply a
-    // multiplier to make them match up.
-    return new THREE.Vector3()
-      .copy(this._agentInstance.velocity())
-      .divideScalar(VELOCITY_MULTIPLIER);
+  public get velocity(): THREE.Vector3 | null {
+    return this.gameObject.velocity;
   }
 
   public override get gameObject(): EntityMovable {
@@ -143,6 +156,21 @@ export class NavMeshAgent extends GameObjectComponent {
     const velocity = this._agentInstance.velocity();
     const horizontalVelocity = new THREE.Vector3(velocity.x, 0, velocity.z);
     this.gameObject.rotateTowards(horizontalVelocity);
+
+    if (this._currentMovePromise) {
+      const currentPos = new THREE.Vector3(agentPos.x, agentPos.y, agentPos.z);
+      const distanceToTarget = currentPos.distanceTo(this._currentMovePromise.target);
+      const velocityMagnitude = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+
+      // Agent has reached target if it's close enough and has stopped moving
+      const ARRIVAL_THRESHOLD = 0.5; // Distance threshold in world units
+      const VELOCITY_THRESHOLD = 0.1; // Velocity threshold
+
+      if (distanceToTarget < ARRIVAL_THRESHOLD && velocityMagnitude < VELOCITY_THRESHOLD) {
+        this._currentMovePromise.resolve();
+        this._currentMovePromise = null;
+      }
+    }
   }
 
   public override destroy(): void {

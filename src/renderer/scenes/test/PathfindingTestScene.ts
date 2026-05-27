@@ -28,8 +28,6 @@ export class PathfindingTestScene extends TestScene {
 
       const skeleton = new Skeleton(this);
       this.add(skeleton);
-
-      skeleton.position.set(0, 5, 0);
     });
   }
 

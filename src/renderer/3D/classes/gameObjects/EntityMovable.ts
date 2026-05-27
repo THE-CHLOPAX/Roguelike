@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import { GameObjectComponent, logger, Scene } from '@tgdf';
+import { logger, Scene } from '@tgdf';
 
 import { Entity, EntityOptions } from './Entity';
-import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
 
 export type EntityMovableOptions = EntityOptions & {
   speed: number;
@@ -17,7 +16,6 @@ export class EntityMovable extends Entity {
 
   private _currentSpeed: number;
   private _movementDisabled: boolean = false;
-  private _navMeshAgent?: NavMeshAgent;
   private _currentMovementTarget: THREE.Vector3 | null = null;
 
   constructor(scene: Scene, options: EntityMovableOptions) {
@@ -35,9 +33,7 @@ export class EntityMovable extends Entity {
   }
 
   public get velocity(): THREE.Vector3 | null {
-    if (this._navMeshAgent) {
-      return this._navMeshAgent.velocity;
-    } else if (this.rigidBody) {
+    if (this.rigidBody) {
       return this.rigidBody.getLinearVelocity();
     } else {
       return null;
@@ -53,17 +49,6 @@ export class EntityMovable extends Entity {
     return this._movementDisabled;
   }
 
-  public override addComponent<C extends GameObjectComponent>(name: string, component: C): C {
-    const addedComponent = super.addComponent(name, component);
-
-    // If the added component is a NavMeshAgent, keep a reference to it
-    if (component instanceof NavMeshAgent) {
-      this._navMeshAgent = component;
-    }
-
-    return addedComponent;
-  }
-
   public toggleSprint(enabled: boolean): void {
     this._currentSpeed = enabled ? this.sprintSpeed : this.defaultSpeed;
   }
@@ -75,23 +60,11 @@ export class EntityMovable extends Entity {
   public move(direction: THREE.Vector3, speed = this._currentSpeed): void {
     if (this._movementDisabled) return;
 
-    // Check if the movement should be controlled by NavMeshAgent
-    if (this._navMeshAgent) {
-      this._navMeshAgent.requestMoveDirection(direction, speed);
-    }
-    // Else, use standard Rigidbody movement
-    else {
-      this._moveRigidbody(direction, speed);
-    }
+    this._moveRigidbody(direction, speed);
   }
 
   public moveTo(position: THREE.Vector3, speed = this.defaultSpeed): void {
     if (this.movementDisabled) return;
-
-    // Check if we should use pathfinding via the NavMeshAgent
-    if (this._navMeshAgent) {
-      this._navMeshAgent.requestMoveTarget(position, speed);
-    }
     // Else, set a simple straight-line movement towards the target using Rigidbody
     else {
       this._moveRigidBodyToPosition(position, speed);

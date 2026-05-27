@@ -12,8 +12,6 @@ export function getRigidBodyColliderDescription(
   const size = new THREE.Vector3();
   bbox.getSize(size);
 
-  console.log('Calculated bounding box size for collider:', size);
-
   let colliderDesc: RAPIER.ColliderDesc;
 
   switch (type) {
