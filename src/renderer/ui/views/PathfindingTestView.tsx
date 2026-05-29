@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { MODELS } from '../../3D/constants';
-import { CHECKERBOARD_TEXTURE } from '../../constants';
+import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
+import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../../layouts/BackToViewLayout';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
-import { PathfindingTestScene } from '../../scenes/test/PathfindingTestScene';
 
 export function PathfindingTestView() {
   const { loadTexture, loadModelGLTF } = useAssetStore();
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
-    sceneClass: PathfindingTestScene,
+    sceneClass: TestScene,
     asyncPreloadOperations: [
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
       loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, {

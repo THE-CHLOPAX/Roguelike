@@ -3,7 +3,7 @@ import { getModelFromStore } from '@tgdf';
 import { Player } from '../Player';
 import { MODELS } from '../../../../constants';
 import { IdleState } from './states/IdleState';
-import { TestScene } from '../../../../../scenes/test/TestScene';
+import { TestScene } from '../../../scenes/TestScene';
 
 export class Monk extends Player {
   constructor(scene: TestScene) {

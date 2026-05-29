@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GameObject, logger, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
@@ -16,7 +16,6 @@ export type EntityOptions = {
   animationControllerOptions?: AnimationControllerOptions;
 };
 
-const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
 const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
 
 export class Entity extends GameObject {
@@ -28,7 +27,6 @@ export class Entity extends GameObject {
 
   private _spawnPosition: THREE.Vector3 = new THREE.Vector3();
   private _rigidBody: RigidBody | null = null;
-  private _currentRotation: number = 0;
 
   constructor(
     scene: Scene,
@@ -95,29 +93,6 @@ export class Entity extends GameObject {
 
   public toggleDebug(enabled: boolean): void {
     this._rigidBody?.toggleDebug(enabled);
-  }
-
-  public rotateTowards(direction: THREE.Vector3): void {
-    if (!this._rigidBody) {
-      logger({
-        message: 'Cannot rotate using Rigidbody because it is not initialized.',
-        type: 'error',
-      });
-      return;
-    }
-
-    if (direction.x !== 0 || direction.z !== 0) {
-      const targetRotation = Math.atan2(direction.x, direction.z);
-
-      // Lerp rotation for smooth turning
-      const delta = targetRotation - this._currentRotation;
-      // Find the shortest angle difference and normalize to [-PI, PI]
-      const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
-      this._currentRotation += shortestAngle * ROTATION_LERP_FACTOR;
-
-      // Sync rotation to physics body so it's not overwritten
-      this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
-    }
   }
 
   protected override onAwake(): void {

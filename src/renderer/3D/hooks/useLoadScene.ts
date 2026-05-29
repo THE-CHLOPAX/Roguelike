@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { executeAsyncOperationsWithProgress, Scene, SceneConstructorOptions } from '@tgdf';
+import { executeAsyncOperationsWithProgress, Scene } from '@tgdf';
 
 export type UseLoadSceneProps = {
-  sceneClass: new (options: SceneConstructorOptions) => Scene;
-  sceneParams?: SceneConstructorOptions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sceneClass: new (options?: any) => Scene;
   asyncPreloadOperations?: Array<Promise<unknown>>;
 };
 
@@ -15,7 +15,6 @@ export type UseLoadSceneResult = {
 
 export function useLoadScene({
   sceneClass,
-  sceneParams,
   asyncPreloadOperations = [],
 }: UseLoadSceneProps): UseLoadSceneResult {
   const [scene, setScene] = useState<Scene | null>(null);
@@ -41,7 +40,7 @@ export function useLoadScene({
   // Instantiate scene once assets are loaded
   useEffect(() => {
     if (loadingProgress === 1 && loading) {
-      const newScene = new sceneClass({ ...sceneParams });
+      const newScene = new sceneClass();
       setScene(newScene);
       setLoading(false);
     }

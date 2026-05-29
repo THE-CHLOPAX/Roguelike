@@ -4,9 +4,9 @@ import { init } from '@recast-navigation/core';
 
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
+import { SceneEventsMap } from '../types/scene';
 import { PhysicsManager } from '../PhysicsManager';
 import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
-import { SceneConstructorOptions, SceneEventsMap } from '../types/scene';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {
@@ -19,10 +19,8 @@ export abstract class Scene extends THREE.Scene {
   private _navMeshManager?: NavMeshManager;
   private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
-  constructor(options?: SceneConstructorOptions) {
+  constructor() {
     super();
-
-    if (options?.physics) this._initializePhysicsWorld(options.physics.gravity);
   }
 
   public get events(): Emitter<SceneEventsMap> {
@@ -134,11 +132,11 @@ export abstract class Scene extends THREE.Scene {
     this._navMeshManager = new NavMeshManager(this, floorObject, options);
   }
 
-  protected onUpdate(_deltaTime: number): void {}
-
-  private async _initializePhysicsWorld(gravity: THREE.Vector3): Promise<void> {
+  public async initializePhysicsWorld(gravity: THREE.Vector3): Promise<void> {
     this._physicsManager = new PhysicsManager();
     await this._physicsManager.init(gravity);
     logger({ message: 'Scene: Physics world initialized', type: 'info' });
   }
+
+  protected onUpdate(_deltaTime: number): void {}
 }

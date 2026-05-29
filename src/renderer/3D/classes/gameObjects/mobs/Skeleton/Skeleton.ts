@@ -1,12 +1,11 @@
 import { getModelFromStore } from '@tgdf';
 import { Crowd } from '@recast-navigation/core';
 
-import { MODELS } from '../../../../constants';
 import { EntityMovable } from '../../EntityMovable';
 import { AIIdleState } from '../../../states/index';
+import { TestScene } from '../../../scenes/TestScene';
 import { AnimationClipNamesShared } from '../../../../types';
-import { MAIN_ENEMY_CROWD_ID } from '../../../../../constants';
-import { TestScene } from '../../../../../scenes/test/TestScene';
+import { MODELS, MAIN_ENEMY_CROWD_ID } from '../../../../constants';
 import { NavMeshAgent } from '../../../gameObjectComponents/NavMeshAgent';
 
 export class Skeleton extends EntityMovable {
