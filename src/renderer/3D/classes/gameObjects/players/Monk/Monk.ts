@@ -1,4 +1,4 @@
-import { getModelFromStore } from '@tgdf';
+import * as THREE from 'three';
 
 import { Player } from '../Player';
 import { MODELS } from '../../../../constants';
@@ -7,14 +7,11 @@ import { TestScene } from '../../../scenes/TestScene';
 
 export class Monk extends Player {
   constructor(scene: TestScene) {
-    const monkModel = getModelFromStore(MODELS.MONK.id);
-
-    if (!monkModel) {
-      throw new Error(`Model not found in cache: ${MODELS.MONK.id}`);
-    }
-
     super(scene, {
-      model: monkModel,
+      model: {
+        id: MODELS.MONK.id,
+        scale: new THREE.Vector3(1, 1, 1),
+      },
       speed: 2.5,
       sprintSpeed: 4,
       walkSpeed: 1,

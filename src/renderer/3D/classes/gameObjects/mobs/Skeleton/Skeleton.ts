@@ -1,25 +1,18 @@
-import { getModelFromStore } from '@tgdf';
-import { Crowd } from '@recast-navigation/core';
+import * as THREE from 'three';
 
-import { EntityMovable } from '../../EntityMovable';
+import { EntityAI } from '../../EntityAI';
+import { MODELS } from '../../../../constants';
 import { AIIdleState } from '../../../states/index';
 import { TestScene } from '../../../scenes/TestScene';
 import { AnimationClipNamesShared } from '../../../../types';
-import { MODELS, MAIN_ENEMY_CROWD_ID } from '../../../../constants';
-import { NavMeshAgent } from '../../../gameObjectComponents/NavMeshAgent';
 
-export class Skeleton extends EntityMovable {
+export class Skeleton extends EntityAI {
   constructor(scene: TestScene) {
-    const skeletonModel = getModelFromStore(MODELS.SKELETON.id);
-
-    if (!skeletonModel) {
-      throw new Error(`Model not found in cache: ${MODELS.SKELETON.id}`);
-    }
-
-    skeletonModel.scale.multiplyScalar(1.2);
-
     super(scene, {
-      model: skeletonModel,
+      model: {
+        id: MODELS.SKELETON.id,
+        scale: new THREE.Vector3(1.2, 1.2, 1.2),
+      },
       speed: 2.5,
       sprintSpeed: 4,
       walkSpeed: 0.5,
@@ -42,53 +35,10 @@ export class Skeleton extends EntityMovable {
     });
 
     this.name = 'Skeleton';
-
-    const navMeshManager = scene.navMeshManager;
-    if (!navMeshManager) {
-      throw new Error('NavMeshManager not found in scene');
-    }
-
-    const existingCrowd = navMeshManager.getCrowd(MAIN_ENEMY_CROWD_ID);
-    // Crowd already there
-    if (existingCrowd) {
-      this._initialize(existingCrowd);
-    } else {
-      // Crowd not added yet - wait for it
-      navMeshManager.events.on('crowdadded', this._onCrowdAdded);
-    }
   }
 
-  protected override onDestroyed(): void {
-    const navMeshManager = this.scene?.navMeshManager;
-    if (navMeshManager) {
-      navMeshManager.events.off('crowdadded', this._onCrowdAdded);
-    }
-    super.onDestroyed();
-  }
-
-  private _onCrowdAdded = ({ crowdId, crowd }: { crowdId: string; crowd: Crowd }) => {
-    if (crowdId === MAIN_ENEMY_CROWD_ID) {
-      this._initialize(crowd);
-    }
-  };
-
-  private _initialize(crowd: Crowd): void {
-    const navMeshAgent = this.addComponent(
-      'NavMeshAgent',
-      new NavMeshAgent(this, crowd, {
-        radius: 0.6,
-        height: 2.0,
-      })
-    );
-
-    const sceneNavMesh = this.scene?.navMeshManager?.navMesh;
-    if (!sceneNavMesh) {
-      throw new Error('NavMesh not found in scene NavMeshManager');
-    }
-
+  protected override onInit(): void {
     this.stateController.currentState = new AIIdleState(this, {
-      navMeshAgent,
-      navMesh: sceneNavMesh,
       roaming: {
         radius: 5,
         interval: {

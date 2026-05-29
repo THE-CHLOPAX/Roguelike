@@ -1,5 +1,6 @@
-import { Scene } from '@tgdf';
 import * as THREE from 'three';
+import { PhysicsManager, Scene } from '@tgdf';
+import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { OrtographicCamera } from '../cameras/OrtographicCamera';
 import { RigidFloorObject } from '../gameObjects/RigidFloorObject';
@@ -39,8 +40,12 @@ export class GameScene extends Scene {
 
     await this.initializeNavMeshManager(rigidFloorObject);
 
-    this.onInit();
+    if (!this.navMeshManager || !this.physics) {
+      throw new Error('Failed to initialize NavMeshManager or PhysicsManager');
+    }
+
+    this.onInit(this.navMeshManager, this.physics);
   }
 
-  protected onInit(): void {}
+  protected onInit(_navMeshManager: NavMeshManager, _physicsManager: PhysicsManager): void {}
 }

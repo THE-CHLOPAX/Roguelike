@@ -1,20 +1,10 @@
 import { InputState } from '@tgdf';
-import { NavMesh } from '@recast-navigation/core';
 
 import { State } from '../State';
-import { EntityMovable } from '../../gameObjects/EntityMovable';
-import { NavMeshAgent } from '../../gameObjectComponents/NavMeshAgent';
-
-export type AIStateOptions = {
-  navMeshAgent: NavMeshAgent;
-  navMesh: NavMesh;
-};
+import { EntityAI } from '../../gameObjects/EntityAI';
 
 export abstract class AIState extends State {
-  constructor(
-    public entity: EntityMovable,
-    protected options: AIStateOptions
-  ) {
+  constructor(public entity: EntityAI) {
     super(entity);
   }
 

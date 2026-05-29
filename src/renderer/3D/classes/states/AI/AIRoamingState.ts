@@ -1,12 +1,12 @@
-import { InputState, logger } from '@tgdf';
+import { InputState } from '@tgdf';
 
+import { AIState } from './AIState';
 import { AIIdleState } from './AIIdleState';
-import { AIState, AIStateOptions } from './AIState';
+import { EntityAI } from '../../gameObjects/EntityAI';
 import { AnimationClipNamesShared } from '../../../types';
-import { EntityMovable } from '../../gameObjects/EntityMovable';
 import { getRandomNavMeshPointInRadius } from '../../../utils/getRandomNavMeshPointInRadius';
 
-export type RoamingOptions = {
+export type AIRoamingStateOptions = {
   radius: number;
   interval: {
     min: number;
@@ -18,10 +18,10 @@ export class AIRoamingState extends AIState {
   private _shouldTransitionToIdle: boolean = false;
 
   constructor(
-    public entity: EntityMovable,
-    protected options: AIStateOptions & RoamingOptions
+    public entity: EntityAI,
+    protected options: AIRoamingStateOptions
   ) {
-    super(entity, options);
+    super(entity);
   }
 
   public override onEnter(): void {
@@ -40,7 +40,7 @@ export class AIRoamingState extends AIState {
   public override onUpdate(_deltaTime: number): AIState {
     if (this._shouldTransitionToIdle) {
       this._shouldTransitionToIdle = false;
-      return new AIIdleState(this.entity, this.options);
+      return new AIIdleState(this.entity, { roaming: this.options });
     }
     return this;
   }
@@ -52,27 +52,19 @@ export class AIRoamingState extends AIState {
         return;
       }
 
-      const navMeshAgent = this.options.navMeshAgent;
-      const navMesh = this.options.navMesh;
+      const navMeshAgent = this.entity.navMeshAgent;
+      const navMesh = this.entity.navMesh;
 
       const randomNavMeshPoint = getRandomNavMeshPointInRadius(
         navMesh,
         this.entity.spawnPosition,
-        this.options?.radius
+        this.options.radius
       );
 
       if (!randomNavMeshPoint) {
         reject(new Error('Failed to find a random point on the NavMesh'));
         return;
       }
-
-      logger({
-        message: `AI roaming to random point: ${randomNavMeshPoint
-          .toArray()
-          .map((n) => n.toFixed(2))
-          .join(', ')}`,
-        type: 'info',
-      });
 
       navMeshAgent
         .moveTo(randomNavMeshPoint, this.entity.walkSpeed)

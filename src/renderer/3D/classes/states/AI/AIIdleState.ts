@@ -1,12 +1,12 @@
 import { randFromRange } from '@tgdf';
 
-import { AIState, AIStateOptions } from '../index';
+import { AIState } from '../index';
+import { EntityAI } from '../../gameObjects/EntityAI';
 import { AnimationClipNamesShared } from '../../../types';
-import { EntityMovable } from '../../gameObjects/EntityMovable';
-import { AIRoamingState, RoamingOptions } from './AIRoamingState';
+import { AIRoamingState, AIRoamingStateOptions } from './AIRoamingState';
 
-export type AIIdleStateOptions = AIStateOptions & {
-  roaming?: RoamingOptions;
+export type AIIdleStateOptions = {
+  roaming?: AIRoamingStateOptions;
 };
 
 export class AIIdleState extends AIState {
@@ -14,10 +14,10 @@ export class AIIdleState extends AIState {
   private _shouldTransitionToRoaming: boolean = false;
 
   constructor(
-    public entity: EntityMovable,
+    public entity: EntityAI,
     protected options: AIIdleStateOptions
   ) {
-    super(entity, options);
+    super(entity);
   }
 
   public override onEnter(): void {
@@ -44,7 +44,7 @@ export class AIIdleState extends AIState {
   public override onUpdate(_deltaTime: number): AIState {
     if (this._shouldTransitionToRoaming && this.options?.roaming) {
       this._shouldTransitionToRoaming = false;
-      return new AIRoamingState(this.entity, { ...this.options, ...this.options.roaming });
+      return new AIRoamingState(this.entity, this.options.roaming);
     }
     return this;
   }

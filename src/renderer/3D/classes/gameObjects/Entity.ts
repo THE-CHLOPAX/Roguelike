@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { GameObject, getModelFromStore, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
@@ -11,7 +11,10 @@ import {
 } from '../gameObjectComponents/AnimationController';
 
 export type EntityOptions = {
-  model: THREE.Object3D;
+  model: {
+    id: string;
+    scale?: THREE.Vector3;
+  };
   rigidBodyOptions?: RigidBodyOptions;
   animationControllerOptions?: AnimationControllerOptions;
 };
@@ -34,10 +37,19 @@ export class Entity extends GameObject {
   ) {
     super({ scene });
 
+    const model = getModelFromStore(options.model.id);
+    if (!model) {
+      throw new Error(`Model not found in cache: ${options.model.id}`);
+    }
+
+    if (options.model.scale) {
+      model.scale.copy(options.model.scale);
+    }
+
     this._modelRenderer = this.addComponent(
       'ModelRenderer',
       new ModelRenderer(this, {
-        model: options.model,
+        model,
       })
     );
     this._animationController = this.addComponent(

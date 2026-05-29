@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { useAssetStore } from '@tgdf';
+import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { GameScene } from './GameScene';
 import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { Monk } from '../gameObjects/players/Monk/Monk';
 import { pixelateTexture } from '../../utils/pixelateTexture';
 import { Skeleton } from '../gameObjects/mobs/Skeleton/Skeleton';
-import { MAIN_ENEMY_CROWD_ID, NAVMESH_AGENT_RADIUS } from '../../constants';
+import { MAIN_CROWD_ID, NAVMESH_AGENT_RADIUS } from '../../constants';
 
 export type TestSceneConstructorOptions = {
   width?: number;
@@ -52,8 +53,8 @@ export class TestScene extends GameScene {
     this.add(directionalLight);
   }
 
-  protected override onInit(): void {
-    this.navMeshManager!.addCrowd(MAIN_ENEMY_CROWD_ID, {
+  protected override onInit(navMeshManager: NavMeshManager): void {
+    navMeshManager.addCrowd(MAIN_CROWD_ID, {
       maxAgents: 100,
       maxAgentRadius: NAVMESH_AGENT_RADIUS,
     });
