@@ -1,30 +1,24 @@
 import { randFromRange } from '@tgdf';
 
 import { AIState } from '../index';
+import { AIRoamingState } from './AIRoamingState';
+import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { AnimationClipNamesShared } from '../../../types';
-import { AIRoamingState, AIRoamingStateOptions } from './AIRoamingState';
-
-export type AIIdleStateOptions = {
-  roaming?: AIRoamingStateOptions;
-};
 
 export class AIIdleState extends AIState {
   private _startRoamingTimeout: NodeJS.Timeout | null = null;
   private _shouldTransitionToRoaming: boolean = false;
 
-  constructor(
-    public entity: EntityAI,
-    protected options: AIIdleStateOptions
-  ) {
+  constructor(public entity: EntityAI) {
     super(entity);
   }
 
   public override onEnter(): void {
     this.entity.animationController.playAnimation(AnimationClipNamesShared.IDLE, { loop: true });
 
-    if (this.options?.roaming) {
-      const interval = this.options.roaming.interval;
+    if (this.entity.roaming) {
+      const interval = this.entity.roaming.interval;
       this._startRoamingTimeout = setTimeout(
         () => {
           this._shouldTransitionToRoaming = true;
@@ -42,9 +36,13 @@ export class AIIdleState extends AIState {
   }
 
   public override onUpdate(_deltaTime: number): AIState {
-    if (this._shouldTransitionToRoaming && this.options?.roaming) {
+    if (AIChasingState.checkCondition(this.entity)) {
+      return new AIChasingState(this.entity);
+    }
+
+    if (this._shouldTransitionToRoaming && this.entity.roaming) {
       this._shouldTransitionToRoaming = false;
-      return new AIRoamingState(this.entity, this.options.roaming);
+      return new AIRoamingState(this.entity);
     }
     return this;
   }

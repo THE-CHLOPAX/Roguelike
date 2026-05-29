@@ -32,3 +32,11 @@ export type StateConfig<T> = {
 };
 
 export type AttackAction = (entity: Entity) => Promise<void>;
+
+export type AIRoamingOptions = {
+  radius: number;
+  interval: {
+    min: number;
+    max: number;
+  };
+};
