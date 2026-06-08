@@ -103,10 +103,6 @@ export class Entity extends GameObject {
     return this._spawnPosition;
   }
 
-  public toggleDebug(enabled: boolean): void {
-    this._rigidBody?.toggleDebug(enabled);
-  }
-
   protected override onAwake(): void {
     this._spawnPosition.copy(this.position);
   }

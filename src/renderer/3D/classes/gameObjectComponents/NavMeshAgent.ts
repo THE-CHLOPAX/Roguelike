@@ -155,7 +155,7 @@ export class NavMeshAgent extends GameObjectComponent {
     // Rotate towards movement direction
     const velocity = this._agentInstance.velocity();
     const horizontalVelocity = new THREE.Vector3(velocity.x, 0, velocity.z);
-    this.gameObject.rotateTowards(horizontalVelocity);
+    this.gameObject.rotate(horizontalVelocity);
 
     if (this._currentMovePromise) {
       const currentPos = new THREE.Vector3(agentPos.x, agentPos.y, agentPos.z);

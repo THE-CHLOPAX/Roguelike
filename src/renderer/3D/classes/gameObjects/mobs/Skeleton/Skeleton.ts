@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 import { EntityAI } from '../../EntityAI';
+import { attackActions } from './attacks';
 import { Player } from '../../players/Player';
 import { AIIdleState } from '../../../states/index';
 import { TestScene } from '../../../scenes/TestScene';
@@ -37,6 +38,9 @@ export class Skeleton extends EntityAI {
           min: 3000,
           max: 7000,
         },
+      },
+      attack: {
+        actions: attackActions,
       },
     });
 

@@ -1,10 +1,14 @@
 import { randFromRange } from '@tgdf';
 
 import { AIState } from '../index';
+import { AIAttackState } from './AIAttackState';
 import { AIRoamingState } from './AIRoamingState';
 import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
+import { getBestAttack } from './utils/getBestAttack';
+import { getTargetEnemy } from './utils/getTargetEnemy';
 import { AnimationClipNamesShared } from '../../../types';
+import { AIRepositioningState } from './AIRepositioningState';
 
 export class AIIdleState extends AIState {
   private _startRoamingTimeout: NodeJS.Timeout | null = null;
@@ -36,8 +40,31 @@ export class AIIdleState extends AIState {
   }
 
   public override onUpdate(_deltaTime: number): AIState {
-    if (AIChasingState.checkCondition(this.entity)) {
+    const targetEnemy = getTargetEnemy(this.entity);
+    let bestAttack = null;
+
+    if (targetEnemy) {
+      bestAttack = getBestAttack(this.entity, targetEnemy);
+    }
+
+    if (!bestAttack) {
+      if (this._shouldTransitionToRoaming && this.entity.roaming) {
+        this._shouldTransitionToRoaming = false;
+        return new AIRoamingState(this.entity);
+      }
+      return this;
+    }
+
+    if (AIChasingState.checkCondition(this.entity, bestAttack)) {
       return new AIChasingState(this.entity);
+    }
+
+    if (AIRepositioningState.checkCondition(this.entity, bestAttack)) {
+      return new AIRepositioningState(this.entity);
+    }
+
+    if (AIAttackState.checkCondition(this.entity, bestAttack)) {
+      return new AIAttackState(this.entity);
     }
 
     if (this._shouldTransitionToRoaming && this.entity.roaming) {

@@ -33,10 +33,20 @@ export type StateConfig<T> = {
 
 export type AttackAction = (entity: Entity) => Promise<void>;
 
+export type AIAttackAction = {
+  action: AttackAction;
+  minRange: number;
+  maxRange: number;
+};
+
 export type AIRoamingOptions = {
   radius: number;
   interval: {
     min: number;
     max: number;
   };
+};
+
+export type AIAttackOptions = {
+  actions: AIAttackAction[];
 };

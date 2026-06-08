@@ -18,8 +18,10 @@ export class EntityMovable extends Entity {
 
   private _currentSpeed: number;
   private _movementDisabled: boolean = false;
-  private _currentMovementTarget: THREE.Vector3 | null = null;
   private _currentRotation: number = 0;
+
+  private _currentRotationTargetDirection: THREE.Vector3 | null = null;
+  private _currentMovementTarget: THREE.Vector3 | null = null;
 
   constructor(scene: Scene, options: EntityMovableOptions) {
     super(scene, options);
@@ -74,7 +76,7 @@ export class EntityMovable extends Entity {
     }
   }
 
-  public rotateTowards(direction: THREE.Vector3): void {
+  public rotate(direction: THREE.Vector3): void {
     if (!this.rigidBody) {
       logger({
         message: 'Cannot rotate using Rigidbody because it is not initialized.',
@@ -86,15 +88,28 @@ export class EntityMovable extends Entity {
     if (direction.x !== 0 || direction.z !== 0) {
       const targetRotation = Math.atan2(direction.x, direction.z);
 
+      if (targetRotation === this._currentRotation) {
+        this._currentRotationTargetDirection = null;
+        return;
+      }
+
       // Lerp rotation for smooth turning
       const delta = targetRotation - this._currentRotation;
       // Find the shortest angle difference and normalize to [-PI, PI]
       const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
       this._currentRotation += shortestAngle * ROTATION_LERP_FACTOR;
-
-      // Sync rotation to physics body so it's not overwritten
-      this.rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
     }
+
+    // Sync rotation to physics body so it's not overwritten
+    this.rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
+  }
+
+  public rotateTowards(direction: THREE.Vector3): void {
+    this._currentRotationTargetDirection = direction.clone();
+  }
+
+  public resetRotationTarget(): void {
+    this._currentRotationTargetDirection = null;
   }
 
   public resetMovementTarget(): void {
@@ -103,6 +118,10 @@ export class EntityMovable extends Entity {
 
   protected override onUpdate(deltaTime: number): void {
     super.onUpdate(deltaTime);
+
+    if (this._currentRotationTargetDirection) {
+      this.rotate(this._currentRotationTargetDirection);
+    }
 
     if (this._currentMovementTarget && !this._movementDisabled) {
       const direction = this._currentMovementTarget.clone().sub(this.position);
