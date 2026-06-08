@@ -125,6 +125,14 @@ export class ModelRenderer extends GameObjectComponent {
     }
 
     this.gameObject.addObjectResourceTracker(options.object);
+
+    // Get parent's world scale to compensate for it
+    const parentWorldScale = new THREE.Vector3();
+    targetParent.getWorldScale(parentWorldScale);
+
+    // Adjust object's scale to maintain world size when attached to scaled parent
+    options.object.scale.divide(parentWorldScale);
+
     targetParent.add(options.object);
   }
 

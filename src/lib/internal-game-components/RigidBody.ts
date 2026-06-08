@@ -177,15 +177,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
   protected override onAwake(): void {
     super.onAwake();
-
-    const physicsManager = this._getPhysicsManager();
-    if (physicsManager.isInitialized) {
-      this._init();
-    } else {
-      physicsManager.events.once('physicsinitialized', () => {
-        this._init();
-      });
-    }
+    this._init();
   }
 
   protected override onUpdate(_deltaTime: number): void {
