@@ -164,6 +164,10 @@ export class ModelRenderer extends GameObjectComponent {
       return;
     }
 
+    if (object instanceof GameObject) {
+      object.destroy();
+    }
+
     parent.remove(object);
     this.gameObject.removeObjectResourceTracker(object);
   }

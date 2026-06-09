@@ -26,7 +26,7 @@ function punch(entity: Entity) {
       .call(
         () =>
           entity.damageHitboxController.attachDamageHitbox(
-            new THREE.Vector3(0.3, 0.3, 0.3),
+            new THREE.Vector3(0.5, 0.5, 0.5),
             10,
             'mixamorigRightHand'
           ),

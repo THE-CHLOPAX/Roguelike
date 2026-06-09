@@ -8,7 +8,6 @@ import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
 import { AnimationClipNamesShared } from '../../../types';
-import { AIRepositioningState } from './AIRepositioningState';
 import { getRandomNavMeshPointInRadius } from '../../../utils/getRandomNavMeshPointInRadius';
 
 export class AIRoamingState extends AIState {
@@ -52,10 +51,6 @@ export class AIRoamingState extends AIState {
 
     if (AIChasingState.checkCondition(this.entity, bestAttack)) {
       return new AIChasingState(this.entity);
-    }
-
-    if (AIRepositioningState.checkCondition(this.entity, bestAttack)) {
-      return new AIRepositioningState(this.entity);
     }
 
     if (AIAttackState.checkCondition(this.entity, bestAttack)) {
