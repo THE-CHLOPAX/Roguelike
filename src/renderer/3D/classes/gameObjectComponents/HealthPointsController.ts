@@ -48,7 +48,7 @@ export class HealthPointsController extends GameObjectComponent {
   }
 
   public inflictDamage(amount: number): void {
-    if (this._isImmuneToDamage) return;
+    if (this._isDead || this._isImmuneToDamage) return;
 
     if (amount <= 0) {
       logger({

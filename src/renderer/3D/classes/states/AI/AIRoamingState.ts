@@ -1,4 +1,4 @@
-import { InputState } from '@tgdf';
+import { InputState, logger } from '@tgdf';
 
 import { AIState } from './AIState';
 import { AIIdleState } from './AIIdleState';
@@ -21,9 +21,14 @@ export class AIRoamingState extends AIState {
     this.entity.animationController.playAnimation(AnimationClipNamesShared.WALK, {
       loop: true,
     });
-    this._roamToRandomPoint().finally(() => {
-      this._shouldTransitionToIdle = true; // After roaming to a random point, transition back to idle
-    });
+    this._roamToRandomPoint()
+      .catch((error) => {
+        logger({ message: error.message, type: 'error' });
+        this._shouldTransitionToIdle = true;
+      })
+      .finally(() => {
+        this._shouldTransitionToIdle = true; // After roaming to a random point, transition back to idle
+      });
   }
   public override onExit(): void {
     this.entity.navMeshAgent.resetMovementTarget();

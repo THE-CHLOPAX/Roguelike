@@ -148,7 +148,10 @@ export class ModelRenderer extends GameObjectComponent {
     // Get parent's world scale to compensate for it
     const parentWorldScale = new THREE.Vector3();
     targetParent.getWorldScale(parentWorldScale);
-
+    // Prevent division by zero if any scale component is 0
+    if (parentWorldScale.x === 0) parentWorldScale.x = 1;
+    if (parentWorldScale.y === 0) parentWorldScale.y = 1;
+    if (parentWorldScale.z === 0) parentWorldScale.z = 1;
     // Adjust object's scale to maintain world size when attached to scaled parent
     options.object.scale.divide(parentWorldScale);
 

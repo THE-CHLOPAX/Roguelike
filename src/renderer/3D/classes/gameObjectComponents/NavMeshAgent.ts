@@ -31,16 +31,10 @@ export class NavMeshAgent extends GameObjectComponent {
     this._options = options;
   }
 
-  public moveTo(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): Promise<void> {
+  public setDestination(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
-      return Promise.reject(new Error('NavMeshAgent instance not initialized yet.'));
-    }
-
-    // If there's an active movement, resolve it (interrupted)
-    if (this._currentMovePromise) {
-      this._currentMovePromise.resolve();
-      this._currentMovePromise = null;
+      return;
     }
 
     this._agentInstance.setParameters({
@@ -48,6 +42,21 @@ export class NavMeshAgent extends GameObjectComponent {
       maxAcceleration: speed * ACCELERATION_MULTIPLIER,
     });
     this._agentInstance.requestMoveTarget(target);
+  }
+
+  public moveTo(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): Promise<void> {
+    if (!this._agentInstance) {
+      this._logNoAgentError();
+      return Promise.reject(new Error('NavMeshAgent instance not initialized yet.'));
+    }
+
+    this.setDestination(target, speed);
+
+    // If there's an active movement, resolve it (interrupted)
+    if (this._currentMovePromise) {
+      this._currentMovePromise.resolve();
+      this._currentMovePromise = null;
+    }
 
     // Create a new promise for this movement
     return new Promise<void>((resolve, reject) => {

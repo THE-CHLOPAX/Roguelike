@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { logger, Scene } from '@tgdf';
+import { compareFloats, logger, Scene } from '@tgdf';
 
 import { Entity, EntityOptions } from './Entity';
 
@@ -70,10 +70,8 @@ export class EntityMovable extends Entity {
 
   public moveTo(position: THREE.Vector3, speed = this.defaultSpeed): void {
     if (this.movementDisabled) return;
-    // Else, set a simple straight-line movement towards the target using Rigidbody
-    else {
-      this._moveRigidBodyToPosition(position, speed);
-    }
+    // Set a simple straight-line movement towards the target using Rigidbody
+    this._moveRigidBodyToPosition(position, speed);
   }
 
   public rotate(direction: THREE.Vector3): void {
@@ -88,7 +86,7 @@ export class EntityMovable extends Entity {
     if (direction.x !== 0 || direction.z !== 0) {
       const targetRotation = Math.atan2(direction.x, direction.z);
 
-      if (targetRotation === this._currentRotation) {
+      if (compareFloats(targetRotation, '===', this._currentRotation)) {
         this._currentRotationTargetDirection = null;
         return;
       }

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PhysicsManager, Scene } from '@tgdf';
+import { logger, PhysicsManager, Scene } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { OrtographicCamera } from '../cameras/OrtographicCamera';
@@ -29,7 +29,10 @@ export class GameScene extends Scene {
     this.camera.position.set(6, 6, 6);
     this.camera.lookAt(0, 0, 0);
 
-    this._initialize(floorObject);
+    this._initialize(floorObject).catch((error) => {
+      logger({ message: `Failed to initialize GameScene: ${error.message}`, type: 'error' });
+      throw new Error('Failed to initialize GameScene');
+    });
   }
 
   private async _initialize(floorObject: THREE.Object3D): Promise<void> {
