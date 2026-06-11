@@ -84,6 +84,7 @@ export default defineConfig([
           leadingUnderscore: 'require',
         },
       ],
+      'no-console': ['error'],
       'perfectionist/sort-imports': [
         'error',
         {
@@ -99,6 +100,17 @@ export default defineConfig([
           ],
         },
       ],
+    },
+  },
+  {
+    files: [
+      'src/lib/internal-ui/utils/logger.ts',
+      'src/lib/internal-3d/ResourceTracker/ResourceTracker.ts',
+      'src/lib/ipc.web.ts',
+      'src/main/**/*',
+    ],
+    rules: {
+      'no-console': 'off',
     },
   },
 ]);

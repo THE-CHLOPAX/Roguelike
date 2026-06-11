@@ -41,7 +41,7 @@ export class DamageHitbox extends Hitbox {
     const worldPosition = new THREE.Vector3();
     this.getWorldPosition(worldPosition);
 
-    const rigidBody = this.getRigidBody();
+    const rigidBody = this.rigidBody;
     if (rigidBody) {
       this._isPositionSynced =
         rigidBody.getTranslation().distanceTo(worldPosition) < SYNCED_POSITION_THRESHOLD;

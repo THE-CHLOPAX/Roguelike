@@ -1,0 +1,74 @@
+import { Scene } from '@tgdf';
+import { NavMesh } from '@recast-navigation/core';
+
+import { Entity } from './Entity';
+import { MAIN_CROWD_ID } from '../../constants';
+import { AIAttackOptions, AIRoamingOptions } from '../../types';
+import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
+import { EntityMovable, EntityMovableOptions } from './EntityMovable';
+
+export type EntityAIOptions = EntityMovableOptions & {
+  detectionRadius?: number;
+  roaming?: AIRoamingOptions;
+  attack?: AIAttackOptions;
+  enemyTypes?: (typeof Entity)[];
+};
+
+export class EntityAI extends EntityMovable {
+  public navMeshAgent: NavMeshAgent;
+  public navMesh: NavMesh;
+
+  private _enemyTypes: (typeof Entity)[] | null = null;
+  private _detectionRadius: number | null = null;
+  private _roaming: AIRoamingOptions | null = null;
+  private _attack: AIAttackOptions | null = null;
+
+  constructor(
+    scene: Scene,
+    public options: EntityAIOptions
+  ) {
+    super(scene, options);
+
+    if (!scene.navMeshManager) {
+      throw new Error('Scene NavMeshManager is not initialized');
+    }
+
+    if (!scene.navMeshManager.navMesh) {
+      throw new Error('NavMesh is not available in NavMeshManager');
+    }
+
+    this.navMesh = scene.navMeshManager.navMesh;
+
+    const mainCrowd = scene.navMeshManager.getCrowd(MAIN_CROWD_ID);
+    if (!mainCrowd) {
+      throw new Error(`Main enemy crowd with ID ${MAIN_CROWD_ID} not found in NavMeshManager`);
+    }
+
+    this.navMeshAgent = this.addComponent('NavMeshAgent', new NavMeshAgent(this, mainCrowd));
+
+    this._detectionRadius = options.detectionRadius ?? null;
+    this._roaming = options.roaming ?? null;
+    this._attack = options.attack ?? null;
+    this._enemyTypes = options.enemyTypes ?? null;
+
+    this.onInit();
+  }
+
+  public get roaming(): AIRoamingOptions | null {
+    return this._roaming;
+  }
+
+  public get attackOptions(): AIAttackOptions | null {
+    return this._attack;
+  }
+
+  public get detectionRadius(): number | null {
+    return this._detectionRadius;
+  }
+
+  public get enemyTypes(): (typeof Entity)[] | null {
+    return this._enemyTypes;
+  }
+
+  protected onInit(): void {}
+}

@@ -58,6 +58,10 @@ export class NavMeshManager {
     return this._events;
   }
 
+  public get navMesh(): NavMesh | null {
+    return this._navMesh;
+  }
+
   public update(deltaTime: number): void {
     this._crowdMap.forEach((crowd) => {
       crowd.update(deltaTime);

@@ -9,15 +9,16 @@ export type ModelRendererOptions = {
 export type AddAttachmentOptions =
   | { object: THREE.Object3D; parent: THREE.Object3D }
   | { object: THREE.Object3D; parentName: string };
+
 export class ModelRenderer extends GameObjectComponent {
   private _model: THREE.Object3D | null = null;
+  private _modelOriginalMaterials: THREE.Material[] = [];
 
-  constructor(gameObject: GameObject, options?: ModelRendererOptions) {
+  constructor(gameObject: GameObject, options: ModelRendererOptions) {
     super(gameObject);
 
-    if (options?.model) {
-      this.setModel(options.model);
-    }
+    this.setModel(options.model);
+    this._modelOriginalMaterials = this.getMaterialsCopy();
   }
 
   public getModel(): THREE.Object3D | null {
@@ -78,6 +79,24 @@ export class ModelRenderer extends GameObjectComponent {
     }
   }
 
+  public getMaterialsCopy(): THREE.Material[] {
+    const currentMaterials = this.getModelMaterials();
+    if (!currentMaterials) return [];
+    return currentMaterials.map((material) => material.clone());
+  }
+
+  public restoreOriginalMaterials(): void {
+    const currentMaterials = this.getModelMaterials();
+
+    if (!currentMaterials) return;
+
+    currentMaterials.forEach((material, index) => {
+      if (this._modelOriginalMaterials[index]) {
+        material.copy(this._modelOriginalMaterials[index]);
+      }
+    });
+  }
+
   private _cloneMaterials(object: THREE.Object3D): void {
     object.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
@@ -125,6 +144,17 @@ export class ModelRenderer extends GameObjectComponent {
     }
 
     this.gameObject.addObjectResourceTracker(options.object);
+
+    // Get parent's world scale to compensate for it
+    const parentWorldScale = new THREE.Vector3();
+    targetParent.getWorldScale(parentWorldScale);
+    // Prevent division by zero if any scale component is 0
+    if (parentWorldScale.x === 0) parentWorldScale.x = 1;
+    if (parentWorldScale.y === 0) parentWorldScale.y = 1;
+    if (parentWorldScale.z === 0) parentWorldScale.z = 1;
+    // Adjust object's scale to maintain world size when attached to scaled parent
+    options.object.scale.divide(parentWorldScale);
+
     targetParent.add(options.object);
   }
 
@@ -154,6 +184,10 @@ export class ModelRenderer extends GameObjectComponent {
         type: 'warn',
       });
       return;
+    }
+
+    if (object instanceof GameObject) {
+      object.destroy();
     }
 
     parent.remove(object);

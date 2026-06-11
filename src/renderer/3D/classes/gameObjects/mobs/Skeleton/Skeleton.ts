@@ -1,78 +1,56 @@
-import { getModelFromStore } from '@tgdf';
-import { Crowd } from '@recast-navigation/core';
+import * as THREE from 'three';
 
-import { MODELS } from '../../../../constants';
-import { EntityMovable } from '../../EntityMovable';
-import { AIIdleState } from '../../../states/index';
-import { MAIN_ENEMY_CROWD_ID } from '../../../../../constants';
-import { TestScene } from '../../../../../scenes/test/TestScene';
-import { NavMeshAgent } from '../../../gameObjectComponents/NavMeshAgent';
+import { EntityAI } from '../../EntityAI';
+import { attackActions } from './attacks';
+import { Player } from '../../players/Player';
+import { TestScene } from '../../../scenes/TestScene';
+import { AnimationClipNamesShared } from '../../../../types';
+import { AIIdleState, AISpawnState } from '../../../states/index';
+import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
 
-export class Skeleton extends EntityMovable {
+export class Skeleton extends EntityAI {
   constructor(scene: TestScene) {
-    const skeletonModel = getModelFromStore(MODELS.SKELETON.id);
-
-    if (!skeletonModel) {
-      throw new Error(`Model not found in cache: ${MODELS.SKELETON.id}`);
-    }
-
-    skeletonModel.scale.multiplyScalar(1.2);
-
     super(scene, {
-      model: skeletonModel,
+      model: {
+        id: MODELS.SKELETON.id,
+        scale: new THREE.Vector3(1.2, 1.2, 1.2),
+      },
       speed: 2.5,
       sprintSpeed: 4,
-      walkSpeed: 1,
+      walkSpeed: 0.5,
       rigidBodyOptions: {
-        mass: 0.1,
-        friction: 0,
-        linearDamping: 0,
-        lockRotation: true,
-        colliderShape: 'box',
-        enableCollisionDetection: true,
+        ...DEFAULT_RIGID_BODY_OPTIONS,
+      },
+      animationControllerOptions: {
+        playbackRates: {
+          [AnimationClipNamesShared.WALK]: 1.5,
+          [AnimationClipNamesShared.RUN]: 1.5,
+        },
+        fadeOutDurations: {
+          [AnimationClipNamesShared.IDLE]: 0.1,
+        },
+      },
+      detectionRadius: 5,
+      enemyTypes: [Player],
+      roaming: {
+        radius: 5,
+        interval: {
+          min: 3000,
+          max: 7000,
+        },
+      },
+      attack: {
+        actions: attackActions,
+      },
+      healthOptions: {
+        initialHealthPoints: 10,
       },
     });
 
     this.name = 'Skeleton';
-
-    this.stateController.currentState = new AIIdleState(this);
-
-    const navMeshManager = scene.navMeshManager;
-    if (!navMeshManager) {
-      throw new Error('NavMeshManager not found in scene');
-    }
-
-    const existingCrowd = navMeshManager.getCrowd(MAIN_ENEMY_CROWD_ID);
-    // Crowd already there
-    if (existingCrowd) {
-      this._initialize(existingCrowd);
-    } else {
-      // Crowd not added yet - wait for it
-      navMeshManager.events.on('crowdadded', this._onCrowdAdded);
-    }
   }
 
-  protected override onDestroyed(): void {
-    const navMeshManager = this.scene?.navMeshManager;
-    if (navMeshManager) {
-      navMeshManager.events.off('crowdadded', this._onCrowdAdded);
-    }
-    super.onDestroyed();
-  }
-
-  private _onCrowdAdded = ({ crowdId, crowd }: { crowdId: string; crowd: Crowd }) => {
-    if (crowdId === MAIN_ENEMY_CROWD_ID) {
-      this._initialize(crowd);
-    }
-  };
-
-  private _initialize(crowd: Crowd): void {
-    this.addComponent(
-      'NavMeshAgent',
-      new NavMeshAgent(this, crowd, {
-        radius: 0.6,
-        height: 2.0,
-      })
-    );
+  protected override onInit(): void {
+    this.stateController.currentState = new AISpawnState(this, new AIIdleState(this));
   }
 }

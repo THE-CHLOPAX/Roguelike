@@ -1,13 +1,13 @@
 import { InputState } from '@tgdf';
 
 import { kick } from '../attacks';
-import { State } from '../../../../states/State';
 import { RunningState, AttackState } from './index';
 import { EntityMovable } from '../../../EntityMovable';
 import { AnimationClipNamesShared } from '../../../../../types';
+import { State, StateWithHealthEvents } from '../../../../states';
 import { mapInputToControls } from '../../../../../utils/mapInputToControls';
 
-export class IdleState extends State {
+export class IdleState extends StateWithHealthEvents {
   constructor(public entity: EntityMovable) {
     super(entity);
   }

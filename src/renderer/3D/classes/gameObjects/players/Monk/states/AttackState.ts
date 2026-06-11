@@ -1,15 +1,14 @@
 import { InputState } from '@tgdf';
 
-import { State } from '../../../../states/State';
 import { IdleState, RunningState } from './index';
 import { AttackAction } from '../../../../../types';
 import { EntityMovable } from '../../../EntityMovable';
+import { State, StateWithHealthEvents } from '../../../../states';
 import { ControlsState, mapInputToControls } from '../../../../../utils/mapInputToControls';
 
-export class AttackState extends State {
+export class AttackState extends StateWithHealthEvents {
   private _attackInProgress = false;
   private _controlState: ControlsState | null = null;
-  private _cancelAttack: ReturnType<AttackAction> | null = null;
 
   constructor(
     public entity: EntityMovable,

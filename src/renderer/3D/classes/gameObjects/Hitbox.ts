@@ -3,7 +3,7 @@ import { GameObject, Scene, RigidBody } from '@tgdf';
 import { RigidBodyCollisionCallback } from '@tgdf/internal-game-components/RigidBody';
 
 export class Hitbox extends GameObject {
-  private _rigidBody: RigidBody | null = null;
+  private _rigidBody: RigidBody;
 
   constructor(scene: Scene, size: THREE.Vector3) {
     super({ scene });
@@ -35,23 +35,15 @@ export class Hitbox extends GameObject {
     );
   }
 
-  public getRigidBody(): RigidBody | null {
+  public get rigidBody(): RigidBody {
     return this._rigidBody;
   }
 
   public addCollisionListener(id: string, callback: RigidBodyCollisionCallback): void {
-    this._rigidBody?.addCollisionListener(id, callback);
-  }
-
-  public getDebugMesh(): THREE.Mesh | null {
-    return this._rigidBody?.getDebugMesh() || null;
+    this._rigidBody.addCollisionListener(id, callback);
   }
 
   public removeCollisionListener(id: string): void {
-    this._rigidBody?.removeCollisionListener(id);
-  }
-
-  public toggleDebug(enabled: boolean): void {
-    this._rigidBody?.toggleDebug(enabled);
+    this._rigidBody.removeCollisionListener(id);
   }
 }

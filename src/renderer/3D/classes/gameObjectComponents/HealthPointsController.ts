@@ -1,18 +1,34 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
-import { GameObjectComponent, logger } from '@tgdf';
+import { Emitter, GameObjectComponent, logger } from '@tgdf';
 
 import { Entity } from '../gameObjects/Entity';
 
+export type HealthPointsControllerEvents = {
+  damagetaken: { currentHealth: number; damageAmount: number };
+  heal: { currentHealth: number; healAmount: number };
+  death: void;
+};
 export class HealthPointsController extends GameObjectComponent {
   private _healthPoints: number;
   private _initialHealthPoints: number;
   private _isDead: boolean = false;
+  private _isImmuneToDamage: boolean = false;
+
+  public events: Emitter<HealthPointsControllerEvents> = new Emitter();
 
   constructor(gameObject: Entity, initialHealthPoints: number = 100) {
     super(gameObject);
     this._initialHealthPoints = initialHealthPoints;
     this._healthPoints = initialHealthPoints;
+  }
+
+  public get isImmuneToDamage(): boolean {
+    return this._isImmuneToDamage;
+  }
+
+  public set isImmuneToDamage(value: boolean) {
+    this._isImmuneToDamage = value;
   }
 
   public get healthPoints(): number {
@@ -32,7 +48,9 @@ export class HealthPointsController extends GameObjectComponent {
   }
 
   public inflictDamage(amount: number): void {
-    if (amount < 0) {
+    if (this._isDead || this._isImmuneToDamage) return;
+
+    if (amount <= 0) {
       logger({
         message: '[HealthPointsController] Damage amount must be positive',
         type: 'warn',
@@ -40,18 +58,16 @@ export class HealthPointsController extends GameObjectComponent {
       return;
     }
     this._healthPoints = Math.max(this._healthPoints - amount, 0);
+    this.events.trigger('damagetaken', { currentHealth: this._healthPoints, damageAmount: amount });
     this._isDead = this._healthPoints === 0;
 
-    this._onDamageTaken();
-    this.onDamageTaken();
-
     if (this._isDead) {
-      this.onDeath();
+      this.events.trigger('death');
     }
   }
 
   public healDamage(amount: number): void {
-    if (amount < 0) {
+    if (amount <= 0) {
       logger({
         message: '[HealthPointsController] Heal amount must be positive',
         type: 'warn',
@@ -60,26 +76,16 @@ export class HealthPointsController extends GameObjectComponent {
     }
     // Allow overhealing
     this._healthPoints = this._healthPoints + amount;
+    this.events.trigger('heal', { currentHealth: this._healthPoints, healAmount: amount });
     this._isDead = this._healthPoints === 0;
-
-    this.onHeal();
   }
 
   public resetHealth(): void {
     this._healthPoints = this._initialHealthPoints;
     this._isDead = false;
-
-    this.onHeal();
   }
 
-  public onHeal() {}
-
-  public onDamageTaken() {}
-
-  public onDeath() {}
-
-  private _onDamageTaken() {
-    // Flash red on damage
+  public flashRed(onComplete?: () => void): void {
     const modelMaterials = this.gameObject.modelRenderer.getModelMaterials();
 
     if (!modelMaterials) return;
@@ -97,6 +103,9 @@ export class HealthPointsController extends GameObjectComponent {
           duration: 0.1,
           yoyo: true,
           repeat: 1,
+          onComplete: () => {
+            onComplete?.();
+          },
         });
       }
     });
