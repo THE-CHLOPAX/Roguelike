@@ -12,5 +12,9 @@ export function getTargetEnemy(entity: EntityAI): Entity | null {
     return distanceA - distanceB;
   });
 
-  return enemiesSortedByDistance[0];
+  const enemiesAlive = enemiesSortedByDistance.filter(
+    (enemy) => !enemy.healthPointsController.isDead
+  );
+
+  return enemiesAlive[0] ?? null;
 }

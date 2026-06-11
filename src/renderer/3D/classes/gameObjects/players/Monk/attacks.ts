@@ -16,7 +16,7 @@ export const kick: AttackAction = (entity: Entity) =>
           entity.damageHitboxController.attachDamageHitbox(
             new THREE.Vector3(0.3, 1, 0.3),
             10,
-            'Ctrl_Foot_IK_Right'
+            'mixamorigRightFoot'
           ),
         [],
         HITBOX_DELAY
@@ -29,7 +29,7 @@ export const kick: AttackAction = (entity: Entity) =>
         HITBOX_DELAY + HITBOX_DURATION
       );
 
-    entity.animationController.playAnimation('attack-1', {
+    entity.animationController.playAnimation('kick', {
       clampWhenFinished: true,
       playbackRate: 1.3,
       onComplete: () => {

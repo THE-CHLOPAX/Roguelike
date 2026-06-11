@@ -28,12 +28,12 @@ export const MODELS: Record<string, ModelRecord> = {
   SKELETON: {
     id: 'model-skeleton',
     path: './assets/models/skeleton.glb',
-    nameExtractor: 'Skeleton',
+    nameExtractor: 'Armature',
   },
   MONK: {
     id: 'model-monk',
     path: './assets/models/monk.glb',
-    nameExtractor: 'Monk',
+    nameExtractor: 'Armature',
   },
   KNIGHT: {
     id: 'model-knight',

@@ -4,9 +4,10 @@ import { AIAttackState } from './AIAttackState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
+import { AIStateWithHealthEvents } from './AIStateWithHealthEvents';
 import { AIAttackAction, AnimationClipNamesShared } from '../../../types';
 
-export class AIChasingState extends AIState {
+export class AIChasingState extends AIStateWithHealthEvents {
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
     // Check if there is a target enemy
     const targetEnemy = getTargetEnemy(entity);

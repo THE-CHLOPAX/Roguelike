@@ -20,17 +20,17 @@ export class StateController extends GameObjectComponent {
 
   public set currentState(newState: State | null) {
     if (this._currentState) {
-      this._currentState.onExit();
+      this._currentState.exit();
     }
     this._currentState = newState;
     if (this._currentState) {
-      this._currentState.onEnter();
+      this._currentState.enter();
     }
   }
 
   public override onInput(_inputState: InputState): void {
     if (this._currentState) {
-      const newState = this._currentState.onInput(_inputState);
+      const newState = this._currentState.input(_inputState);
       if (newState !== this._currentState) {
         this.currentState = newState;
       }
@@ -39,10 +39,15 @@ export class StateController extends GameObjectComponent {
 
   public override onUpdate(deltaTime: number): void {
     if (this._currentState) {
-      const newState = this._currentState.onUpdate(deltaTime);
+      const newState = this._currentState.update(deltaTime);
       if (newState !== this._currentState) {
         this.currentState = newState;
       }
     }
+  }
+
+  public override onDestroyed(): void {
+    this._currentState = null;
+    super.onDestroyed();
   }
 }

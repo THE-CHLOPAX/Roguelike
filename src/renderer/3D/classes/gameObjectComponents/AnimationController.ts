@@ -24,7 +24,7 @@ export type AnimationControllerOptions = {
 const DEFAULT_FADE_OUT_DURATION = 0.2; // seconds
 export class AnimationController extends GameObjectComponent {
   private _currentAction: THREE.AnimationAction | null = null;
-  private _currentActionOnComplete: ((event?: THREE.Event) => void) | null = null;
+  private _onCompleteCallbacks = new Map<THREE.AnimationAction, () => void>();
   private _animations: THREE.AnimationClip[] = [];
   private _animationMixer: THREE.AnimationMixer | null = null;
   private _actions: Map<string, THREE.AnimationAction> = new Map();
@@ -52,8 +52,11 @@ export class AnimationController extends GameObjectComponent {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
 
-    // If already playing this animation, don't restart it
+    // If already playing this animation, update onComplete if provided but don't restart it
     if (this._currentAction === action && action.isRunning()) {
+      if (options?.onComplete) {
+        this._setOnCompleteCallback(action, options.onComplete);
+      }
       return;
     }
 
@@ -63,7 +66,7 @@ export class AnimationController extends GameObjectComponent {
         this._options?.fadeOutDurations?.[this._currentAction.getClip().name] ??
         DEFAULT_FADE_OUT_DURATION;
       this._currentAction.fadeOut(fadeOutDuration);
-      this._onActionInterrupted(this._currentAction);
+      this._clearOnCompleteCallback(this._currentAction);
     }
 
     // Apply playback rate if specified
@@ -82,8 +85,9 @@ export class AnimationController extends GameObjectComponent {
 
     // Reset and play the new action
     this._currentAction = action;
-
-    this._currentActionOnComplete = options?.onComplete ?? null;
+    if (options?.onComplete) {
+      this._setOnCompleteCallback(action, options.onComplete);
+    }
 
     action.reset();
     action.fadeIn(0.2);
@@ -99,7 +103,10 @@ export class AnimationController extends GameObjectComponent {
   public stopAnimation(animationName: string): void {
     const action = this._getAnimationAction(animationName);
     if (!action) return;
-    this._currentAction = null;
+    if (this._currentAction === action) {
+      this._currentAction = null;
+    }
+    this._clearOnCompleteCallback(action);
     action.stop();
   }
 
@@ -151,13 +158,15 @@ export class AnimationController extends GameObjectComponent {
     this._animationMixer = new THREE.AnimationMixer(model);
 
     this._animationMixer.addEventListener('finished', (event) => {
-      if (event.action === this._currentAction) {
-        this._currentActionOnComplete?.(event);
-        this._currentActionOnComplete = null;
-      }
+      const onComplete = this._onCompleteCallbacks.get(event.action);
+      if (!onComplete) return;
+
+      this._onCompleteCallbacks.delete(event.action);
+      onComplete();
     });
 
     this._actions.clear(); // Clear cached actions
+    this._onCompleteCallbacks.clear();
   }
 
   private _disposeAnimationMixer(): void {
@@ -166,13 +175,14 @@ export class AnimationController extends GameObjectComponent {
       this._animationMixer.uncacheRoot(this._animationMixer.getRoot());
       this._animationMixer = null;
     }
+    this._onCompleteCallbacks.clear();
   }
 
-  private _onActionInterrupted(action: THREE.AnimationAction): void {
-    // If the interrupted action has an onComplete callback, we should call it to ensure proper cleanup
-    if (this._currentActionOnComplete && action === this._currentAction) {
-      this._currentActionOnComplete();
-      this._currentActionOnComplete = null;
-    }
+  private _setOnCompleteCallback(action: THREE.AnimationAction, onComplete: () => void): void {
+    this._onCompleteCallbacks.set(action, onComplete);
+  }
+
+  private _clearOnCompleteCallback(action: THREE.AnimationAction): void {
+    this._onCompleteCallbacks.delete(action);
   }
 }

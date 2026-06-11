@@ -1,6 +1,6 @@
 import { randFromRange } from '@tgdf';
 
-import { AIState } from '../index';
+import { AIState } from './AIState';
 import { AIAttackState } from './AIAttackState';
 import { AIRoamingState } from './AIRoamingState';
 import { AIChasingState } from './AIChasingState';

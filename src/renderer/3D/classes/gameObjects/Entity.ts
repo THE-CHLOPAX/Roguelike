@@ -15,6 +15,9 @@ export type EntityOptions = {
     id: string;
     scale?: THREE.Vector3;
   };
+  healthOptions?: {
+    initialHealthPoints?: number;
+  };
   rigidBodyOptions?: RigidBodyOptions;
   animationControllerOptions?: AnimationControllerOptions;
 };
@@ -22,14 +25,14 @@ export type EntityOptions = {
 const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
 
 export class Entity extends GameObject {
-  private _animationController: AnimationController;
+  private _rigidBody: RigidBody;
   private _modelRenderer: ModelRenderer;
   private _stateController: StateController;
+  private _animationController: AnimationController;
   private _damageHitboxController: DamageHitboxController;
   private _healthPointsController: HealthPointsController;
 
   private _spawnPosition: THREE.Vector3 = new THREE.Vector3();
-  private _rigidBody: RigidBody | null = null;
 
   constructor(
     scene: Scene,
@@ -52,6 +55,7 @@ export class Entity extends GameObject {
         model,
       })
     );
+
     this._animationController = this.addComponent(
       'AnimationController',
       new AnimationController(this, this._modelRenderer, options.animationControllerOptions)
@@ -69,7 +73,7 @@ export class Entity extends GameObject {
 
     this._healthPointsController = this.addComponent(
       'HealthPointsController',
-      new HealthPointsController(this)
+      new HealthPointsController(this, options.healthOptions?.initialHealthPoints)
     );
 
     this._stateController = this.addComponent('StateController', new StateController(this));
@@ -95,7 +99,7 @@ export class Entity extends GameObject {
     return this._healthPointsController;
   }
 
-  public get rigidBody(): RigidBody | null {
+  public get rigidBody(): RigidBody {
     return this._rigidBody;
   }
 

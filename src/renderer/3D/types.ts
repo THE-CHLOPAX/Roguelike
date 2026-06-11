@@ -9,7 +9,7 @@ export enum AnimationClipNamesShared {
   JUMP = 'jump',
   FALL = 'fall',
   HIT = 'hit',
-  DIE = 'die',
+  STAND_UP = 'stand-up',
 }
 
 export enum StateGroup {

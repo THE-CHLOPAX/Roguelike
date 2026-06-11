@@ -1,6 +1,6 @@
 import { InputState } from '@tgdf';
 
-import { State } from '../../../../states/State';
+import { State } from '../../../../states';
 import { IdleState, RunningState } from './index';
 import { EntityMovable } from '../../../EntityMovable';
 import { AnimationClipNamesShared } from '../../../../../types';

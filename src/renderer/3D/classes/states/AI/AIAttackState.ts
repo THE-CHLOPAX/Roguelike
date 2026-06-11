@@ -1,13 +1,13 @@
-import { AIAttackAction } from 'src/renderer/3D/types';
-
 import { AIState } from './AIState';
 import { AIIdleState } from './AIIdleState';
+import { AIAttackAction } from '../../../types';
 import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
+import { AIStateWithHealthEvents } from './AIStateWithHealthEvents';
 
-export class AIAttackState extends AIState {
+export class AIAttackState extends AIStateWithHealthEvents {
   private _isAttacking: boolean = false;
 
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {

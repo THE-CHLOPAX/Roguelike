@@ -9,15 +9,16 @@ export type ModelRendererOptions = {
 export type AddAttachmentOptions =
   | { object: THREE.Object3D; parent: THREE.Object3D }
   | { object: THREE.Object3D; parentName: string };
+
 export class ModelRenderer extends GameObjectComponent {
   private _model: THREE.Object3D | null = null;
+  private _modelOriginalMaterials: THREE.Material[] = [];
 
-  constructor(gameObject: GameObject, options?: ModelRendererOptions) {
+  constructor(gameObject: GameObject, options: ModelRendererOptions) {
     super(gameObject);
 
-    if (options?.model) {
-      this.setModel(options.model);
-    }
+    this.setModel(options.model);
+    this._modelOriginalMaterials = this.getMaterialsCopy();
   }
 
   public getModel(): THREE.Object3D | null {
@@ -76,6 +77,24 @@ export class ModelRenderer extends GameObjectComponent {
     if (this._model) {
       this.gameObject.add(this._model);
     }
+  }
+
+  public getMaterialsCopy(): THREE.Material[] {
+    const currentMaterials = this.getModelMaterials();
+    if (!currentMaterials) return [];
+    return currentMaterials.map((material) => material.clone());
+  }
+
+  public restoreOriginalMaterials(): void {
+    const currentMaterials = this.getModelMaterials();
+
+    if (!currentMaterials) return;
+
+    currentMaterials.forEach((material, index) => {
+      if (this._modelOriginalMaterials[index]) {
+        material.copy(this._modelOriginalMaterials[index]);
+      }
+    });
   }
 
   private _cloneMaterials(object: THREE.Object3D): void {
