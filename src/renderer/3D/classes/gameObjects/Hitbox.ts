@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GameObject, Scene, RigidBody } from '@tgdf';
-import { RigidBodyCollisionCallback } from '@tgdf/internal-game-components/RigidBody';
 
 export class Hitbox extends GameObject {
   private _rigidBody: RigidBody;
@@ -37,13 +36,5 @@ export class Hitbox extends GameObject {
 
   public get rigidBody(): RigidBody {
     return this._rigidBody;
-  }
-
-  public addCollisionListener(id: string, callback: RigidBodyCollisionCallback): void {
-    this._rigidBody.addCollisionListener(id, callback);
-  }
-
-  public removeCollisionListener(id: string): void {
-    this._rigidBody.removeCollisionListener(id);
   }
 }

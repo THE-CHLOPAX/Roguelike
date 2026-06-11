@@ -3,9 +3,9 @@ import * as THREE from 'three';
 import { EntityAI } from '../../EntityAI';
 import { attackActions } from './attacks';
 import { Player } from '../../players/Player';
+import { AIIdleState } from '../../../states/index';
 import { TestScene } from '../../../scenes/TestScene';
 import { AnimationClipNamesShared } from '../../../../types';
-import { AIIdleState, AISpawnState } from '../../../states/index';
 import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
 
 export class Skeleton extends EntityAI {
@@ -51,6 +51,7 @@ export class Skeleton extends EntityAI {
   }
 
   protected override onInit(): void {
-    this.stateController.currentState = new AISpawnState(this, new AIIdleState(this));
+    //this.stateController.currentState = new AISpawnState(this, new AIIdleState(this));
+    this.stateController.currentState = new AIIdleState(this);
   }
 }

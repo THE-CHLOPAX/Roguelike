@@ -40,14 +40,6 @@ export abstract class Scene extends THREE.Scene {
   }
 
   public update(deltaTime: number, renderer: THREE.WebGLRenderer | null): void {
-    // Update physics world with deltaTime for fixed time step
-    this.physics?.update(deltaTime);
-
-    // Update navmesh manager
-    if (this._navMeshManager) {
-      this._navMeshManager.update(deltaTime);
-    }
-
     // Assign current renderer
     if (this._renderer !== renderer) this.events.trigger('rendererChange', { renderer });
     this._renderer = renderer;
@@ -57,12 +49,23 @@ export abstract class Scene extends THREE.Scene {
       (this.camera as { update: () => void }).update();
     }
 
-    // Update all GameObjects
+    // Update GameObjects first so kinematic visuals are current before physics
     this.traverse((child) => {
       if (child instanceof GameObject) {
         child.update(deltaTime);
       }
     });
+
+    // Step physics after kinematic bodies have synced their colliders
+    this.physics?.update(deltaTime);
+
+    // Pull dynamic body transforms back to visuals after simulation
+    this.physics?.syncDynamicBodies();
+
+    // Update navmesh manager
+    if (this._navMeshManager) {
+      this._navMeshManager.update(deltaTime);
+    }
 
     this.events.trigger('update', { deltaTime });
 

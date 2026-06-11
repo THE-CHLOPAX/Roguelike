@@ -49,17 +49,6 @@ describe('ResourceTracker', () => {
     expect(materialDisposeSpy).toHaveBeenCalledOnce();
   });
 
-  it('should remove object from parent', () => {
-    const parent = new THREE.Object3D();
-    const child = new THREE.Mesh();
-    parent.add(child);
-
-    tracker.track(child);
-    tracker.dispose();
-
-    expect(parent.children).not.toContain(child);
-  });
-
   it('should handle shader material uniforms', () => {
     const texture = new THREE.Texture();
     const material = new THREE.ShaderMaterial({

@@ -79,6 +79,14 @@ export class PhysicsManager {
     }
   }
 
+  public syncDynamicBodies(): void {
+    if (!this._bodies) return;
+
+    for (const body of this._bodies.values()) {
+      body.syncFromPhysics();
+    }
+  }
+
   public onCollision(callback: PhysicsCollisionCallback): () => void {
     this._collisionSubscribers.add(callback);
     return () => this._collisionSubscribers.delete(callback);
@@ -106,19 +114,6 @@ export class PhysicsManager {
     this._handlesMap.set(bodyHandle, object);
   }
 
-  public getObjectFromBody(body: RigidBody): GameObject | undefined {
-    if (!this._bodies) return undefined;
-    const bodyHandle = body.getHandle();
-    if (bodyHandle === null) {
-      logger({
-        message: 'Cannot get object from body: RigidBody does not have a valid handle',
-        type: 'error',
-      });
-      return undefined;
-    }
-    return this._handlesMap.get(bodyHandle) || undefined;
-  }
-
   public getBodyFromHandle(handle: RAPIER.RigidBodyHandle): RigidBody | null {
     if (!this._world) return null;
     const object = this._handlesMap.get(handle);
@@ -129,7 +124,7 @@ export class PhysicsManager {
   public getObjectFromHandle(handle: RAPIER.RigidBodyHandle): THREE.Object3D | undefined {
     const body = this.getBodyFromHandle(handle);
     if (!body) return undefined;
-    return this.getObjectFromBody(body);
+    return body.gameObject;
   }
 
   public removeBody(object: GameObject): void {
