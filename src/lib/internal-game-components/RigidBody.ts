@@ -160,7 +160,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
     // Get this body's handle
     const thisHandle = this._body?.handle;
-    if (!thisHandle) {
+    if (thisHandle === undefined || thisHandle === null) {
       throw new Error('RigidBody: Cannot add collision listener before body is initialized');
     }
 

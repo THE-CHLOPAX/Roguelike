@@ -26,8 +26,6 @@ export class Monk extends Player {
       },
     });
 
-    this.rigidBody.toggleDebug(true);
-
     //this.stateController.currentState = new SpawnState(this, new IdleState(this));
     this.stateController.currentState = new IdleState(this);
   }
