@@ -6,8 +6,8 @@ import { AttackAction } from '../../../../types';
 
 export const kick: AttackAction = (entity: Entity) =>
   new Promise<void>((resolve) => {
-    const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
-    const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active
+    const HITBOX_DELAY = 0.3; // Delay in seconds before the hitbox is attached
+    const HITBOX_DURATION = 0.4; // Duration in seconds for which the hitbox remains active
 
     entity.damageHitboxController.hitboxTimeline = gsap
       .timeline()
