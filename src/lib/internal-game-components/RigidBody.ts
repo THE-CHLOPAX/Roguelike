@@ -101,10 +101,33 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
   }
 
+  public setTranslation(translation: THREE.Vector3, wake = true): void {
+    const body = this._getBody();
+    body.setTranslation({ x: translation.x, y: translation.y, z: translation.z }, wake);
+  }
+
+  public setRotation(quaternion: THREE.Quaternion, wake = true): void {
+    const body = this._getBody();
+    body.setRotation({ x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w }, wake);
+  }
+
   public setEulerRotation(euler: THREE.Euler): void {
     const body = this._getBody();
     const quat = new THREE.Quaternion().setFromEuler(euler);
     body.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }, true);
+  }
+
+  public syncFromPhysics(): void {
+    if (this.options.type !== 'dynamic') return;
+
+    const body = this._body;
+    if (!body) return;
+
+    const translation = body.translation();
+    const rotation = body.rotation();
+
+    this.gameObject.position.set(translation.x, translation.y, translation.z);
+    this.gameObject.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
   }
 
   public applyForce(force: THREE.Vector3): void {
@@ -134,7 +157,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
     // Get this body's handle
     const thisHandle = this._body?.handle;
-    if (!thisHandle) {
+    if (thisHandle === undefined || thisHandle === null) {
       throw new Error('RigidBody: Cannot add collision listener before body is initialized');
     }
 
@@ -182,31 +205,19 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
   protected override onUpdate(_deltaTime: number): void {
     super.onUpdate(_deltaTime);
+    if (this.options.type !== 'kinematic') return;
+
     const body = this._body;
     if (!body) return;
 
-    // For kinematic bodies, sync physics position TO visual
-    if (this.options.type === 'kinematic') {
-      const worldPos = new THREE.Vector3();
-      const worldQuat = new THREE.Quaternion();
-      this.gameObject.getWorldPosition(worldPos);
-      this.gameObject.getWorldQuaternion(worldQuat);
+    // Sync visual transform to physics immediately so colliders match this frame
+    const worldPos = new THREE.Vector3();
+    const worldQuat = new THREE.Quaternion();
+    this.gameObject.getWorldPosition(worldPos);
+    this.gameObject.getWorldQuaternion(worldQuat);
 
-      body.setNextKinematicTranslation({ x: worldPos.x, y: worldPos.y, z: worldPos.z });
-      body.setNextKinematicRotation({
-        x: worldQuat.x,
-        y: worldQuat.y,
-        z: worldQuat.z,
-        w: worldQuat.w,
-      });
-    } else {
-      // For dynamic/static bodies, sync visual position TO physics
-      const translation = body.translation();
-      const rotation = body.rotation();
-
-      this.gameObject.position.set(translation.x, translation.y, translation.z);
-      this.gameObject.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
-    }
+    this.setTranslation(worldPos);
+    this.setRotation(worldQuat);
   }
 
   protected override onDestroyed(): void {

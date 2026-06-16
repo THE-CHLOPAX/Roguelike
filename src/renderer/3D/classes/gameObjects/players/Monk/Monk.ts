@@ -1,6 +1,5 @@
 import { Player } from '../Player';
 import { IdleState } from './states/IdleState';
-import { SpawnState } from '../../../states/index';
 import { TestScene } from '../../../scenes/TestScene';
 import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
 
@@ -19,6 +18,7 @@ export class Monk extends Player {
           spawn: 2,
           kick: 1.5,
           hit: 1.8,
+          run: 0.9,
         },
       },
       healthOptions: {
@@ -26,6 +26,6 @@ export class Monk extends Player {
       },
     });
 
-    this.stateController.currentState = new SpawnState(this, new IdleState(this));
+    this.stateController.currentState = new IdleState(this);
   }
 }
