@@ -1,31 +1,50 @@
 import * as THREE from 'three';
-import { GameObject, GameObjectComponent } from '@tgdf';
+import { GameObjectComponent } from '@tgdf';
 
-import { ModelRenderer } from './ModelRenderer';
+import { Entity } from '../gameObjects/Entity';
 import { DamageHitbox } from '../gameObjects/DamageHitbox';
 
 export class DamageHitboxController extends GameObjectComponent {
-  private _modelRenderer: ModelRenderer;
   private _attackHitbox: DamageHitbox | null = null;
 
-  constructor(gameObject: GameObject, modelRenderer: ModelRenderer) {
-    super(gameObject);
-    this._modelRenderer = modelRenderer;
+  public hitboxTimeline: gsap.core.Timeline | null = null;
+
+  constructor(public entity: Entity) {
+    super(entity);
+    this.entity.healthPointsController.events.on('damagetaken', this._onDamageTaken);
   }
 
   public attachDamageHitbox(size: THREE.Vector3, damage: number, parentName: string): void {
     if (this._attackHitbox || !this.scene) return;
     this._attackHitbox = new DamageHitbox(this.scene, size, this.gameObject, damage);
 
-    this._modelRenderer.addAttachment({
+    this._attackHitbox.rigidBody.toggleDebug(true);
+
+    this.entity.modelRenderer.addAttachment({
       object: this._attackHitbox,
       parentName: parentName,
     });
   }
 
   public removeDamageHitbox(): void {
-    if (!this._attackHitbox || !this.scene) return;
-    this._modelRenderer.removeAttachment(this._attackHitbox);
+    if (!this._attackHitbox) return;
+    this.entity.modelRenderer.removeAttachment(this._attackHitbox);
     this._attackHitbox = null;
   }
+
+  public clearHitboxEvents(): void {
+    this.removeDamageHitbox();
+    this.hitboxTimeline?.kill();
+    this.hitboxTimeline = null;
+  }
+
+  protected override onDestroyed(): void {
+    super.onDestroyed();
+    this.clearHitboxEvents();
+    this.entity.healthPointsController.events.off('damagetaken', this._onDamageTaken);
+  }
+
+  private _onDamageTaken = () => {
+    this.clearHitboxEvents();
+  };
 }

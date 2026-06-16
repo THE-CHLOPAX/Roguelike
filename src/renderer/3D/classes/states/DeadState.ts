@@ -13,8 +13,6 @@ export class DeadState extends State {
       loop: false,
       clampWhenFinished: true,
     });
-    // Remove the damage hitbox when the entity dies
-    this.entity.damageHitboxController.removeDamageHitbox();
   }
   public onExit(): void {}
 
