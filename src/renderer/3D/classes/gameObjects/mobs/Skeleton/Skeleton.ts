@@ -51,7 +51,6 @@ export class Skeleton extends EntityAI {
   }
 
   protected override onInit(): void {
-    //this.stateController.currentState = new AISpawnState(this, new AIIdleState(this));
     this.stateController.currentState = new AIIdleState(this);
   }
 }
