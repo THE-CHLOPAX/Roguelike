@@ -21,7 +21,7 @@ function punch(entity: Entity) {
     const HITBOX_DELAY = 0.7; // Delay in seconds before the hitbox is attached
     const HITBOX_DURATION = 0.8; // Duration in seconds for which the hitbox remains active
 
-    const timeline = gsap
+    entity.damageHitboxController.hitboxTimeline = gsap
       .timeline()
       .call(
         () =>
@@ -35,7 +35,7 @@ function punch(entity: Entity) {
       )
       .call(
         () => {
-          entity.damageHitboxController.removeDamageHitbox();
+          entity.damageHitboxController.clearHitboxEvents();
         },
         [],
         HITBOX_DELAY + HITBOX_DURATION
@@ -45,8 +45,7 @@ function punch(entity: Entity) {
       clampWhenFinished: true,
       playbackRate: 1.8,
       onComplete: () => {
-        entity.damageHitboxController.removeDamageHitbox();
-        timeline.kill();
+        entity.damageHitboxController.clearHitboxEvents();
         resolve();
       },
     });

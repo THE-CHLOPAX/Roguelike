@@ -66,14 +66,14 @@ export class Entity extends GameObject {
       new RigidBody(this, this.options.rigidBodyOptions)
     );
 
-    this._damageHitboxController = this.addComponent(
-      'DamageHitboxController',
-      new DamageHitboxController(this, this._modelRenderer)
-    );
-
     this._healthPointsController = this.addComponent(
       'HealthPointsController',
       new HealthPointsController(this, options.healthOptions?.initialHealthPoints)
+    );
+
+    this._damageHitboxController = this.addComponent(
+      'DamageHitboxController',
+      new DamageHitboxController(this)
     );
 
     this._stateController = this.addComponent('StateController', new StateController(this));

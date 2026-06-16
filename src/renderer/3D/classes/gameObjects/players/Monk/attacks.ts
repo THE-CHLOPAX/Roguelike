@@ -6,10 +6,10 @@ import { AttackAction } from '../../../../types';
 
 export const kick: AttackAction = (entity: Entity) =>
   new Promise<void>((resolve) => {
-    const HITBOX_DELAY = 0.3; // Delay in milliseconds before the hitbox is attached
-    const HITBOX_DURATION = 0.4; // Duration in milliseconds for which the hitbox remains active
+    const HITBOX_DELAY = 0.3; // Delay in seconds before the hitbox is attached
+    const HITBOX_DURATION = 0.4; // Duration in seconds for which the hitbox remains active
 
-    const timeline = gsap
+    entity.damageHitboxController.hitboxTimeline = gsap
       .timeline()
       .call(
         () =>
@@ -23,7 +23,7 @@ export const kick: AttackAction = (entity: Entity) =>
       )
       .call(
         () => {
-          entity.damageHitboxController.removeDamageHitbox();
+          entity.damageHitboxController.clearHitboxEvents();
         },
         [],
         HITBOX_DELAY + HITBOX_DURATION
@@ -34,8 +34,7 @@ export const kick: AttackAction = (entity: Entity) =>
       playbackRate: 1.3,
       onComplete: () => {
         resolve();
-        entity.damageHitboxController.removeDamageHitbox();
-        timeline.kill();
+        entity.damageHitboxController.clearHitboxEvents();
       },
     });
   });

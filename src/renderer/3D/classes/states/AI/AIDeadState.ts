@@ -16,8 +16,6 @@ export class AIDeadState extends AIState {
         this.entity.destroy();
       },
     });
-    // Remove the damage hitbox when the entity dies
-    this.entity.damageHitboxController.removeDamageHitbox();
   }
   public onExit(): void {}
 

@@ -28,8 +28,6 @@ export class AIHurtState extends AIStateNoHealthEvents {
     this.entity.healthPointsController.flashRed(() => {
       this._flashEnded = true;
     });
-    // Remove the damage hitbox when the entity gets hurt
-    this.entity.damageHitboxController.removeDamageHitbox();
   }
 
   public onExit(): void {
