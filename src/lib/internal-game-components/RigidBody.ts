@@ -108,10 +108,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
 
   public setRotation(quaternion: THREE.Quaternion, wake = true): void {
     const body = this._getBody();
-    body.setRotation(
-      { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w },
-      wake
-    );
+    body.setRotation({ x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w }, wake);
   }
 
   public setEulerRotation(euler: THREE.Euler): void {

@@ -19,6 +19,7 @@ export class Monk extends Player {
           spawn: 2,
           kick: 1.5,
           hit: 1.8,
+          run: 0.9,
         },
       },
       healthOptions: {
