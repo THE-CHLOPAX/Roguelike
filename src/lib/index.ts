@@ -13,10 +13,8 @@ export * from './internal-store/useGamepadStore';
 // Internal UI
 export * from './internal-ui/components';
 export * from './internal-ui/ViewManager';
-export * from './internal-ui/SoundChannel';
 export * from './internal-ui/types/native';
 export * from './internal-ui/types/graphics';
-export * from './internal-ui/types/sound';
 export { logger } from './internal-ui/utils/logger';
 
 // Internal Input

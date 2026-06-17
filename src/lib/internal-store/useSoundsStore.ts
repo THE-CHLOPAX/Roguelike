@@ -1,112 +1,157 @@
 import { create } from 'zustand';
-
-import { useAssetStore } from './useAssetStore';
-import { SoundChannel } from '../internal-ui/SoundChannel';
+import { logger } from '@tgdf/internal-ui/utils/logger';
 
 export const MAIN_SOUND_CHANNEL = 'main';
 
-export type SoundsState = {
-  soundChannels: Map<string, SoundChannel>;
-  setSoundInChannel: (
-    channelId: string,
-    sound: string | HTMLAudioElement,
-    options: Partial<HTMLAudioElement>
-  ) => void;
-  playSoundInChannel: (
-    channelId: string,
-    sound: string | HTMLAudioElement,
-    options?: Partial<HTMLAudioElement>
-  ) => void;
-  pauseSoundInChannel: (channelId: string, sound: string | HTMLAudioElement) => void;
-  stopSoundInChannel: (channelId: string, sound: string | HTMLAudioElement) => void;
-  addSoundChannel: (id: string, volume: number, muted: boolean) => void;
-  removeSoundChannel: (id: string) => void;
-  setChannelVolume: (id: string, volume: number) => void;
-  setChannelMuted: (id: string, muted: boolean) => void;
+export type SoundChannel = {
+  id: string;
+  volume: number;
+  muted: boolean;
 };
 
-export const useSoundsStore = create<SoundsState>((set) => ({
+export type SoundPlaying = {
+  element: HTMLAudioElement;
+  initialVolume: number;
+  channelId: string;
+};
+
+export type SoundsState = {
+  soundChannels: Map<string, SoundChannel>;
+  soundsPlaying: Map<string, SoundPlaying>;
+};
+
+export const useSoundsStore = create<SoundsState>(() => ({
   soundChannels: new Map<string, SoundChannel>([
-    [MAIN_SOUND_CHANNEL, new SoundChannel(MAIN_SOUND_CHANNEL, 50, false)],
+    [MAIN_SOUND_CHANNEL, { id: MAIN_SOUND_CHANNEL, volume: 1, muted: false }],
   ]),
-
-  playSoundInChannel: (
-    channelId: string,
-    sound: string | HTMLAudioElement,
-    options?: Partial<HTMLAudioElement>
-  ) => {
-    const channel = useSoundsStore.getState().soundChannels.get(channelId);
-    const { audioCache } = useAssetStore.getState();
-    const soundElement = typeof sound === 'string' ? audioCache.get(sound) : sound;
-    if (channel && soundElement) {
-      channel.playSound(soundElement, options);
-    }
-  },
-
-  pauseSoundInChannel: (channelId: string, sound: string | HTMLAudioElement) => {
-    const channel = useSoundsStore.getState().soundChannels.get(channelId);
-    const { audioCache } = useAssetStore.getState();
-    const soundElement = typeof sound === 'string' ? audioCache.get(sound) : sound;
-    if (channel && soundElement) {
-      channel.pauseSound(soundElement);
-    }
-  },
-
-  stopSoundInChannel: (channelId: string, sound: string | HTMLAudioElement) => {
-    const channel = useSoundsStore.getState().soundChannels.get(channelId);
-    const { audioCache } = useAssetStore.getState();
-    const soundElement = typeof sound === 'string' ? audioCache.get(sound) : sound;
-    if (channel && soundElement) {
-      channel.stopSound(soundElement);
-    }
-  },
-
-  setSoundInChannel: (
-    channelId: string,
-    sound: string | HTMLAudioElement,
-    options: Partial<HTMLAudioElement>
-  ) => {
-    const channel = useSoundsStore.getState().soundChannels.get(channelId);
-    const { audioCache } = useAssetStore.getState();
-    const soundElement = typeof sound === 'string' ? audioCache.get(sound) : sound;
-    if (channel && soundElement) {
-      channel.setSound(soundElement, options);
-    }
-  },
-
-  addSoundChannel: (id: string, volume: number, muted: boolean) => {
-    const newChannel = new SoundChannel(id, volume, muted);
-    set((state) => ({
-      soundChannels: new Map(state.soundChannels).set(id, newChannel),
-    }));
-  },
-  removeSoundChannel: (id: string) => {
-    set((state) => {
-      const newChannels = new Map(state.soundChannels);
-      newChannels.delete(id);
-      return { soundChannels: newChannels };
-    });
-  },
-  setChannelVolume: (id: string, volume: number) => {
-    set((state) => {
-      const channel = state.soundChannels.get(id);
-      if (channel) {
-        channel.volume = volume;
-        // Trigger re-render by creating new Map
-        return { soundChannels: new Map(state.soundChannels) };
-      }
-      return state;
-    });
-  },
-  setChannelMuted: (id: string, muted: boolean) => {
-    set((state) => {
-      const channel = state.soundChannels.get(id);
-      if (channel) {
-        channel.muted = muted;
-        // Trigger re-render by creating new Map
-        return { soundChannels: new Map(state.soundChannels) };
-      }
-      return state;
-    });
-  },
+  soundsPlaying: new Map<string, SoundPlaying>(),
 }));
+
+export const setChannelVolume = (channelId: string, volume: number) => {
+  const channel = useSoundsStore.getState().soundChannels.get(channelId);
+  if (channel) {
+    const soundsPlaying = useSoundsStore.getState().soundsPlaying;
+    for (const sound of soundsPlaying.values()) {
+      if (sound.channelId === channelId) {
+        sound.element.volume = sound.initialVolume * volume;
+      }
+    }
+    const updatedChannel = { ...channel, volume };
+    useSoundsStore.setState((state) => ({
+      soundChannels: new Map(state.soundChannels).set(channelId, updatedChannel),
+    }));
+  } else {
+    logger({
+      message: `SoundsStore: unable to set channel volume. Channel ${channelId} not found`,
+      type: 'error',
+    });
+  }
+};
+
+export const setChannelMuted = (channelId: string, muted: boolean) => {
+  const channel = useSoundsStore.getState().soundChannels.get(channelId);
+  if (channel) {
+    const soundsPlaying = useSoundsStore.getState().soundsPlaying;
+    for (const sound of soundsPlaying.values()) {
+      if (sound.channelId === channelId) {
+        sound.element.muted = muted;
+      }
+    }
+
+    const updatedChannel = { ...channel, muted };
+    useSoundsStore.setState((state) => ({
+      soundChannels: new Map(state.soundChannels).set(channelId, updatedChannel),
+    }));
+  } else {
+    logger({
+      message: `SoundsStore: unable to set channel muted. Channel ${channelId} not found`,
+      type: 'error',
+    });
+  }
+};
+
+export const addSoundChannel = (channel: SoundChannel) => {
+  useSoundsStore.setState((state) => ({
+    soundChannels: new Map(state.soundChannels).set(channel.id, channel),
+  }));
+};
+
+export const removeSoundChannel = (channelId: string) => {
+  const soundsPlaying = useSoundsStore.getState().soundsPlaying;
+
+  for (const [key, sound] of soundsPlaying.entries()) {
+    if (sound.channelId === channelId) {
+      stopSoundInChannel(key);
+    }
+  }
+
+  const newSoundChannels = new Map(useSoundsStore.getState().soundChannels);
+  newSoundChannels.delete(channelId);
+
+  useSoundsStore.setState(() => ({
+    soundChannels: newSoundChannels,
+  }));
+};
+
+export const playSoundInChannel = (
+  audioElement: HTMLAudioElement,
+  channelId: string
+): string | undefined => {
+  const channel = useSoundsStore.getState().soundChannels.get(channelId);
+  if (channel) {
+    const newAudioElement = audioElement.cloneNode() as HTMLAudioElement;
+    const initialVolume = newAudioElement.volume;
+
+    const soundPlayingId = crypto.randomUUID();
+
+    const soundPlaying: SoundPlaying = {
+      element: newAudioElement,
+      initialVolume,
+      channelId,
+    };
+    useSoundsStore.setState((state) => ({
+      soundsPlaying: new Map(state.soundsPlaying).set(soundPlayingId, soundPlaying),
+    }));
+
+    newAudioElement.volume = initialVolume * channel.volume;
+    newAudioElement.muted = channel.muted;
+    newAudioElement.onended = () => {
+      stopSoundInChannel(soundPlayingId);
+    };
+    newAudioElement.play().catch((_error) => {
+      logger({
+        message: `SoundsStore: unable to play sound in channel.
+        Sound ${soundPlayingId} not added to map`,
+        type: 'error',
+      });
+      return undefined;
+    });
+
+    return soundPlayingId;
+  } else {
+    logger({
+      message: `SoundsStore: unable to play sound in channel. Channel ${channelId} not found`,
+      type: 'error',
+    });
+    return undefined;
+  }
+};
+
+export const stopSoundInChannel = (soundPlayingId: string) => {
+  const soundPlaying = useSoundsStore.getState().soundsPlaying.get(soundPlayingId);
+  if (soundPlaying) {
+    soundPlaying.element.pause();
+
+    const newSoundsPlaying = new Map(useSoundsStore.getState().soundsPlaying);
+    newSoundsPlaying.delete(soundPlayingId);
+
+    useSoundsStore.setState(() => ({
+      soundsPlaying: newSoundsPlaying,
+    }));
+  } else {
+    logger({
+      message: `SoundsStore: unable to stop sound in channel. Sound ${soundPlayingId} not found`,
+      type: 'error',
+    });
+  }
+};

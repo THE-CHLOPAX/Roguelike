@@ -4,17 +4,19 @@ import {
   useGraphicsStore,
   MAIN_SOUND_CHANNEL,
   AVAILABLE_RESOLUTIONS,
+  setChannelVolume,
   InternalCheckbox,
   InternalFlex,
   InternalSelect,
   InternalSlider,
   InternalText,
+  setChannelMuted,
 } from '@tgdf';
 
 import { BackToViewLayout } from '../../layouts/BackToViewLayout';
 
 export function SettingsView() {
-  const { soundChannels, setChannelVolume } = useSoundsStore();
+  const { soundChannels } = useSoundsStore();
 
   const mainVolumeChannel = useMemo(() => soundChannels.get(MAIN_SOUND_CHANNEL), [soundChannels]);
 
@@ -82,6 +84,10 @@ export function SettingsView() {
             onValueChange={(value) => {
               setChannelVolume(MAIN_SOUND_CHANNEL, value);
             }}
+          />
+          <InternalCheckbox
+            checked={mainVolumeChannel?.muted ?? false}
+            onChange={() => setChannelMuted(MAIN_SOUND_CHANNEL, !mainVolumeChannel?.muted)}
           />
         </InternalFlex>
       </InternalFlex>
