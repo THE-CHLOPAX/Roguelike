@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, assert } from 'vitest';
 
 import {
   useSoundsStore,
@@ -118,10 +118,10 @@ describe('useSoundsStore', () => {
   describe('play / stop lifecycle', () => {
     it('playSoundInChannel adds the sound to soundsPlaying', () => {
       const { original } = makeAudioWithClone();
-      playSoundInChannel(original, MAIN_SOUND_CHANNEL);
+      const soundPlayingId = playSoundInChannel(original, MAIN_SOUND_CHANNEL);
 
-      const key = `${original.src}-${MAIN_SOUND_CHANNEL}`;
-      expect(useSoundsStore.getState().soundsPlaying.has(key)).toBe(true);
+      assert(soundPlayingId);
+      expect(useSoundsStore.getState().soundsPlaying.has(soundPlayingId)).toBe(true);
     });
 
     it('playSoundInChannel applies channel volume and muted state to the element', () => {
@@ -142,9 +142,10 @@ describe('useSoundsStore', () => {
 
     it('stopSoundInChannel removes the sound from soundsPlaying and pauses the element', () => {
       const { original, clone } = makeAudioWithClone();
-      playSoundInChannel(original, MAIN_SOUND_CHANNEL);
+      const soundPlayingId = playSoundInChannel(original, MAIN_SOUND_CHANNEL);
+      assert(soundPlayingId);
 
-      stopSoundInChannel(clone, MAIN_SOUND_CHANNEL);
+      stopSoundInChannel(soundPlayingId);
 
       const key = `${original.src}-${MAIN_SOUND_CHANNEL}`;
       expect(useSoundsStore.getState().soundsPlaying.has(key)).toBe(false);
@@ -153,12 +154,22 @@ describe('useSoundsStore', () => {
 
     it('sound is removed from soundsPlaying when it ends naturally', () => {
       const { original, clone } = makeAudioWithClone();
-      playSoundInChannel(original, MAIN_SOUND_CHANNEL);
+      const soundPlayingId = playSoundInChannel(original, MAIN_SOUND_CHANNEL);
+      assert(soundPlayingId);
 
       clone.onended?.call(clone, new Event('ended'));
 
-      const key = `${original.src}-${MAIN_SOUND_CHANNEL}`;
-      expect(useSoundsStore.getState().soundsPlaying.has(key)).toBe(false);
+      expect(useSoundsStore.getState().soundsPlaying.has(soundPlayingId)).toBe(false);
+    });
+
+    it('removeSoundChannel stops all sounds in channel and removes the sound from soundsPlaying', () => {
+      const { original } = makeAudioWithClone();
+      const soundPlayingId = playSoundInChannel(original, MAIN_SOUND_CHANNEL);
+      assert(soundPlayingId);
+
+      removeSoundChannel(MAIN_SOUND_CHANNEL);
+
+      expect(useSoundsStore.getState().soundsPlaying.has(soundPlayingId)).toBe(false);
     });
   });
 });
