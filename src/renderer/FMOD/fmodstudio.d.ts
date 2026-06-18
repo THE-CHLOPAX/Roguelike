@@ -1,0 +1,102 @@
+/** Mutable out-value holder — passed as {} and populated by FMOD before the call returns. */
+export type FMODOutVal<T = unknown> = { val: T };
+
+export interface FMODEventInstance {
+  start(): number;
+  stop(mode: number): number;
+  release(): number;
+}
+
+export interface FMODEventDescription {
+  createInstance(outval: FMODOutVal<FMODEventInstance>): number;
+  loadSampleData(): number;
+  getPath(outval: FMODOutVal<string>, size: number, retrieved: null): number;
+}
+
+export interface FMODBank {
+  getEventCount(outval: FMODOutVal<number>): number;
+  getEventList(
+    outval: FMODOutVal<FMODEventDescription[]>,
+    capacity: number,
+    countOut: FMODOutVal<number>,
+  ): number;
+}
+
+export interface FMODCoreSystem {
+  setDSPBufferSize(bufferlength: number, numbuffers: number): number;
+  getDriverInfo(
+    id: number,
+    name: null,
+    namelen: null,
+    samplerate: FMODOutVal<number>,
+    speakermode: null,
+    speakermodechannels: null
+  ): number;
+  setSoftwareFormat(samplerate: number, speakermode: number, numrawspeakers: number): number;
+}
+
+export interface FMODStudioSystem {
+  initialize(
+    maxchannels: number,
+    studioflags: number,
+    coreflags: number,
+    extradriverdata: null
+  ): number;
+  getCoreSystem(outval: FMODOutVal<FMODCoreSystem>): number;
+  loadBankFile(filename: string, flags: number, outval: FMODOutVal<FMODBank>): number;
+  getEvent(path: string, outval: FMODOutVal<FMODEventDescription>): number;
+  update(): number;
+}
+
+/** The FMOD module object — passed as config, then populated with the full API on runtime init. */
+export interface FMODObject {
+  // ── Lifecycle callbacks (set before calling the factory) ──────────────────
+  preRun: () => void;
+  onRuntimeInitialized: () => void;
+  INITIAL_MEMORY: number;
+  /** Provide the wasm binary directly to skip Emscripten's file-path resolution. */
+  wasmBinary: ArrayBuffer | Uint8Array;
+
+  // ── Result constants ───────────────────────────────────────────────────────
+  readonly OK: number;
+  readonly STUDIO_INIT_NORMAL: number;
+  readonly INIT_NORMAL: number;
+  readonly STUDIO_LOAD_BANK_NORMAL: number;
+  readonly STUDIO_STOP_IMMEDIATE: number;
+  readonly SPEAKERMODE_DEFAULT: number;
+
+  // ── Core API ───────────────────────────────────────────────────────────────
+  ErrorString(result: number): string;
+  Studio_System_Create(outval: FMODOutVal<FMODStudioSystem>): number;
+
+  // ── Audio context resume (call on first user gesture if audio is silent) ──
+  OutputWebAudio_resumeAudio?: () => void;
+  OutputAudioWorklet_resumeAudio?: () => void;
+
+  // ── Virtual file system ────────────────────────────────────────────────────
+  FS_createPreloadedFile(
+    parent: string,
+    name: string,
+    url: string,
+    canRead: boolean,
+    canWrite: boolean
+  ): void;
+  FS_createDataFile(
+    parent: string,
+    name: string,
+    data: Uint8Array,
+    canRead: boolean,
+    canWrite: boolean,
+    canOwn?: boolean
+  ): void;
+  FS_unlink(path: string): void;
+}
+
+/**
+ * Factory exported by fmodstudio.js.
+ * Call with a plain object — FMOD populates it with the full API asynchronously
+ * via the onRuntimeInitialized callback.
+ */
+declare function FMODModuleFactory(config: Partial<FMODObject>): void;
+
+export default FMODModuleFactory;

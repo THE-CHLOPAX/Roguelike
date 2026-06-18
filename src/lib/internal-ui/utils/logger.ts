@@ -1,14 +1,42 @@
-export function logger({ message, type }: { message: string; type: 'info' | 'warn' | 'error' }) {
+export type LogType = 'info' | 'warn' | 'error';
+
+export type LoggerGroupSettings = {
+  label: string;
+  body: string;
+};
+
+const PREFIX: Record<LogType, string> = {
+  info: '💡[INFO]',
+  warn: '⚠️[WARN]',
+  error: '❌[ERROR]',
+};
+
+export function logger(args: { type: LogType; message: string }): void;
+export function logger(args: { type: LogType; group: LoggerGroupSettings }): void;
+export function logger(args: {
+  type: LogType;
+  message?: string;
+  group?: LoggerGroupSettings;
+}): void {
   const timestamp = new Date().toISOString();
-  switch (type) {
+  const prefix = `${PREFIX[args.type]} [${timestamp}]`;
+
+  if (args.group) {
+    console.groupCollapsed(`${prefix} ${args.group.label}`);
+    console.log(args.group.body);
+    console.groupEnd();
+    return;
+  }
+
+  switch (args.type) {
     case 'info':
-      console.log(`💡[INFO] [${timestamp}] ${message}`);
+      console.log(`${prefix} ${args.message}`);
       break;
     case 'warn':
-      console.warn(`⚠️[WARN] [${timestamp}] ${message}`);
+      console.warn(`${prefix} ${args.message}`);
       break;
     case 'error':
-      console.error(`❌[ERROR] [${timestamp}] ${message}`);
+      console.error(`${prefix} ${args.message}`);
       break;
   }
 }

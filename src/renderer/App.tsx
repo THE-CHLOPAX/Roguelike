@@ -6,10 +6,15 @@ import { useGamepadStore, ViewManager } from '@tgdf';
 
 import * as views from './ui/views';
 import { useActivePlayersStore } from './store/useActivePlayersStore';
+import { useFMODAudioInitialization } from './FMOD/hooks/useFMODAudioInitialization';
 
 const App: React.FC = () => {
   useGamepadStore();
   useActivePlayersStore();
+
+  useFMODAudioInitialization({
+    bankUrls: ['/assets/sounds/banks/Master.bank', '/assets/sounds/banks/Master.strings.bank'],
+  });
 
   return (
     <Theme>

@@ -3,6 +3,8 @@ import { useAssetStore } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { GameScene } from './GameScene';
+import { FMODAudio } from '../../../FMOD/FMODAudio';
+import { FMOD_EVENTS } from '../../../FMOD/constants';
 import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { Monk } from '../gameObjects/players/Monk/Monk';
 import { pixelateTexture } from '../../utils/pixelateTexture';
@@ -66,5 +68,7 @@ export class TestScene extends GameScene {
 
     const skeleton = new Skeleton(this);
     this.add(skeleton);
+
+    FMODAudio.getInstance().playEvent(FMOD_EVENTS.MUSIC_SYSTEM);
   }
 }
