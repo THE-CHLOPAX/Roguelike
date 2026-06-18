@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { MODELS } from '../../3D/constants';
@@ -6,9 +6,10 @@ import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { FMODAudio, FMODEventInstance, FMOD_EVENTS } from '../../FMOD';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 
-export function PathfindingTestView() {
+export function TestView() {
   const { loadTexture, loadModelGLTF } = useAssetStore();
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
@@ -27,6 +28,18 @@ export function PathfindingTestView() {
   });
 
   const [loadingFinished, setLoadingFinished] = useState(false);
+
+  useEffect(() => {
+    let eventInstance: FMODEventInstance;
+    if (loadingFinished) {
+      eventInstance = FMODAudio.playEvent(FMOD_EVENTS.MUSIC_SYSTEM);
+    }
+    return () => {
+      if (eventInstance) {
+        FMODAudio.stopEvent(eventInstance);
+      }
+    };
+  }, [loadingFinished]);
 
   return (
     <BackToViewLayout backToView="MenuView">

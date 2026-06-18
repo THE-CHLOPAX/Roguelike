@@ -103,17 +103,38 @@ export class FMODAudio {
   }
 
   /**
-   * Triggers a one-shot FMOD Studio event by its path (e.g. "event:/SFX/Explosion").
-   * The instance is released immediately after starting so FMOD cleans it up on completion.
+   * Starts an FMOD Studio event and returns the instance.
+   * For looping or stoppable events, hold the reference and pass it to stopEvent().
+   * For true one-shots that need no manual cleanup, set release parameter to true.
+   * @param eventPath The path of the event to play.
+   * @param release Whether to release the event instance after playing.
+   * @returns The event instance.
    */
-  playEvent(eventPath: string): void {
+  playEvent(eventPath: string, release = false): FMODEventInstance {
     const descOut = {} as FMODOutVal<FMODEventDescription>;
     this._check(this._system!.getEvent(eventPath, descOut));
 
     const instanceOut = {} as FMODOutVal<FMODEventInstance>;
     this._check(descOut.val.createInstance(instanceOut));
     this._check(instanceOut.val.start());
-    this._check(instanceOut.val.release());
+    if (release) {
+      this._check(instanceOut.val.release());
+    }
+    return instanceOut.val;
+  }
+
+  /**
+   * Stops a playing event instance and releases it.
+   * @param instance  The value returned by playEvent().
+   * @param allowFadeout  When true, lets the event tail/fadeout play before stopping.
+   *                      Defaults to false (immediate cut).
+   */
+  stopEvent(instance: FMODEventInstance, allowFadeout = false): void {
+    const mode = allowFadeout
+      ? this._fmod.STUDIO_STOP_ALLOWFADEOUT
+      : this._fmod.STUDIO_STOP_IMMEDIATE;
+    this._check(instance.stop(mode));
+    this._check(instance.release());
   }
 
   /**

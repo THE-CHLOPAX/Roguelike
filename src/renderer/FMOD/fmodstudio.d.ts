@@ -63,6 +63,7 @@ export interface FMODObject {
   readonly INIT_NORMAL: number;
   readonly STUDIO_LOAD_BANK_NORMAL: number;
   readonly STUDIO_STOP_IMMEDIATE: number;
+  readonly STUDIO_STOP_ALLOWFADEOUT: number;
   readonly SPEAKERMODE_DEFAULT: number;
 
   // ── Core API ───────────────────────────────────────────────────────────────

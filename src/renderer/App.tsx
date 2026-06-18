@@ -5,8 +5,8 @@ import { Theme } from '@radix-ui/themes';
 import { useGamepadStore, ViewManager } from '@tgdf';
 
 import * as views from './ui/views';
+import { useFMODAudioInitialization } from './FMOD';
 import { useActivePlayersStore } from './store/useActivePlayersStore';
-import { useFMODAudioInitialization } from './FMOD/hooks/useFMODAudioInitialization';
 
 const App: React.FC = () => {
   useGamepadStore();
