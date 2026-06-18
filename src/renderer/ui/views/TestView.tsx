@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
+import { InternalLoader, MAIN_SOUND_CHANNEL, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { MODELS } from '../../3D/constants';
 import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
@@ -32,7 +32,10 @@ export function TestView() {
   useEffect(() => {
     let eventInstance: FMODEventInstance;
     if (loadingFinished) {
-      eventInstance = FMODAudio.playEvent(FMOD_EVENTS.MUSIC_SYSTEM);
+      eventInstance = FMODAudio.playEventInSoundChannel({
+        eventPath: FMOD_EVENTS.MUSIC_SYSTEM,
+        channelId: MAIN_SOUND_CHANNEL,
+      });
     }
     return () => {
       if (eventInstance) {

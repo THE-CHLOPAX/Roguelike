@@ -1,8 +1,9 @@
-import { InputState } from '@tgdf';
+import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { AIState } from './AIState';
 import { AIDeadState } from './AIDeadState';
 import { EntityAI } from '../../gameObjects/EntityAI';
+import { FMOD_EVENTS, FMODAudio } from '../../../../FMOD';
 import { AnimationClipNamesShared } from '../../../types';
 import { AIStateNoHealthEvents } from './AIStateNoHealthEvents';
 
@@ -18,6 +19,11 @@ export class AIHurtState extends AIStateNoHealthEvents {
   }
 
   public onEnter(): void {
+    FMODAudio.playEventInSoundChannel({
+      eventPath: FMOD_EVENTS.HURT,
+      channelId: MAIN_SOUND_CHANNEL,
+    });
+
     this.entity.animationController.playAnimation(AnimationClipNamesShared.HIT, {
       loop: false,
       clampWhenFinished: true,

@@ -8,9 +8,15 @@ import type {
   FMODStudioSystem,
 } from './fmodstudio';
 
-import { logger } from '@tgdf';
+import { logger, useSoundsStore } from '@tgdf';
 
 import FMODModuleFactory from './fmodstudio';
+
+export type FMODPlayEventOptions = {
+  playbackRate?: number;
+  volume?: number;
+  parameters?: Record<string, number>;
+};
 
 export class FMODAudio {
   public static getInstance(): FMODAudio {
@@ -27,6 +33,7 @@ export class FMODAudio {
   private _banks: FMODBank[] = [];
   private _initialized = false;
   private _updateInterval: ReturnType<typeof setInterval> | null = null;
+  private _channelSubscriptions = new Map<FMODEventInstance, () => void>();
 
   /**
    * Loads and initialises the FMOD Studio Emscripten runtime.
@@ -110,17 +117,67 @@ export class FMODAudio {
    * @param release Whether to release the event instance after playing.
    * @returns The event instance.
    */
-  playEvent(eventPath: string, release = false): FMODEventInstance {
+  playEvent({
+    eventPath,
+    options,
+  }: {
+    eventPath: string;
+    options?: FMODPlayEventOptions;
+  }): FMODEventInstance {
     const descOut = {} as FMODOutVal<FMODEventDescription>;
     this._check(this._system!.getEvent(eventPath, descOut));
 
     const instanceOut = {} as FMODOutVal<FMODEventInstance>;
     this._check(descOut.val.createInstance(instanceOut));
     this._check(instanceOut.val.start());
-    if (release) {
-      this._check(instanceOut.val.release());
+
+    this._check(instanceOut.val.release());
+
+    if (options?.playbackRate) {
+      this._check(instanceOut.val.setPitch(options.playbackRate));
+    }
+    if (options?.volume) {
+      this._check(instanceOut.val.setVolume(options.volume));
+    }
+    if (options?.parameters) {
+      for (const [name, value] of Object.entries(options.parameters)) {
+        this._check(instanceOut.val.setParameterByName(name, value, false));
+      }
     }
     return instanceOut.val;
+  }
+
+  /**
+   * Plays an event and ties its volume and mute state to a sound channel from
+   * useSoundsStore. Future setChannelVolume / setChannelMuted calls automatically
+   * propagate to the FMOD instance. The subscription is cleaned up on stopEvent().
+   */
+  playEventInSoundChannel({
+    eventPath,
+    channelId,
+    options,
+  }: {
+    eventPath: string;
+    channelId: string;
+    options?: FMODPlayEventOptions;
+  }): FMODEventInstance {
+    const instance = this.playEvent({ eventPath, options });
+
+    const applyChannel = () => {
+      const channel = useSoundsStore.getState().soundChannels.get(channelId);
+      if (channel) {
+        instance.setVolume(channel.volume);
+      }
+    };
+
+    applyChannel();
+
+    // Subscribe to the store — soundChannels is replaced with a new Map on every
+    // setChannelVolume / setChannelMuted call, so each update triggers this.
+    const unsubscribe = useSoundsStore.subscribe(applyChannel);
+
+    this._channelSubscriptions.set(instance, unsubscribe);
+    return instance;
   }
 
   /**
@@ -130,6 +187,9 @@ export class FMODAudio {
    *                      Defaults to false (immediate cut).
    */
   stopEvent(instance: FMODEventInstance, allowFadeout = false): void {
+    this._channelSubscriptions.get(instance)?.();
+    this._channelSubscriptions.delete(instance);
+
     const mode = allowFadeout
       ? this._fmod.STUDIO_STOP_ALLOWFADEOUT
       : this._fmod.STUDIO_STOP_IMMEDIATE;

@@ -5,6 +5,15 @@ export interface FMODEventInstance {
   start(): number;
   stop(mode: number): number;
   release(): number;
+  setVolume(volume: number): number;
+  getVolume(outval: FMODOutVal<number>): number;
+  setMute(mute: boolean): number;
+  /** Pitch multiplier: 1.0 = normal, 2.0 = double speed, 0.5 = half speed. */
+  setPitch(pitch: number): number;
+  getPitch(outval: FMODOutVal<number>): number;
+  /** Drive a named parameter defined in FMOD Studio (e.g. intensity, distance). */
+  setParameterByName(name: string, value: number, ignoreSeekSpeed: boolean): number;
+  getParameterByName(name: string, outval: FMODOutVal<number>): number;
 }
 
 export interface FMODEventDescription {

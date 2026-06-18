@@ -1,8 +1,9 @@
-import { InputState } from '@tgdf';
+import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { IdleState, RunningState } from './index';
 import { AttackAction } from '../../../../../types';
 import { EntityMovable } from '../../../EntityMovable';
+import { FMOD_EVENTS, FMODAudio } from '../../../../../../FMOD';
 import { State, StateWithHealthEvents } from '../../../../states';
 import { ControlsState, mapInputToControls } from '../../../../../utils/mapInputToControls';
 
@@ -19,6 +20,12 @@ export class AttackState extends StateWithHealthEvents {
 
   public override onEnter(): void {
     this._attackInProgress = true;
+
+    FMODAudio.playEventInSoundChannel({
+      eventPath: FMOD_EVENTS.ATTACK,
+      channelId: MAIN_SOUND_CHANNEL,
+    });
+
     this._attackAction(this.entity).then(() => {
       this._attackInProgress = false;
     });
