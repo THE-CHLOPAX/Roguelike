@@ -166,7 +166,11 @@ export class FMODAudio {
     const applyChannel = () => {
       const channel = useSoundsStore.getState().soundChannels.get(channelId);
       if (channel) {
-        instance.setVolume(channel.volume);
+        if (channel.muted) {
+          instance.setVolume(0);
+        } else {
+          instance.setVolume(channel.volume);
+        }
       }
     };
 
