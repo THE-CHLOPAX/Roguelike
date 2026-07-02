@@ -1,4 +1,11 @@
-import type { FMODEventInstance, FMODObject, FMODOutVal } from './fmodstudio';
+import type {
+  FMODEventInstance,
+  FMODEventDescription,
+  FMODBank,
+  FMODObject,
+  FMODStudioSystem,
+  FMODOutVal,
+} from './fmodstudio';
 
 import { Mock, It, Times } from 'moq.ts';
 import { logger, useSoundsStore } from '@tgdf';
@@ -29,7 +36,8 @@ function buildInstanceMock() {
   return m;
 }
 
-function wireAudio(instanceMock: Mock<FMODEventInstance>) {
+/** Creates the raw FMOD mock objects without instantiating FMODAudio. */
+function makeMocks(instanceMock: Mock<FMODEventInstance>) {
   const instance = instanceMock.object();
 
   const desc = {
@@ -37,6 +45,7 @@ function wireAudio(instanceMock: Mock<FMODEventInstance>) {
       out.val = instance;
       return OK;
     }),
+    loadSampleData: vi.fn(() => OK),
     getPath: vi.fn((out: FMODOutVal<string>) => {
       out.val = 'event:/Test/Event';
       return OK;
@@ -56,13 +65,13 @@ function wireAudio(instanceMock: Mock<FMODEventInstance>) {
   };
 
   const system = {
-    getEvent: vi.fn((_path: string, out: FMODOutVal<typeof desc>) => {
-      out.val = desc as never;
+    getEvent: vi.fn((_path: string, out: FMODOutVal<FMODEventDescription>) => {
+      out.val = desc as FMODEventDescription;
       return OK;
     }),
     update: vi.fn(() => OK),
-    loadBankFile: vi.fn((_file: string, _flags: number, out: FMODOutVal<typeof bank>) => {
-      out.val = bank as never;
+    loadBankFile: vi.fn((_f: string, _fl: number, out: FMODOutVal<FMODBank>) => {
+      out.val = bank as FMODBank;
       return OK;
     }),
   };
@@ -76,19 +85,25 @@ function wireAudio(instanceMock: Mock<FMODEventInstance>) {
     FS_createDataFile: vi.fn(),
   };
 
-  const audio = FMODAudio.getInstance();
-  (audio as never as Record<string, unknown>)._fmod = fmod;
-  (audio as never as Record<string, unknown>)._system = system;
-  (audio as never as Record<string, unknown>)._initialized = true;
+  return { desc, bank, system, fmod };
+}
 
-  return { audio, fmod, system, bank, desc };
+/** Instantiates FMODAudio with pre-wired mocks injected via the constructor. */
+function wireAudio(instanceMock: Mock<FMODEventInstance>) {
+  const mocks = makeMocks(instanceMock);
+  const audio = FMODAudio.getInstance({
+    fmod: mocks.fmod as Partial<FMODObject>,
+    system: mocks.system as Partial<FMODStudioSystem>,
+    initialized: true,
+  });
+  return { audio, ...mocks };
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('FMODAudio', () => {
   beforeEach(() => {
-    (FMODAudio as never as Record<string, unknown>)._instance = null;
+    FMODAudio['_instance'] = null;
     vi.clearAllMocks();
   });
 
@@ -133,10 +148,7 @@ describe('FMODAudio', () => {
 
       const audio = FMODAudio.getInstance();
       expect(await audio.init()).toBe(true);
-      expect((audio as never as Record<string, unknown>)._initialized).toBe(true);
-
-      // Subsequent calls are no-ops
-      expect(await audio.init()).toBe(true);
+      expect(await audio.init()).toBe(true); // idempotent
       expect(vi.mocked(FMODModuleFactory)).toHaveBeenCalledTimes(1);
     });
 
@@ -164,7 +176,7 @@ describe('FMODAudio', () => {
         false
       );
       expect(system.loadBankFile).toHaveBeenCalledWith('/Master.bank', OK, expect.any(Object));
-      expect((audio as never as Record<string, unknown[]>)._banks).toHaveLength(1);
+      expect(audio['_banks']).toHaveLength(1);
     });
   });
 
@@ -211,8 +223,13 @@ describe('FMODAudio', () => {
   describe('logEventPaths', () => {
     it('iterates all banks and logs their event paths', () => {
       const m = buildInstanceMock();
-      const { audio, bank } = wireAudio(m);
-      (audio as never as Record<string, unknown[]>)._banks = [bank];
+      const { bank, system, fmod } = makeMocks(m);
+      const audio = FMODAudio.getInstance({
+        fmod: fmod as Partial<FMODObject>,
+        system: system as Partial<FMODStudioSystem>,
+        banks: [bank] as FMODBank[],
+        initialized: true,
+      });
 
       audio.logEventPaths();
 

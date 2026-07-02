@@ -18,10 +18,20 @@ export type FMODPlayEventOptions = {
   parameters?: Record<string, number>;
 };
 
+export type FMODPrivateFieldOverrides = {
+  fmod: Partial<FMODObject>;
+  system: Partial<FMODStudioSystem>;
+  banks: Partial<FMODBank>[];
+  initialized: boolean;
+  initPromise: Promise<boolean>;
+  updateInterval: ReturnType<typeof setInterval>;
+  channelSubscriptions: Map<FMODEventInstance, () => void>;
+};
+
 export class FMODAudio {
-  public static getInstance(): FMODAudio {
+  public static getInstance(privateFieldOverrides?: Partial<FMODPrivateFieldOverrides>): FMODAudio {
     if (!FMODAudio._instance) {
-      FMODAudio._instance = new FMODAudio();
+      FMODAudio._instance = new FMODAudio(privateFieldOverrides);
     }
     return FMODAudio._instance;
   }
@@ -32,8 +42,22 @@ export class FMODAudio {
   private _system: FMODStudioSystem | null = null;
   private _banks: FMODBank[] = [];
   private _initialized = false;
+  private _initPromise: Promise<boolean> | null = null;
   private _updateInterval: ReturnType<typeof setInterval> | null = null;
   private _channelSubscriptions = new Map<FMODEventInstance, () => void>();
+
+  constructor(privateFieldOverrides?: Partial<FMODPrivateFieldOverrides>) {
+    if (!privateFieldOverrides) return;
+    const { fmod, system, banks, initialized, initPromise, updateInterval, channelSubscriptions } =
+      privateFieldOverrides;
+    if (fmod !== undefined) this._fmod = fmod as FMODObject;
+    if (system !== undefined) this._system = system as FMODStudioSystem;
+    if (banks !== undefined) this._banks = banks as FMODBank[];
+    if (initialized !== undefined) this._initialized = initialized;
+    if (initPromise !== undefined) this._initPromise = initPromise;
+    if (updateInterval !== undefined) this._updateInterval = updateInterval;
+    if (channelSubscriptions !== undefined) this._channelSubscriptions = channelSubscriptions;
+  }
 
   /**
    * Loads and initialises the FMOD Studio Emscripten runtime.
@@ -42,6 +66,7 @@ export class FMODAudio {
    */
   async init(): Promise<boolean> {
     if (this._initialized) return true;
+    if (this._initPromise) return this._initPromise;
 
     // Pre-fetch the wasm binary and hand it to Emscripten directly via wasmBinary.
     // This bypasses Emscripten's __filename/__dirname path resolution which breaks
@@ -57,7 +82,7 @@ export class FMODAudio {
       return false;
     }
 
-    return new Promise<boolean>((resolve) => {
+    this._initPromise = new Promise<boolean>((resolve) => {
       this._fmod.wasmBinary = wasmBinary;
       this._fmod.INITIAL_MEMORY = 64 * 1024 * 1024;
 
@@ -80,6 +105,8 @@ export class FMODAudio {
         resolve(false);
       }
     });
+
+    return this._initPromise;
   }
 
   /**
@@ -87,7 +114,7 @@ export class FMODAudio {
    * and loads it into the Studio system.
    * Must be called after init() has resolved true.
    */
-  async loadBank(url: string): Promise<void> {
+  public async loadBank(url: string): Promise<void> {
     const bankName = url.split('/').pop() ?? url;
 
     const response = await fetch(url);
@@ -117,7 +144,7 @@ export class FMODAudio {
    * @param release Whether to release the event instance after playing.
    * @returns The event instance.
    */
-  playEvent({
+  public playEvent({
     eventPath,
     options,
   }: {
@@ -152,7 +179,7 @@ export class FMODAudio {
    * useSoundsStore. Future setChannelVolume / setChannelMuted calls automatically
    * propagate to the FMOD instance. The subscription is cleaned up on stopEvent().
    */
-  playEventInSoundChannel({
+  public playEventInSoundChannel({
     eventPath,
     channelId,
     options,
@@ -190,7 +217,7 @@ export class FMODAudio {
    * @param allowFadeout  When true, lets the event tail/fadeout play before stopping.
    *                      Defaults to false (immediate cut).
    */
-  stopEvent(instance: FMODEventInstance, allowFadeout = false): void {
+  public stopEvent(instance: FMODEventInstance, allowFadeout = false): void {
     this._channelSubscriptions.get(instance)?.();
     this._channelSubscriptions.delete(instance);
 
@@ -206,7 +233,7 @@ export class FMODAudio {
    * Browsers suspend audio until the user interacts — call this inside any
    * click or keydown handler if sounds aren't playing after init.
    */
-  resumeAudio(): void {
+  public resumeAudio(): void {
     this._fmod.OutputWebAudio_resumeAudio?.();
     this._fmod.OutputAudioWorklet_resumeAudio?.();
   }
@@ -216,11 +243,11 @@ export class FMODAudio {
    * The internal setInterval already calls this every 20 ms — only use this
    * method if you want to tick FMOD in sync with your own render loop instead.
    */
-  update(): void {
+  public update(): void {
     this._system?.update();
   }
 
-  logEventPaths(): void {
+  public logEventPaths(): void {
     const eventPaths: string[] = [];
 
     for (const bank of this._banks) {
