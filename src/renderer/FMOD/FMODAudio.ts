@@ -110,15 +110,13 @@ export class FMODAudio {
    */
   public async loadBank(url: string): Promise<void> {
     if (!this._initialized || this._system === null) {
-      throw new Error('[FMOD] System not initialized');
+      throw new Error(MESSAGES.SYSTEM_NOT_INITIALIZED);
     }
     const bankName = url.split('/').pop() ?? url;
 
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `[FMOD] Failed to fetch bank "${url}": ${response.status} ${response.statusText}`
-      );
+      throw new Error(MESSAGES.BANK_FETCH_FAILED(url, response.status, response.statusText));
     }
 
     const data = new Uint8Array(await response.arrayBuffer());
@@ -130,7 +128,7 @@ export class FMODAudio {
       this._fmod,
       this._system.loadBankFile(`/${bankName}`, this._fmod.STUDIO_LOAD_BANK_NORMAL, bankOut)
     );
-    assert(bankOut.val !== undefined, '[FMOD] Bank not loaded');
+    assert(bankOut.val !== undefined, MESSAGES.BANK_NOT_LOADED);
     logger({ message: MESSAGES.LOADED_BANK(bankName), type: 'info' });
     this._banks.push(bankOut.val);
   }
@@ -157,11 +155,11 @@ export class FMODAudio {
 
     const descOut = fmodOut<FMODEventDescription>();
     fmodCheckOrThrow(this._fmod, this._system.getEvent(eventPath, descOut));
-    assert(descOut.val !== undefined);
+    assert(descOut.val !== undefined, MESSAGES.EVENT_NOT_FOUND);
 
     const instanceOut = fmodOut<FMODEventInstance>();
     fmodCheckOrThrow(this._fmod, descOut.val.createInstance(instanceOut));
-    assert(instanceOut.val !== undefined);
+    assert(instanceOut.val !== undefined, MESSAGES.EVENT_INSTANCE_NOT_CREATED);
 
     fmodCheckOrThrow(this._fmod, instanceOut.val.start());
     fmodCheckOrThrow(this._fmod, instanceOut.val.release());
@@ -266,19 +264,19 @@ export class FMODAudio {
     for (const bank of this._banks) {
       const countOut = fmodOut<number>();
       fmodCheckOrThrow(this._fmod, bank.getEventCount(countOut));
-      assert(countOut.val !== undefined, '[FMOD] Event count not found');
+      assert(countOut.val !== undefined, MESSAGES.EVENT_COUNT_NOT_FOUND);
 
       const listOut = fmodOut<FMODEventDescription[]>();
       fmodCheckOrThrow(
         this._fmod,
         bank.getEventList(listOut, countOut.val, {} as FMODOutVal<number>)
       );
-      assert(listOut.val !== undefined, '[FMOD] Event list not found');
+      assert(listOut.val !== undefined, MESSAGES.EVENT_LIST_NOT_FOUND);
 
       for (const desc of listOut.val) {
         const pathOut = fmodOut<string>();
         fmodCheckOrThrow(this._fmod, desc.getPath(pathOut, 256, null));
-        assert(pathOut.val !== undefined, '[FMOD] Event path not found');
+        assert(pathOut.val !== undefined, MESSAGES.EVENT_PATH_NOT_FOUND);
         eventPaths.push(pathOut.val);
       }
     }
@@ -294,12 +292,12 @@ export class FMODAudio {
   private _setupSystem(): void {
     const studioOut = fmodOut<FMODStudioSystem>();
     fmodCheckOrThrow(this._fmod, this._fmod.Studio_System_Create(studioOut));
-    assert(studioOut.val !== undefined, '[FMOD] System not created');
+    assert(studioOut.val !== undefined, MESSAGES.SYSTEM_NOT_CREATED);
     this._system = studioOut.val;
 
     const coreOut = fmodOut<FMODCoreSystem>();
     fmodCheckOrThrow(this._fmod, this._system.getCoreSystem(coreOut));
-    assert(coreOut.val !== undefined, '[FMOD] Core system not found');
+    assert(coreOut.val !== undefined, MESSAGES.CORE_SYSTEM_NOT_FOUND);
     const coreSystem = coreOut.val;
 
     const driverOut = fmodOut<number>();
@@ -309,7 +307,7 @@ export class FMODAudio {
 
     // Match the mixer sample rate to the OS output rate to avoid unnecessary resampling.
     fmodCheckOrThrow(this._fmod, coreSystem.getDriverInfo(0, null, null, driverOut, null, null));
-    assert(driverOut.val !== undefined, '[FMOD] Driver not found');
+    assert(driverOut.val !== undefined, MESSAGES.DRIVER_NOT_FOUND);
 
     fmodCheckOrThrow(
       this._fmod,

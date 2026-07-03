@@ -13,6 +13,6 @@ export async function fetchWasmBinary(): Promise<Uint8Array> {
     return new Uint8Array(await response.arrayBuffer());
   } catch (e) {
     logger({ message: MESSAGES.WASM_FETCH_FAILED(e), type: 'error' });
-    throw new Error(`[FMOD] Failed to fetch fmodstudio.wasm: ${e}`);
+    throw new Error(MESSAGES.WASM_FETCH_FAILED(e));
   }
 }
