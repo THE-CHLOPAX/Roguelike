@@ -2,6 +2,7 @@ import { logger } from '@tgdf';
 import { useState, useEffect } from 'react';
 
 import { FMODAudio } from '../FMODAudio';
+import { fetchWasmBinary } from '../utils/fetchWasmBinary';
 
 export type UseFMODAudioResult = {
   instance: FMODAudio | null;
@@ -26,7 +27,8 @@ export const useFMODAudioInitialization = ({ bankUrls }: UseFMODAudioProps): Use
   };
 
   const init = async (audioInstance: FMODAudio) => {
-    const initialized = await audioInstance.init();
+    const wasmBinary = await fetchWasmBinary();
+    const initialized = await audioInstance.init(wasmBinary);
 
     // If properly initialized
     if (initialized) {

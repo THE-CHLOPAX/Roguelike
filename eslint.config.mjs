@@ -70,10 +70,12 @@ export default defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
       '@typescript-eslint/no-namespace': 'off',
       '@typescript-eslint/triple-slash-reference': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'error',
 
       '@typescript-eslint/naming-convention': [
         'error',

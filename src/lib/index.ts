@@ -52,4 +52,5 @@ export * from './internal-math/utils/filterBelow';
 export * from './internal-math/utils/randFromRange';
 
 // Internal Utils
-export * from './utils';
+export { executeAsyncOperationsWithProgress } from './internal-utils/executeAsyncOperationsWithProgress';
+export { assert } from './internal-utils/assert';

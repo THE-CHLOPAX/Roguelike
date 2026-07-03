@@ -30,7 +30,7 @@ export function TestView() {
   const [loadingFinished, setLoadingFinished] = useState(false);
 
   useEffect(() => {
-    let eventInstance: FMODEventInstance;
+    let eventInstance: FMODEventInstance | null = null;
     if (loadingFinished) {
       eventInstance = FMODAudio.playEventInSoundChannel({
         eventPath: FMOD_EVENTS.MUSIC_SYSTEM,
@@ -38,7 +38,7 @@ export function TestView() {
       });
     }
     return () => {
-      if (eventInstance) {
+      if (eventInstance !== null) {
         FMODAudio.stopEvent(eventInstance);
       }
     };
@@ -46,14 +46,14 @@ export function TestView() {
 
   return (
     <BackToViewLayout backToView="MenuView">
-      {!loadingFinished ? (
+      {!loadingFinished || scene === null ? (
         <InternalLoader
           progress={loadingProgress * 100}
           onComplete={() => setLoadingFinished(true)}
         />
       ) : (
         <ThreeDViewerPixelated
-          scene={scene!}
+          scene={scene}
           resX={resolution.width}
           resY={resolution.height}
           debug

@@ -9,7 +9,7 @@ import type {
 
 import { Mock, It, Times } from 'moq.ts';
 import { logger, useSoundsStore } from '@tgdf';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { assert, describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { FMODAudio } from './FMODAudio';
 import FMODModuleFactory from './fmodstudio';
@@ -17,6 +17,7 @@ import FMODModuleFactory from './fmodstudio';
 vi.mock('./fmodstudio', () => ({ default: vi.fn() }));
 vi.mock('@tgdf', () => ({
   logger: vi.fn(),
+  assert,
   useSoundsStore: {
     getState: vi.fn(),
     subscribe: vi.fn(() => vi.fn()),
@@ -102,6 +103,8 @@ function wireAudio(instanceMock: Mock<FMODEventInstance>) {
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('FMODAudio', () => {
+  const mockFetchWasmBinary = vi.fn().mockResolvedValue(new Uint8Array(0));
+
   beforeEach(() => {
     FMODAudio['_instance'] = null;
     vi.clearAllMocks();
@@ -146,15 +149,11 @@ describe('FMODAudio', () => {
         (config as { onRuntimeInitialized(): void }).onRuntimeInitialized();
       });
 
+      const wasmBinary = await mockFetchWasmBinary();
       const audio = FMODAudio.getInstance();
-      expect(await audio.init()).toBe(true);
-      expect(await audio.init()).toBe(true); // idempotent
+      expect(await audio.init(wasmBinary)).toBe(true);
+      expect(await audio.init(wasmBinary)).toBe(true); // idempotent
       expect(vi.mocked(FMODModuleFactory)).toHaveBeenCalledTimes(1);
-    });
-
-    it('returns false when the wasm fetch fails', async () => {
-      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
-      expect(await FMODAudio.getInstance().init()).toBe(false);
     });
   });
 
@@ -204,6 +203,8 @@ describe('FMODAudio', () => {
       const { audio, fmod } = wireAudio(m);
       const inst = audio.playEvent({ eventPath: 'event:/Sfx/Hit' });
 
+      assert(inst !== null);
+
       audio.stopEvent(inst);
 
       m.verify((x) => x.stop(fmod.STUDIO_STOP_IMMEDIATE), Times.Once());
@@ -213,6 +214,8 @@ describe('FMODAudio', () => {
       const m = buildInstanceMock();
       const { audio, fmod } = wireAudio(m);
       const inst = audio.playEvent({ eventPath: 'event:/Sfx/Hit' });
+
+      assert(inst !== null);
 
       audio.stopEvent(inst, true);
 
@@ -296,9 +299,24 @@ describe('FMODAudio', () => {
         eventPath: 'event:/Sfx/Amb',
         channelId: CHANNEL,
       });
+
+      assert(inst !== null);
+
       audio.stopEvent(inst);
 
       expect(unsubscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns existing promise when init is called multiple times before it resolves', async () => {
+      vi.mocked(FMODModuleFactory).mockImplementation(() => {
+        // intentionally do NOT call onRuntimeInitialized yet
+      });
+
+      const wasmBinary = await mockFetchWasmBinary();
+      const audio = FMODAudio.getInstance();
+      const promise = audio.init(wasmBinary);
+      const concurrentPromise = audio.init(wasmBinary);
+      expect(promise).toBe(concurrentPromise);
     });
   });
 });

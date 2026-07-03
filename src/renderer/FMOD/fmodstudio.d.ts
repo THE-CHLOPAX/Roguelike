@@ -1,5 +1,5 @@
 /** Mutable out-value holder — passed as {} and populated by FMOD before the call returns. */
-export type FMODOutVal<T = unknown> = { val: T };
+export type FMODOutVal<T = unknown> = { val: T | undefined };
 
 export interface FMODEventInstance {
   start(): number;

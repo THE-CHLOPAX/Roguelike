@@ -8,9 +8,12 @@ import type {
   FMODStudioSystem,
 } from './fmodstudio';
 
-import { logger, useSoundsStore } from '@tgdf';
+import { assert, logger, useSoundsStore } from '@tgdf';
 
+import { MESSAGES } from './constants';
+import { fmodOut } from './utils/fmodOut';
 import FMODModuleFactory from './fmodstudio';
+import { fmodCheckOrThrow } from './utils/fmodCheckOrThrow';
 
 export type FMODPlayEventOptions = {
   playbackRate?: number;
@@ -64,23 +67,9 @@ export class FMODAudio {
    * Resolves true on success, false if anything goes wrong.
    * Safe to call multiple times — subsequent calls return true immediately.
    */
-  async init(): Promise<boolean> {
-    if (this._initialized) return true;
+  public init(wasmBinary: Uint8Array): Promise<boolean> {
+    if (this._initialized) return Promise.resolve(true);
     if (this._initPromise) return this._initPromise;
-
-    // Pre-fetch the wasm binary and hand it to Emscripten directly via wasmBinary.
-    // This bypasses Emscripten's __filename/__dirname path resolution which breaks
-    // in Electron's renderer process (webpack shims __dirname to the Electron
-    // resources path, causing it to look inside electron.asar).
-    let wasmBinary: Uint8Array;
-    try {
-      const response = await fetch('./fmodstudio.wasm');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      wasmBinary = new Uint8Array(await response.arrayBuffer());
-    } catch (e) {
-      logger({ message: `[FMOD] Failed to fetch fmodstudio.wasm: ${e}`, type: 'error' });
-      return false;
-    }
 
     this._initPromise = new Promise<boolean>((resolve) => {
       this._fmod.wasmBinary = wasmBinary;
@@ -92,16 +81,16 @@ export class FMODAudio {
           this._initialized = true;
           this._updateInterval = setInterval(() => this._system?.update(), 20);
           resolve(true);
-        } catch (e) {
-          logger({ message: `[FMOD] System setup failed: ${e}`, type: 'error' });
+        } catch (_e) {
+          logger({ message: MESSAGES.SYSTEM_SETUP_FAILED, type: 'error' });
           resolve(false);
         }
       };
 
       try {
         FMODModuleFactory(this._fmod);
-      } catch (e) {
-        logger({ message: `[FMOD] Module factory failed: ${e}`, type: 'error' });
+      } catch (_e) {
+        logger({ message: MESSAGES.MODULE_FACTORY_FAILED, type: 'error' });
         resolve(false);
       }
     });
@@ -115,6 +104,9 @@ export class FMODAudio {
    * Must be called after init() has resolved true.
    */
   public async loadBank(url: string): Promise<void> {
+    if (!this._initialized || this._system === null) {
+      throw new Error('[FMOD] System not initialized');
+    }
     const bankName = url.split('/').pop() ?? url;
 
     const response = await fetch(url);
@@ -128,11 +120,13 @@ export class FMODAudio {
 
     this._fmod.FS_createDataFile('/', bankName, data, true, false);
 
-    const bankOut = {} as FMODOutVal<FMODBank>;
-    this._check(
-      this._system!.loadBankFile(`/${bankName}`, this._fmod.STUDIO_LOAD_BANK_NORMAL, bankOut)
+    const bankOut = fmodOut<FMODBank>();
+    fmodCheckOrThrow(
+      this._fmod,
+      this._system.loadBankFile(`/${bankName}`, this._fmod.STUDIO_LOAD_BANK_NORMAL, bankOut)
     );
-    logger({ message: `[FMOD] Loaded bank "${bankName}"`, type: 'info' });
+    assert(bankOut.val !== undefined, '[FMOD] Bank not loaded');
+    logger({ message: MESSAGES.LOADED_BANK(bankName), type: 'info' });
     this._banks.push(bankOut.val);
   }
 
@@ -150,25 +144,32 @@ export class FMODAudio {
   }: {
     eventPath: string;
     options?: FMODPlayEventOptions;
-  }): FMODEventInstance {
-    const descOut = {} as FMODOutVal<FMODEventDescription>;
-    this._check(this._system!.getEvent(eventPath, descOut));
+  }): FMODEventInstance | null {
+    if (!this._initialized || this._system === null) {
+      logger({ message: MESSAGES.SYSTEM_NOT_INITIALIZED, type: 'error' });
+      return null;
+    }
 
-    const instanceOut = {} as FMODOutVal<FMODEventInstance>;
-    this._check(descOut.val.createInstance(instanceOut));
-    this._check(instanceOut.val.start());
+    const descOut = fmodOut<FMODEventDescription>();
+    fmodCheckOrThrow(this._fmod, this._system.getEvent(eventPath, descOut));
+    assert(descOut.val !== undefined, '[FMOD] Event not found');
 
-    this._check(instanceOut.val.release());
+    const instanceOut = fmodOut<FMODEventInstance>();
+    fmodCheckOrThrow(this._fmod, descOut.val.createInstance(instanceOut));
+    assert(instanceOut.val !== undefined, '[FMOD] Instance not created');
+
+    fmodCheckOrThrow(this._fmod, instanceOut.val.start());
+    fmodCheckOrThrow(this._fmod, instanceOut.val.release());
 
     if (options?.playbackRate) {
-      this._check(instanceOut.val.setPitch(options.playbackRate));
+      fmodCheckOrThrow(this._fmod, instanceOut.val.setPitch(options.playbackRate));
     }
     if (options?.volume) {
-      this._check(instanceOut.val.setVolume(options.volume));
+      fmodCheckOrThrow(this._fmod, instanceOut.val.setVolume(options.volume));
     }
     if (options?.parameters) {
       for (const [name, value] of Object.entries(options.parameters)) {
-        this._check(instanceOut.val.setParameterByName(name, value, false));
+        fmodCheckOrThrow(this._fmod, instanceOut.val.setParameterByName(name, value, false));
       }
     }
     return instanceOut.val;
@@ -187,8 +188,13 @@ export class FMODAudio {
     eventPath: string;
     channelId: string;
     options?: FMODPlayEventOptions;
-  }): FMODEventInstance {
+  }): FMODEventInstance | null {
     const instance = this.playEvent({ eventPath, options });
+
+    if (instance === null) {
+      logger({ message: MESSAGES.EVENT_NOT_FOUND, type: 'error' });
+      return null;
+    }
 
     const applyChannel = () => {
       const channel = useSoundsStore.getState().soundChannels.get(channelId);
@@ -224,8 +230,8 @@ export class FMODAudio {
     const mode = allowFadeout
       ? this._fmod.STUDIO_STOP_ALLOWFADEOUT
       : this._fmod.STUDIO_STOP_IMMEDIATE;
-    this._check(instance.stop(mode));
-    this._check(instance.release());
+    fmodCheckOrThrow(this._fmod, instance.stop(mode));
+    fmodCheckOrThrow(this._fmod, instance.release());
   }
 
   /**
@@ -251,50 +257,58 @@ export class FMODAudio {
     const eventPaths: string[] = [];
 
     for (const bank of this._banks) {
-      const countOut = {} as FMODOutVal<number>;
-      bank.getEventCount(countOut);
+      const countOut = fmodOut<number>();
+      fmodCheckOrThrow(this._fmod, bank.getEventCount(countOut));
+      assert(countOut.val !== undefined, '[FMOD] Event count not found');
 
-      const listOut = {} as FMODOutVal<FMODEventDescription[]>;
-      bank.getEventList(listOut, countOut.val, {} as FMODOutVal<number>);
+      const listOut = fmodOut<FMODEventDescription[]>();
+      fmodCheckOrThrow(
+        this._fmod,
+        bank.getEventList(listOut, countOut.val, {} as FMODOutVal<number>)
+      );
+      assert(listOut.val !== undefined, '[FMOD] Event list not found');
 
       for (const desc of listOut.val) {
-        const pathOut = {} as FMODOutVal<string>;
-        desc.getPath(pathOut, 256, null);
+        const pathOut = fmodOut<string>();
+        fmodCheckOrThrow(this._fmod, desc.getPath(pathOut, 256, null));
+        assert(pathOut.val !== undefined, '[FMOD] Event path not found');
         eventPaths.push(pathOut.val);
       }
     }
 
-    logger({ group: { label: '[FMOD] Event Paths', body: eventPaths.join('\n') }, type: 'info' });
+    logger({ group: { label: MESSAGES.EVENT_PATHS_LABEL, body: eventPaths.join('\n') }, type: 'info' });
   }
 
   // ── Private ──────────────────────────────────────────────────────────────
 
   private _setupSystem(): void {
-    const studioOut = {} as FMODOutVal<FMODStudioSystem>;
-    this._check(this._fmod.Studio_System_Create(studioOut));
+    const studioOut = fmodOut<FMODStudioSystem>();
+    fmodCheckOrThrow(this._fmod, this._fmod.Studio_System_Create(studioOut));
+    assert(studioOut.val !== undefined, '[FMOD] System not created');
     this._system = studioOut.val;
 
-    const coreOut = {} as FMODOutVal<FMODCoreSystem>;
-    this._check(this._system.getCoreSystem(coreOut));
+    const coreOut = fmodOut<FMODCoreSystem>();
+    fmodCheckOrThrow(this._fmod, this._system.getCoreSystem(coreOut));
+    assert(coreOut.val !== undefined, '[FMOD] Core system not found');
     const coreSystem = coreOut.val;
 
-    const driverOut = {} as FMODOutVal<number>;
+    const driverOut = fmodOut<number>();
 
     // Reduce audio latency — 2048 samples is safe for WebAudio (non-AudioWorklet) paths.
-    this._check(coreSystem.setDSPBufferSize(2048, 2));
+    fmodCheckOrThrow(this._fmod, coreSystem.setDSPBufferSize(2048, 2));
 
     // Match the mixer sample rate to the OS output rate to avoid unnecessary resampling.
-    this._check(coreSystem.getDriverInfo(0, null, null, driverOut, null, null));
-    this._check(coreSystem.setSoftwareFormat(driverOut.val, this._fmod.SPEAKERMODE_DEFAULT, 0));
+    fmodCheckOrThrow(this._fmod, coreSystem.getDriverInfo(0, null, null, driverOut, null, null));
+    assert(driverOut.val !== undefined, '[FMOD] Driver not found');
 
-    this._check(
+    fmodCheckOrThrow(
+      this._fmod,
+      coreSystem.setSoftwareFormat(driverOut.val, this._fmod.SPEAKERMODE_DEFAULT, 0)
+    );
+
+    fmodCheckOrThrow(
+      this._fmod,
       this._system.initialize(1024, this._fmod.STUDIO_INIT_NORMAL, this._fmod.INIT_NORMAL, null)
     );
-  }
-
-  private _check(result: number): void {
-    if (result !== this._fmod.OK) {
-      throw new Error(`[FMOD] ${this._fmod.ErrorString(result)}`);
-    }
   }
 }
