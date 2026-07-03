@@ -1,4 +1,4 @@
-import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
+import { assert, InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { IdleState, RunningState } from './index';
 import { AttackAction } from '../../../../../types';
@@ -19,15 +19,17 @@ export class AttackState extends StateWithHealthEvents {
   }
 
   public override onEnter(): void {
-    this._attackInProgress = true;
-
-    FMODAudio.playEventInSoundChannel({
+    const eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.ATTACK,
       channelId: MAIN_SOUND_CHANNEL,
     });
+    assert(eventInstance !== null);
+
+    this._attackInProgress = true;
 
     this._attackAction(this.entity).then(() => {
       this._attackInProgress = false;
+      FMODAudio.stopEvent(eventInstance);
     });
   }
 

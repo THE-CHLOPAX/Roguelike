@@ -21,6 +21,11 @@ export type FMODPlayEventOptions = {
   parameters?: Record<string, number>;
 };
 
+export type FMODPlayEventInChannelOptions = {
+  playbackRate?: number;
+  parameters?: Record<string, number>;
+};
+
 export type FMODPrivateFieldOverrides = {
   fmod: Partial<FMODObject>;
   system: Partial<FMODStudioSystem>;
@@ -187,7 +192,7 @@ export class FMODAudio {
   }: {
     eventPath: string;
     channelId: string;
-    options?: FMODPlayEventOptions;
+    options?: FMODPlayEventInChannelOptions;
   }): FMODEventInstance | null {
     const instance = this.playEvent({ eventPath, options });
 
@@ -276,7 +281,10 @@ export class FMODAudio {
       }
     }
 
-    logger({ group: { label: MESSAGES.EVENT_PATHS_LABEL, body: eventPaths.join('\n') }, type: 'info' });
+    logger({
+      group: { label: MESSAGES.EVENT_PATHS_LABEL, body: eventPaths.join('\n') },
+      type: 'info',
+    });
   }
 
   // ── Private ──────────────────────────────────────────────────────────────
