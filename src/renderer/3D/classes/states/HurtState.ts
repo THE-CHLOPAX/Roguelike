@@ -1,15 +1,16 @@
-import { assert, InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
+import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { State } from './State';
 import { DeadState } from './DeadState';
 import { Entity } from '../gameObjects/Entity';
-import { FMOD_EVENTS, FMODAudio } from '../../../FMOD';
 import { AnimationClipNamesShared } from '../../types';
 import { StateNoHealthEvents } from './StateNoHealthEvents';
+import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../FMOD';
 
 export class HurtState extends StateNoHealthEvents {
   private _flashEnded: boolean = false;
   private _animationEnded: boolean = false;
+  private _eventInstance: FMODEventInstance | null = null;
 
   constructor(
     public entity: Entity,
@@ -19,18 +20,16 @@ export class HurtState extends StateNoHealthEvents {
   }
 
   public onEnter(): void {
-    const eventInstance = FMODAudio.playEventInSoundChannel({
+    this._eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.HURT,
       channelId: MAIN_SOUND_CHANNEL,
     });
-    assert(eventInstance !== null);
 
     this.entity.animationController.playAnimation(AnimationClipNamesShared.HIT, {
       loop: false,
       clampWhenFinished: true,
       onComplete: () => {
         this._animationEnded = true;
-        FMODAudio.stopEvent(eventInstance);
       },
     });
     this.entity.healthPointsController.flashRed(() => {
@@ -41,6 +40,9 @@ export class HurtState extends StateNoHealthEvents {
   public onExit(): void {
     // Restore original materials when exiting the hurt state
     this.entity.modelRenderer.restoreOriginalMaterials();
+    if (this._eventInstance === null) return;
+    FMODAudio.stopEvent(this._eventInstance);
+    this._eventInstance = null;
   }
 
   public onInput(_inputState: InputState): State {

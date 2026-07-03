@@ -1,15 +1,16 @@
-import { assert, InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
+import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { IdleState, RunningState } from './index';
 import { AttackAction } from '../../../../../types';
 import { EntityMovable } from '../../../EntityMovable';
-import { FMOD_EVENTS, FMODAudio } from '../../../../../../FMOD';
 import { State, StateWithHealthEvents } from '../../../../states';
+import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../../../../FMOD';
 import { ControlsState, mapInputToControls } from '../../../../../utils/mapInputToControls';
 
 export class AttackState extends StateWithHealthEvents {
   private _attackInProgress = false;
   private _controlState: ControlsState | null = null;
+  private _eventInstance: FMODEventInstance | null = null;
 
   constructor(
     public entity: EntityMovable,
@@ -19,21 +20,23 @@ export class AttackState extends StateWithHealthEvents {
   }
 
   public override onEnter(): void {
-    const eventInstance = FMODAudio.playEventInSoundChannel({
+    this._eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.ATTACK,
       channelId: MAIN_SOUND_CHANNEL,
     });
-    assert(eventInstance !== null);
 
     this._attackInProgress = true;
 
     this._attackAction(this.entity).then(() => {
       this._attackInProgress = false;
-      FMODAudio.stopEvent(eventInstance);
     });
   }
 
-  public override onExit(): void {}
+  public override onExit(): void {
+    if (this._eventInstance === null) return;
+    FMODAudio.stopEvent(this._eventInstance);
+    this._eventInstance = null;
+  }
 
   public override onInput(inputState: InputState): State {
     this._controlState = mapInputToControls(inputState);

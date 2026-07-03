@@ -3,13 +3,14 @@ import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 import { AIState } from './AIState';
 import { AIDeadState } from './AIDeadState';
 import { EntityAI } from '../../gameObjects/EntityAI';
-import { FMOD_EVENTS, FMODAudio } from '../../../../FMOD';
 import { AnimationClipNamesShared } from '../../../types';
 import { AIStateNoHealthEvents } from './AIStateNoHealthEvents';
+import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../../FMOD';
 
 export class AIHurtState extends AIStateNoHealthEvents {
   private _flashEnded: boolean = false;
   private _animationEnded: boolean = false;
+  private _eventInstance: FMODEventInstance | null = null;
 
   constructor(
     public entity: EntityAI,
@@ -19,7 +20,7 @@ export class AIHurtState extends AIStateNoHealthEvents {
   }
 
   public onEnter(): void {
-    FMODAudio.playEventInSoundChannel({
+    this._eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.HURT,
       channelId: MAIN_SOUND_CHANNEL,
     });
@@ -39,6 +40,9 @@ export class AIHurtState extends AIStateNoHealthEvents {
   public onExit(): void {
     // Restore original materials when exiting the hurt state
     this.entity.modelRenderer.restoreOriginalMaterials();
+    if (this._eventInstance === null) return;
+    FMODAudio.stopEvent(this._eventInstance);
+    this._eventInstance = null;
   }
 
   public onInput(_inputState: InputState): AIState {

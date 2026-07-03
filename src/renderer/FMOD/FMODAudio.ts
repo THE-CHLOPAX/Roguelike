@@ -157,11 +157,11 @@ export class FMODAudio {
 
     const descOut = fmodOut<FMODEventDescription>();
     fmodCheckOrThrow(this._fmod, this._system.getEvent(eventPath, descOut));
-    assert(descOut.val !== undefined, '[FMOD] Event not found');
+    assert(descOut.val !== undefined);
 
     const instanceOut = fmodOut<FMODEventInstance>();
     fmodCheckOrThrow(this._fmod, descOut.val.createInstance(instanceOut));
-    assert(instanceOut.val !== undefined, '[FMOD] Instance not created');
+    assert(instanceOut.val !== undefined);
 
     fmodCheckOrThrow(this._fmod, instanceOut.val.start());
     fmodCheckOrThrow(this._fmod, instanceOut.val.release());
@@ -229,14 +229,16 @@ export class FMODAudio {
    *                      Defaults to false (immediate cut).
    */
   public stopEvent(instance: FMODEventInstance, allowFadeout = false): void {
-    this._channelSubscriptions.get(instance)?.();
-    this._channelSubscriptions.delete(instance);
+    this._cleanupChannelSubscription(instance);
 
     const mode = allowFadeout
       ? this._fmod.STUDIO_STOP_ALLOWFADEOUT
       : this._fmod.STUDIO_STOP_IMMEDIATE;
-    fmodCheckOrThrow(this._fmod, instance.stop(mode));
-    fmodCheckOrThrow(this._fmod, instance.release());
+
+    // The handle may already be invalid if the event finished before stopEvent() was called.
+    if (instance.stop(mode) === this._fmod.OK) {
+      instance.release();
+    }
   }
 
   /**
@@ -318,5 +320,12 @@ export class FMODAudio {
       this._fmod,
       this._system.initialize(1024, this._fmod.STUDIO_INIT_NORMAL, this._fmod.INIT_NORMAL, null)
     );
+  }
+
+  private _cleanupChannelSubscription(instance: FMODEventInstance): void {
+    const unsubscribe = this._channelSubscriptions.get(instance);
+    if (unsubscribe === undefined) return;
+    unsubscribe();
+    this._channelSubscriptions.delete(instance);
   }
 }

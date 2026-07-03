@@ -301,10 +301,12 @@ describe('FMODAudio', () => {
       });
 
       assert(inst !== null);
+      expect(audio['_channelSubscriptions'].size).toBe(1);
 
       audio.stopEvent(inst);
 
       expect(unsubscribe).toHaveBeenCalledTimes(1);
+      expect(audio['_channelSubscriptions'].size).toBe(0);
     });
 
     it('returns existing promise when init is called multiple times before it resolves', async () => {
