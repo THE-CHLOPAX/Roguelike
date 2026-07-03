@@ -1,5 +1,5 @@
-import { FMODObject } from '../fmodstudio';
 import { MESSAGES } from '../constants';
+import { FMODObject } from '../fmodstudio';
 
 export function fmodCheckOrThrow(fmod: FMODObject, result: number): void {
   if (result !== fmod.OK) {

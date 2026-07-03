@@ -92,7 +92,7 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
   public follow(target: THREE.Object3D): void {
     this._followTarget = target;
     // Initialize pivot point to target's position when starting to follow
-    this._pivotPoint!.copy(target.position);
+    this._pivotPoint.copy(target.position);
   }
 
   public stopFollowing(): void {
@@ -115,7 +115,7 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     );
 
     // Update pivot point to follow the player
-    this._pivotPoint!.copy(targetPosition);
+    this._pivotPoint.copy(targetPosition);
 
     // Rotate offset by camera's Y rotation around the pivot point
     const rotatedOffset = CAMERA_POSITION_OFFSET.clone().applyAxisAngle(

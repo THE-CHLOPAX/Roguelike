@@ -59,7 +59,7 @@ export const useActivePlayersStore = create<ActivePlayersState>()(
         const occupiedGamepadIndices = new Set(
           Array.from(get().getActivePlayers())
             .filter((player) => player.controls === 'gamepad' && player.gamepadIndex !== undefined)
-            .map((player) => player.gamepadIndex!)
+            .map((player) => player.gamepadIndex)
         );
 
         return new Set(

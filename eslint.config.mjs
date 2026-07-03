@@ -25,6 +25,8 @@ export default defineConfig([
       'build/**',
       'release/**',
       '*.min.js',
+      'src/renderer/FMOD/fmodstudio.wasm',
+      'src/renderer/FMOD/fmodstudio.js',
       'webpack.*.js',
     ],
   },

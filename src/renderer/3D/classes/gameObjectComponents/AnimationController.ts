@@ -131,8 +131,9 @@ export class AnimationController extends GameObjectComponent {
     }
 
     // Return cached action if it exists
-    if (this._actions.has(animationName)) {
-      return this._actions.get(animationName)!;
+    const animationAction = this._actions.get(animationName);
+    if (animationAction !== undefined) {
+      return animationAction;
     }
 
     const clip = this._animations.find((anim) => anim.name === animationName);
