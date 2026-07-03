@@ -13,7 +13,9 @@ import { assert, logger, useSoundsStore } from '@tgdf';
 import { MESSAGES } from './constants';
 import { fmodOut } from './utils/fmodOut';
 import FMODModuleFactory from './fmodstudio';
+import { fetchBankBinary } from './utils/fetchBankBinary';
 import { fmodCheckOrThrow } from './utils/fmodCheckOrThrow';
+import { getInstancePointer } from './utils/getInstancePointer';
 
 export type FMODPlayEventOptions = {
   playbackRate?: number;
@@ -33,7 +35,7 @@ export type FMODPrivateFieldOverrides = {
   initialized: boolean;
   initPromise: Promise<boolean>;
   updateInterval: ReturnType<typeof setInterval>;
-  channelSubscriptions: Map<FMODEventInstance, () => void>;
+  channelSubscriptions: Map<number, () => void>;
 };
 
 export class FMODAudio {
@@ -49,11 +51,11 @@ export class FMODAudio {
   private _fmod = {} as FMODObject;
   private _system: FMODStudioSystem | null = null;
   private _banks = new Map<string, FMODBank>();
-  private _banksLoading = new Set<string>();
+  private _bankLoadPromises = new Map<string, Promise<void>>();
   private _initialized = false;
   private _initPromise: Promise<boolean> | null = null;
   private _updateInterval: ReturnType<typeof setInterval> | null = null;
-  private _channelSubscriptions = new Map<FMODEventInstance, () => void>();
+  private _channelSubscriptions = new Map<number, () => void>();
 
   constructor(privateFieldOverrides?: Partial<FMODPrivateFieldOverrides>) {
     if (!privateFieldOverrides) return;
@@ -86,9 +88,11 @@ export class FMODAudio {
           this._setupSystem();
           this._initialized = true;
           this._updateInterval = setInterval(() => this._system?.update(), 20);
+          this._initPromise = null;
           resolve(true);
         } catch (_e) {
           logger({ message: MESSAGES.SYSTEM_SETUP_FAILED, type: 'error' });
+          this._initPromise = null;
           resolve(false);
         }
       };
@@ -97,6 +101,7 @@ export class FMODAudio {
         FMODModuleFactory(this._fmod);
       } catch (_e) {
         logger({ message: MESSAGES.MODULE_FACTORY_FAILED, type: 'error' });
+        this._initPromise = null;
         resolve(false);
       }
     });
@@ -109,51 +114,34 @@ export class FMODAudio {
    * and loads it into the Studio system.
    * Must be called after init() has resolved true.
    */
-  public async loadBank(url: string): Promise<void> {
+  public loadBank(url: string): Promise<void> {
     if (!this._initialized || this._system === null) {
       throw new Error(MESSAGES.SYSTEM_NOT_INITIALIZED);
     }
     const bankName = url.split('/').pop() ?? url;
 
-    if (this._banksLoading.has(bankName)) {
-      logger({ message: MESSAGES.BANK_ALREADY_LOADING(bankName), type: 'warn' });
-      return;
-    }
-
     if (this._banks.has(bankName)) {
       logger({ message: MESSAGES.BANK_ALREADY_LOADED(bankName), type: 'warn' });
-      return;
+      return Promise.resolve();
     }
 
-    this._banksLoading.add(bankName);
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(MESSAGES.BANK_FETCH_FAILED(url, response.status, response.statusText));
+    const inFlight = this._bankLoadPromises.get(bankName);
+    if (inFlight) {
+      logger({ message: MESSAGES.BANK_ALREADY_LOADING(bankName), type: 'warn' });
+      return inFlight;
     }
 
-    const data = new Uint8Array(await response.arrayBuffer());
-
-    this._fmod.FS_createDataFile('/', bankName, data, true, false);
-
-    const bankOut = fmodOut<FMODBank>();
-    fmodCheckOrThrow(
-      this._fmod,
-      this._system.loadBankFile(`/${bankName}`, this._fmod.STUDIO_LOAD_BANK_NORMAL, bankOut)
-    );
-    assert(bankOut.val !== undefined, MESSAGES.BANK_NOT_LOADED);
-    logger({ message: MESSAGES.LOADED_BANK(bankName), type: 'info' });
-
-    this._banksLoading.delete(bankName);
-    this._banks.set(bankName, bankOut.val);
+    const loadPromise = this._loadBank(url, bankName, this._system).finally(() => {
+      this._bankLoadPromises.delete(bankName);
+    });
+    this._bankLoadPromises.set(bankName, loadPromise);
+    return loadPromise;
   }
 
   /**
    * Starts an FMOD Studio event and returns the instance.
-   * For looping or stoppable events, hold the reference and pass it to stopEvent().
-   * For true one-shots that need no manual cleanup, set release parameter to true.
    * @param eventPath The path of the event to play.
-   * @param release Whether to release the event instance after playing.
+   * @param options The options for the event.
    * @returns The event instance.
    */
   public playEvent({
@@ -178,6 +166,14 @@ export class FMODAudio {
 
     fmodCheckOrThrow(this._fmod, instanceOut.val.start());
 
+    // On event stopped, release the instance and clear the subscription (if any).
+    instanceOut.val.setCallback((type, instance) => {
+      if (type === this._fmod.STUDIO_EVENT_CALLBACK_STOPPED) {
+        this._onEventStopped(instance);
+      }
+      return this._fmod.OK;
+    }, this._fmod.STUDIO_EVENT_CALLBACK_STOPPED);
+
     if (options?.playbackRate) {
       fmodCheckOrThrow(this._fmod, instanceOut.val.setPitch(options.playbackRate));
     }
@@ -195,7 +191,7 @@ export class FMODAudio {
   /**
    * Plays an event and ties its volume and mute state to a sound channel from
    * useSoundsStore. Future setChannelVolume / setChannelMuted calls automatically
-   * propagate to the FMOD instance. The subscription is cleaned up on stopEvent().
+   * propagate to the FMOD instance. The subscription is cleaned automatically when the event stops.
    */
   public playEventInSoundChannel({
     eventPath,
@@ -230,7 +226,7 @@ export class FMODAudio {
     // setChannelVolume / setChannelMuted call, so each update triggers this.
     const unsubscribe = useSoundsStore.subscribe(applyChannel);
 
-    this._channelSubscriptions.set(instance, unsubscribe);
+    this._channelSubscriptions.set(getInstancePointer(instance), unsubscribe);
     return instance;
   }
 
@@ -241,16 +237,11 @@ export class FMODAudio {
    *                      Defaults to false (immediate cut).
    */
   public stopEvent(instance: FMODEventInstance, allowFadeout = false): void {
-    this._cleanupChannelSubscription(instance);
-
     const mode = allowFadeout
       ? this._fmod.STUDIO_STOP_ALLOWFADEOUT
       : this._fmod.STUDIO_STOP_IMMEDIATE;
 
-    // The handle may already be invalid if the event finished before stopEvent() was called.
-    if (instance.stop(mode) === this._fmod.OK) {
-      instance.release();
-    }
+    instance.stop(mode);
   }
 
   /**
@@ -304,6 +295,26 @@ export class FMODAudio {
 
   // ── Private ──────────────────────────────────────────────────────────────
 
+  private async _loadBank(url: string, bankName: string, system: FMODStudioSystem): Promise<void> {
+    try {
+      const data = await fetchBankBinary(url);
+
+      this._fmod.FS_createDataFile('/', bankName, data, true, false);
+
+      const bankOut = fmodOut<FMODBank>();
+      fmodCheckOrThrow(
+        this._fmod,
+        system.loadBankFile(`/${bankName}`, this._fmod.STUDIO_LOAD_BANK_NORMAL, bankOut)
+      );
+      assert(bankOut.val !== undefined, MESSAGES.BANK_NOT_LOADED);
+      logger({ message: MESSAGES.LOADED_BANK(bankName), type: 'info' });
+
+      this._banks.set(bankName, bankOut.val);
+    } catch (error) {
+      logger({ message: MESSAGES.BANK_LOAD_FAILED(url, error), type: 'error' });
+    }
+  }
+
   private _setupSystem(): void {
     const studioOut = fmodOut<FMODStudioSystem>();
     fmodCheckOrThrow(this._fmod, this._fmod.Studio_System_Create(studioOut));
@@ -335,10 +346,13 @@ export class FMODAudio {
     );
   }
 
-  private _cleanupChannelSubscription(instance: FMODEventInstance): void {
-    const unsubscribe = this._channelSubscriptions.get(instance);
-    if (unsubscribe === undefined) return;
-    unsubscribe();
-    this._channelSubscriptions.delete(instance);
+  private _onEventStopped(instance: FMODEventInstance): void {
+    const unsubscribe = this._channelSubscriptions.get(getInstancePointer(instance));
+    if (unsubscribe) {
+      logger({ message: MESSAGES.EVENT_SOUND_CHANNEL_SUBSCRIPTION_CLEARED, type: 'info' });
+      unsubscribe();
+      this._channelSubscriptions.delete(getInstancePointer(instance));
+    }
+    instance.release();
   }
 }

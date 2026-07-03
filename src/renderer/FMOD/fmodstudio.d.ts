@@ -1,10 +1,13 @@
 /** Mutable out-value holder — passed as {} and populated by FMOD before the call returns. */
 export type FMODOutVal<T = unknown> = { val: T | undefined };
 
+export type FMODEventCallback = (type: number, event: FMODEventInstance) => number;
+
 export interface FMODEventInstance {
   start(): number;
   stop(mode: number): number;
   release(): number;
+  setCallback(callback: FMODEventCallback | null, callbackmask: number): number;
   setVolume(volume: number): number;
   getVolume(outval: FMODOutVal<number>): number;
   /** Pitch multiplier: 1.0 = normal, 2.0 = double speed, 0.5 = half speed. */
@@ -14,6 +17,12 @@ export interface FMODEventInstance {
   setParameterByName(name: string, value: number, ignoreSeekSpeed: boolean): number;
   getParameterByName(name: string, outval: FMODOutVal<number>): number;
 }
+
+export type FMODEventInstanceWithPointer = FMODEventInstance & {
+  $$: {
+    ptr: number;
+  };
+};
 
 export interface FMODEventDescription {
   createInstance(outval: FMODOutVal<FMODEventInstance>): number;
@@ -72,6 +81,7 @@ export interface FMODObject {
   readonly STUDIO_LOAD_BANK_NORMAL: number;
   readonly STUDIO_STOP_IMMEDIATE: number;
   readonly STUDIO_STOP_ALLOWFADEOUT: number;
+  readonly STUDIO_EVENT_CALLBACK_STOPPED: number;
   readonly SPEAKERMODE_DEFAULT: number;
 
   // ── Core API ───────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { logger } from '@tgdf';
 import { useState, useEffect } from 'react';
 
+import { MESSAGES } from '../constants';
 import { FMODAudio } from '../FMODAudio';
 import { fetchWasmBinary } from '../utils/fetchWasmBinary';
 
@@ -33,7 +34,7 @@ export const useFMODAudioInitialization = ({ bankUrls }: UseFMODAudioProps): Use
       setIsReady(false);
       setIsLoading(false);
       setIsError(true);
-      logger({ message: 'Failed to initialize FMOD Audio', type: 'error' });
+      logger({ message: MESSAGES.HOOK_INITIALIZATION_FAILED, type: 'error' });
     };
 
     try {

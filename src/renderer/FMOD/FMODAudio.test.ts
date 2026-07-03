@@ -5,6 +5,7 @@ import type {
   FMODObject,
   FMODStudioSystem,
   FMODOutVal,
+  FMODEventInstanceWithPointer,
 } from './fmodstudio';
 
 import { Mock, It, Times } from 'moq.ts';
@@ -14,8 +15,11 @@ import { assert, describe, it, expect, vi, beforeEach } from 'vitest';
 import { MESSAGES } from './constants';
 import { FMODAudio } from './FMODAudio';
 import FMODModuleFactory from './fmodstudio';
+import { fetchBankBinary } from './utils/fetchBankBinary';
 
 vi.mock('./fmodstudio', () => ({ default: vi.fn() }));
+vi.mock('./utils/fetchBankBinary', () => ({ fetchBankBinary: vi.fn() }));
+vi.mock('./utils/getInstancePointer', () => ({ getInstancePointer: vi.fn() }));
 vi.mock('@tgdf', () => ({
   logger: vi.fn(),
   assert,
@@ -28,13 +32,14 @@ vi.mock('@tgdf', () => ({
 const OK = 0;
 
 function buildInstanceMock() {
-  const m = new Mock<FMODEventInstance>();
+  const m = new Mock<FMODEventInstanceWithPointer>();
   m.setup((x) => x.start()).returns(OK);
   m.setup((x) => x.release()).returns(OK);
   m.setup((x) => x.stop(It.IsAny())).returns(OK);
   m.setup((x) => x.setVolume(It.IsAny())).returns(OK);
   m.setup((x) => x.setPitch(It.IsAny())).returns(OK);
   m.setup((x) => x.setParameterByName(It.IsAny(), It.IsAny(), It.IsAny())).returns(OK);
+  m.setup((x) => x.setCallback(It.IsAny(), It.IsAny())).returns(OK);
   return m;
 }
 
@@ -109,15 +114,11 @@ describe('FMODAudio', () => {
   beforeEach(() => {
     FMODAudio['_instance'] = null;
     vi.clearAllMocks();
+    vi.mocked(fetchBankBinary).mockResolvedValue(new Uint8Array(4));
   });
 
   describe('init', () => {
     it('initializes the runtime and returns true', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-      });
-
       const coreSystem = {
         setDSPBufferSize: vi.fn(() => OK),
         getDriverInfo: vi.fn((_id: number, _n: null, _nl: null, out: FMODOutVal<number>) => {
@@ -160,13 +161,10 @@ describe('FMODAudio', () => {
 
   describe('loadBank', () => {
     it('fetches the bank, mounts it in FS and stores the reference', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(4)),
-      });
-
       const { audio, fmod, system } = wireAudio(buildInstanceMock());
       await audio.loadBank('/assets/Master.bank');
+
+      expect(fetchBankBinary).toHaveBeenCalledWith('/assets/Master.bank');
 
       expect(fmod.FS_createDataFile).toHaveBeenCalledWith(
         '/',
@@ -176,27 +174,44 @@ describe('FMODAudio', () => {
         false
       );
       expect(system.loadBankFile).toHaveBeenCalledWith('/Master.bank', OK, expect.any(Object));
-      expect(audio['_banks']).toHaveLength(1);
+      expect(audio['_banks'].size).toBe(1);
     });
 
-    it('does not load the same bank if it is already loading', async () => {
-      const { audio } = wireAudio(buildInstanceMock());
-      audio.loadBank('/assets/Master.bank');
-      audio.loadBank('/assets/Master.bank');
+    it('returns the same in-flight promise when the same bank is already loading', async () => {
+      let resolveFetch: (value: Uint8Array) => void = () => {};
+      vi.mocked(fetchBankBinary).mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+      );
+
+      const { audio, system } = wireAudio(buildInstanceMock());
+      const first = audio.loadBank('/assets/Master.bank');
+      const second = audio.loadBank('/assets/Master.bank');
+
+      expect(first).toBe(second);
       expect(logger).toHaveBeenCalledWith(
         expect.objectContaining({ message: MESSAGES.BANK_ALREADY_LOADING('Master.bank') })
       );
+      expect(fetchBankBinary).toHaveBeenCalledTimes(1);
+
+      resolveFetch(new Uint8Array(4));
+
+      await Promise.all([first, second]);
+
+      expect(system.loadBankFile).toHaveBeenCalledTimes(1);
+      expect(audio['_banks'].size).toBe(1);
     });
 
     it('does not load the same bank if it is already loaded', async () => {
       const { audio, system } = wireAudio(buildInstanceMock());
       await audio.loadBank('/assets/Master.bank');
       expect(system.loadBankFile).toHaveBeenCalledTimes(1);
-      expect(audio['_banks']).toHaveLength(1);
+      expect(audio['_banks'].size).toBe(1);
 
       await audio.loadBank('/assets/Master.bank');
       expect(system.loadBankFile).toHaveBeenCalledTimes(1);
-      expect(audio['_banks']).toHaveLength(1);
+      expect(audio['_banks'].size).toBe(1);
       expect(logger).toHaveBeenCalledWith(
         expect.objectContaining({ message: MESSAGES.BANK_ALREADY_LOADED('Master.bank') })
       );
@@ -310,30 +325,6 @@ describe('FMODAudio', () => {
       m.verify((x) => x.setParameterByName('mood', 1, false), Times.Once());
     });
 
-    it('unsubscribes from the store when stopEvent is called and releases the instance', () => {
-      const m = buildInstanceMock();
-      const { audio } = wireAudio(m);
-      const unsubscribe = vi.fn();
-      vi.mocked(useSoundsStore.subscribe).mockReturnValue(unsubscribe);
-      vi.mocked(useSoundsStore.getState).mockReturnValue({
-        soundChannels: new Map([[CHANNEL, { id: CHANNEL, volume: 1, muted: false }]]),
-      } as never);
-
-      const inst = audio.playEventInSoundChannel({
-        eventPath: 'event:/Sfx/Amb',
-        channelId: CHANNEL,
-      });
-
-      assert(inst !== null);
-      expect(audio['_channelSubscriptions'].size).toBe(1);
-
-      audio.stopEvent(inst);
-
-      expect(m.verify((x) => x.release(), Times.Once()));
-      expect(unsubscribe).toHaveBeenCalledTimes(1);
-      expect(audio['_channelSubscriptions'].size).toBe(0);
-    });
-
     it('returns existing promise when init is called multiple times before it resolves', async () => {
       vi.mocked(FMODModuleFactory).mockImplementation(() => {
         // intentionally do NOT call onRuntimeInitialized yet
@@ -345,5 +336,7 @@ describe('FMODAudio', () => {
       const concurrentPromise = audio.init(wasmBinary);
       expect(promise).toBe(concurrentPromise);
     });
+
+    //TODO: Add test for unsubscribing from the store when event stops and releasing the instance
   });
 });
