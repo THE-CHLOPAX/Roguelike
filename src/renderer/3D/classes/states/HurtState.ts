@@ -1,4 +1,4 @@
-import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
+import { assert, InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { State } from './State';
 import { DeadState } from './DeadState';
@@ -19,16 +19,18 @@ export class HurtState extends StateNoHealthEvents {
   }
 
   public onEnter(): void {
-    FMODAudio.playEventInSoundChannel({
+    const eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.HURT,
       channelId: MAIN_SOUND_CHANNEL,
     });
+    assert(eventInstance !== null);
 
     this.entity.animationController.playAnimation(AnimationClipNamesShared.HIT, {
       loop: false,
       clampWhenFinished: true,
       onComplete: () => {
         this._animationEnded = true;
+        FMODAudio.stopEvent(eventInstance);
       },
     });
     this.entity.healthPointsController.flashRed(() => {

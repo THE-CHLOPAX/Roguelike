@@ -3,8 +3,8 @@ import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 import { AIState } from './AIState';
 import { AIDeadState } from './AIDeadState';
 import { EntityAI } from '../../gameObjects/EntityAI';
-import { AnimationClipNamesShared } from '../../../types';
 import { FMOD_EVENTS, FMODAudio } from '../../../../FMOD';
+import { AnimationClipNamesShared } from '../../../types';
 import { AIStateNoHealthEvents } from './AIStateNoHealthEvents';
 
 export class AIHurtState extends AIStateNoHealthEvents {
