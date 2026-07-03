@@ -28,22 +28,26 @@ export const useFMODAudioInitialization = ({ bankUrls }: UseFMODAudioProps): Use
 
   const init = async (audioInstance: FMODAudio) => {
     const wasmBinary = await fetchWasmBinary();
-    const initialized = await audioInstance.init(wasmBinary);
 
-    // If properly initialized
-    if (initialized) {
-      await loadBanks(audioInstance);
-      setIsReady(true);
-      setIsLoading(false);
-
-      audioInstance.logEventPaths();
-    }
-    // Failed to initialize
-    else {
+    const onError = () => {
       setIsReady(false);
       setIsLoading(false);
       setIsError(true);
       logger({ message: 'Failed to initialize FMOD Audio', type: 'error' });
+    };
+
+    try {
+      const initialized = await audioInstance.init(wasmBinary);
+      if (initialized) {
+        await loadBanks(audioInstance);
+        setIsReady(true);
+        setIsLoading(false);
+        audioInstance.logEventPaths();
+      } else {
+        onError();
+      }
+    } catch (_e) {
+      onError();
     }
   };
 

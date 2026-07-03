@@ -29,7 +29,7 @@ export type FMODPlayEventInChannelOptions = {
 export type FMODPrivateFieldOverrides = {
   fmod: Partial<FMODObject>;
   system: Partial<FMODStudioSystem>;
-  banks: Partial<FMODBank>[];
+  banks: Map<string, FMODBank>;
   initialized: boolean;
   initPromise: Promise<boolean>;
   updateInterval: ReturnType<typeof setInterval>;
@@ -48,7 +48,8 @@ export class FMODAudio {
 
   private _fmod = {} as FMODObject;
   private _system: FMODStudioSystem | null = null;
-  private _banks: FMODBank[] = [];
+  private _banks = new Map<string, FMODBank>();
+  private _banksLoading = new Set<string>();
   private _initialized = false;
   private _initPromise: Promise<boolean> | null = null;
   private _updateInterval: ReturnType<typeof setInterval> | null = null;
@@ -60,7 +61,7 @@ export class FMODAudio {
       privateFieldOverrides;
     if (fmod !== undefined) this._fmod = fmod as FMODObject;
     if (system !== undefined) this._system = system as FMODStudioSystem;
-    if (banks !== undefined) this._banks = banks as FMODBank[];
+    if (banks !== undefined) this._banks = banks;
     if (initialized !== undefined) this._initialized = initialized;
     if (initPromise !== undefined) this._initPromise = initPromise;
     if (updateInterval !== undefined) this._updateInterval = updateInterval;
@@ -114,6 +115,18 @@ export class FMODAudio {
     }
     const bankName = url.split('/').pop() ?? url;
 
+    if (this._banksLoading.has(bankName)) {
+      logger({ message: MESSAGES.BANK_ALREADY_LOADING(bankName), type: 'warn' });
+      return;
+    }
+
+    if (this._banks.has(bankName)) {
+      logger({ message: MESSAGES.BANK_ALREADY_LOADED(bankName), type: 'warn' });
+      return;
+    }
+
+    this._banksLoading.add(bankName);
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(MESSAGES.BANK_FETCH_FAILED(url, response.status, response.statusText));
@@ -130,7 +143,9 @@ export class FMODAudio {
     );
     assert(bankOut.val !== undefined, MESSAGES.BANK_NOT_LOADED);
     logger({ message: MESSAGES.LOADED_BANK(bankName), type: 'info' });
-    this._banks.push(bankOut.val);
+
+    this._banksLoading.delete(bankName);
+    this._banks.set(bankName, bankOut.val);
   }
 
   /**
@@ -162,7 +177,6 @@ export class FMODAudio {
     assert(instanceOut.val !== undefined, MESSAGES.EVENT_INSTANCE_NOT_CREATED);
 
     fmodCheckOrThrow(this._fmod, instanceOut.val.start());
-    fmodCheckOrThrow(this._fmod, instanceOut.val.release());
 
     if (options?.playbackRate) {
       fmodCheckOrThrow(this._fmod, instanceOut.val.setPitch(options.playbackRate));
@@ -260,8 +274,9 @@ export class FMODAudio {
 
   public logEventPaths(): void {
     const eventPaths: string[] = [];
+    const banks = Array.from(this._banks.values());
 
-    for (const bank of this._banks) {
+    for (const bank of banks) {
       const countOut = fmodOut<number>();
       fmodCheckOrThrow(this._fmod, bank.getEventCount(countOut));
       assert(countOut.val !== undefined, MESSAGES.EVENT_COUNT_NOT_FOUND);

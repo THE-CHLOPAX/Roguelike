@@ -11,6 +11,7 @@ import { Mock, It, Times } from 'moq.ts';
 import { logger, useSoundsStore } from '@tgdf';
 import { assert, describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { MESSAGES } from './constants';
 import { FMODAudio } from './FMODAudio';
 import FMODModuleFactory from './fmodstudio';
 
@@ -177,6 +178,29 @@ describe('FMODAudio', () => {
       expect(system.loadBankFile).toHaveBeenCalledWith('/Master.bank', OK, expect.any(Object));
       expect(audio['_banks']).toHaveLength(1);
     });
+
+    it('does not load the same bank if it is already loading', async () => {
+      const { audio } = wireAudio(buildInstanceMock());
+      audio.loadBank('/assets/Master.bank');
+      audio.loadBank('/assets/Master.bank');
+      expect(logger).toHaveBeenCalledWith(
+        expect.objectContaining({ message: MESSAGES.BANK_ALREADY_LOADING('Master.bank') })
+      );
+    });
+
+    it('does not load the same bank if it is already loaded', async () => {
+      const { audio, system } = wireAudio(buildInstanceMock());
+      await audio.loadBank('/assets/Master.bank');
+      expect(system.loadBankFile).toHaveBeenCalledTimes(1);
+      expect(audio['_banks']).toHaveLength(1);
+
+      await audio.loadBank('/assets/Master.bank');
+      expect(system.loadBankFile).toHaveBeenCalledTimes(1);
+      expect(audio['_banks']).toHaveLength(1);
+      expect(logger).toHaveBeenCalledWith(
+        expect.objectContaining({ message: MESSAGES.BANK_ALREADY_LOADED('Master.bank') })
+      );
+    });
   });
 
   describe('playEvent', () => {
@@ -230,7 +254,7 @@ describe('FMODAudio', () => {
       const audio = FMODAudio.getInstance({
         fmod: fmod as Partial<FMODObject>,
         system: system as Partial<FMODStudioSystem>,
-        banks: [bank] as FMODBank[],
+        banks: new Map([['Master.bank', bank as FMODBank]]),
         initialized: true,
       });
 
@@ -286,7 +310,7 @@ describe('FMODAudio', () => {
       m.verify((x) => x.setParameterByName('mood', 1, false), Times.Once());
     });
 
-    it('unsubscribes from the store when stopEvent is called', () => {
+    it('unsubscribes from the store when stopEvent is called and releases the instance', () => {
       const m = buildInstanceMock();
       const { audio } = wireAudio(m);
       const unsubscribe = vi.fn();
@@ -305,6 +329,7 @@ describe('FMODAudio', () => {
 
       audio.stopEvent(inst);
 
+      expect(m.verify((x) => x.release(), Times.Once()));
       expect(unsubscribe).toHaveBeenCalledTimes(1);
       expect(audio['_channelSubscriptions'].size).toBe(0);
     });

@@ -18,6 +18,8 @@ export const MESSAGES = {
   EVENT_PATH_NOT_FOUND: '[FMOD] Event path not found',
   EVENT_PATHS_LABEL: '[FMOD] Event Paths',
   BANK_NOT_LOADED: '[FMOD] Bank not loaded',
+  BANK_ALREADY_LOADED: (bankName: string) => `[FMOD] Bank "${bankName}" already loaded`,
+  BANK_ALREADY_LOADING: (bankName: string) => `[FMOD] Bank "${bankName}" already loading`,
   BANK_FETCH_FAILED: (url: string, status: number, statusText: string) =>
     `[FMOD] Failed to fetch bank "${url}": ${status} ${statusText}`,
   LOADED_BANK: (bankName: string) => `[FMOD] Loaded bank "${bankName}"`,
