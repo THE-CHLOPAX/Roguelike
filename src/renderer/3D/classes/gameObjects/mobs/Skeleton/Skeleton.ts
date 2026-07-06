@@ -15,9 +15,11 @@ export class Skeleton extends EntityAI {
         id: MODELS.SKELETON.id,
         scale: new THREE.Vector3(1.2, 1.2, 1.2),
       },
-      speed: 2.5,
-      sprintSpeed: 4,
-      walkSpeed: 0.5,
+      movementOptions: {
+        speed: 2.5,
+        sprintSpeed: 4,
+        walkSpeed: 0.5,
+      },
       rigidBodyOptions: {
         ...DEFAULT_RIGID_BODY_OPTIONS,
       },

@@ -1,20 +1,19 @@
 import { Scene } from '@tgdf';
 import { NavMesh } from '@recast-navigation/core';
 
-import { Entity } from './Entity';
 import { MAIN_CROWD_ID } from '../../constants';
+import { Entity, EntityOptions } from './Entity';
 import { AIAttackOptions, AIRoamingOptions } from '../../types';
 import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
-import { EntityMovable, EntityMovableOptions } from './EntityMovable';
 
-export type EntityAIOptions = EntityMovableOptions & {
+export type EntityAIOptions = EntityOptions & {
   detectionRadius?: number;
   roaming?: AIRoamingOptions;
   attack?: AIAttackOptions;
   enemyTypes?: (typeof Entity)[];
 };
 
-export class EntityAI extends EntityMovable {
+export class EntityAI extends Entity {
   public navMeshAgent: NavMeshAgent;
   public navMesh: NavMesh;
 

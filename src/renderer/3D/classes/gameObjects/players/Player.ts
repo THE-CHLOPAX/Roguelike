@@ -1,9 +1,9 @@
 import { Scene } from '@tgdf';
 
-import { EntityMovable, EntityMovableOptions } from '../EntityMovable';
+import { Entity, EntityOptions } from '../Entity';
 
-export class Player extends EntityMovable {
-  constructor(scene: Scene, options: EntityMovableOptions) {
+export class Player extends Entity {
+  constructor(scene: Scene, options: EntityOptions) {
     super(scene, options);
   }
 }

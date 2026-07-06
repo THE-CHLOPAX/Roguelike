@@ -5,7 +5,7 @@ import { MODELS } from '../../3D/constants';
 import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { TestScene } from '../../3D/classes/scenes/TestScene';
-import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { BackToViewLayout } from '../layouts/BackToViewLayout';
 import { FMODAudio, FMODEventInstance, FMOD_EVENTS } from '../../FMOD';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 

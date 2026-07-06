@@ -9,9 +9,11 @@ export class Monk extends Player {
       model: {
         id: MODELS.MONK.id,
       },
-      speed: 2.5,
-      sprintSpeed: 4,
-      walkSpeed: 1,
+      movementOptions: {
+        speed: 2.5,
+        sprintSpeed: 4,
+        walkSpeed: 1,
+      },
       rigidBodyOptions: { ...DEFAULT_RIGID_BODY_OPTIONS },
       animationControllerOptions: {
         playbackRates: {

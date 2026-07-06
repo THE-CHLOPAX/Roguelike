@@ -44,7 +44,10 @@ export class AIChasingState extends AIStateWithHealthEvents {
       return new AIAttackState(this.entity);
     }
 
-    this.entity.navMeshAgent.setDestination(targetEnemy.position, this.entity.defaultSpeed);
+    this.entity.navMeshAgent.setDestination(
+      targetEnemy.position,
+      this.entity.movementController.defaultSpeed
+    );
 
     return this;
   }

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GameObjectComponent, logger } from '@tgdf';
 import { Crowd, CrowdAgent, CrowdAgentParams } from '@recast-navigation/core';
 
-import { EntityMovable } from '../gameObjects/EntityMovable';
+import { Entity } from '../gameObjects/Entity';
 
 /**
  * Those are arbitrary, tunable values that were
@@ -24,14 +24,17 @@ export class NavMeshAgent extends GameObjectComponent {
     target: THREE.Vector3;
   } | null = null;
 
-  constructor(gameObject: EntityMovable, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
+  constructor(gameObject: Entity, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
     super(gameObject);
 
     this._crowd = crowd;
     this._options = options;
   }
 
-  public setDestination(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): void {
+  public setDestination(
+    target: THREE.Vector3,
+    speed = this.gameObject.movementController.defaultSpeed
+  ): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return;
@@ -44,7 +47,10 @@ export class NavMeshAgent extends GameObjectComponent {
     this._agentInstance.requestMoveTarget(target);
   }
 
-  public moveTo(target: THREE.Vector3, speed = this.gameObject.defaultSpeed): Promise<void> {
+  public moveTo(
+    target: THREE.Vector3,
+    speed = this.gameObject.movementController.defaultSpeed
+  ): Promise<void> {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return Promise.reject(new Error('NavMeshAgent instance not initialized yet.'));
@@ -83,7 +89,10 @@ export class NavMeshAgent extends GameObjectComponent {
     this._agentInstance.resetMoveTarget();
   }
 
-  public move(direction: THREE.Vector3, speed = this.gameObject.defaultSpeed): void {
+  public move(
+    direction: THREE.Vector3,
+    speed = this.gameObject.movementController.defaultSpeed
+  ): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return;
@@ -115,11 +124,11 @@ export class NavMeshAgent extends GameObjectComponent {
   }
 
   public get velocity(): THREE.Vector3 | null {
-    return this.gameObject.velocity;
+    return this.gameObject.movementController.velocity;
   }
 
-  public override get gameObject(): EntityMovable {
-    return super.gameObject as EntityMovable;
+  public override get gameObject(): Entity {
+    return super.gameObject as Entity;
   }
 
   protected override onAwake(): void {
@@ -164,7 +173,7 @@ export class NavMeshAgent extends GameObjectComponent {
     // Rotate towards movement direction
     const velocity = this._agentInstance.velocity();
     const horizontalVelocity = new THREE.Vector3(velocity.x, 0, velocity.z);
-    this.gameObject.rotate(horizontalVelocity);
+    this.gameObject.movementController.rotate(horizontalVelocity);
 
     if (this._currentMovePromise) {
       const currentPos = new THREE.Vector3(agentPos.x, agentPos.y, agentPos.z);
