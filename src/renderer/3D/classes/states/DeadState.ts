@@ -11,6 +11,7 @@ export class DeadState extends State {
   constructor(public entity: Entity) {
     super(entity);
   }
+
   public onEnter(): void {
     this._eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.HURT,
@@ -21,6 +22,7 @@ export class DeadState extends State {
       clampWhenFinished: true,
     });
   }
+
   public onExit(): void {
     if (this._eventInstance === null) return;
     FMODAudio.stopEvent(this._eventInstance);
@@ -30,6 +32,7 @@ export class DeadState extends State {
   public onInput(_inputState: InputState): State {
     return this;
   }
+
   public onUpdate(_deltaTime: number): State {
     return this;
   }

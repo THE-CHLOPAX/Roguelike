@@ -13,6 +13,8 @@ export type EntityAIOptions = EntityOptions & {
   enemyTypes?: (typeof Entity)[];
 };
 
+const DESPAWN_TIMEOUT = 3000;
+
 export class EntityAI extends Entity {
   public navMeshAgent: NavMeshAgent;
   public navMesh: NavMesh;
@@ -50,6 +52,8 @@ export class EntityAI extends Entity {
     this._attack = options.attack ?? null;
     this._enemyTypes = options.enemyTypes ?? null;
 
+    this.healthPointsController.events.once('death', this._despawnAfterTimeout);
+
     this.onInit();
   }
 
@@ -70,4 +74,8 @@ export class EntityAI extends Entity {
   }
 
   protected onInit(): void {}
+
+  private _despawnAfterTimeout = (): void => {
+    setTimeout(() => this.destroy(), DESPAWN_TIMEOUT);
+  };
 }
