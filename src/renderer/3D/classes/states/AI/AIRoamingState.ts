@@ -1,6 +1,6 @@
 import { InputState, logger } from '@tgdf';
 
-import { AIState } from './AIState';
+import { State } from '../State';
 import { AIIdleState } from './AIIdleState';
 import { AIAttackState } from './AIAttackState';
 import { AIChasingState } from './AIChasingState';
@@ -10,7 +10,7 @@ import { getTargetEnemy } from './utils/getTargetEnemy';
 import { AnimationClipNamesShared } from '../../../types';
 import { getRandomNavMeshPointInRadius } from '../../../utils/getRandomNavMeshPointInRadius';
 
-export class AIRoamingState extends AIState {
+export class AIRoamingState extends State {
   private _shouldTransitionToIdle: boolean = false;
 
   constructor(public entity: EntityAI) {
@@ -34,11 +34,11 @@ export class AIRoamingState extends AIState {
     this.entity.navMeshAgent.resetMovementTarget();
   }
 
-  public override onInput(_inputState: InputState): AIState {
+  public override onInput(_inputState: InputState): State {
     return this;
   }
 
-  public override onUpdate(_deltaTime: number): AIState {
+  public override onUpdate(_deltaTime: number): State {
     const targetEnemy = getTargetEnemy(this.entity);
 
     let bestAttack = null;

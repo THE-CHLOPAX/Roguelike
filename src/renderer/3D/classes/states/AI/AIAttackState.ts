@@ -1,13 +1,15 @@
-import { AIState } from './AIState';
+import { InputState } from '@tgdf';
+
+import { State } from '../State';
 import { AIIdleState } from './AIIdleState';
 import { AIAttackAction } from '../../../types';
 import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { AIStateWithHealthEvents } from './AIStateWithHealthEvents';
+import { StateWithHealthEvents } from '../StateWithHealthEvents';
 
-export class AIAttackState extends AIStateWithHealthEvents {
+export class AIAttackState extends StateWithHealthEvents {
   private _isAttacking: boolean = false;
 
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
@@ -28,7 +30,7 @@ export class AIAttackState extends AIStateWithHealthEvents {
 
   public onExit(): void {}
 
-  public override onUpdate(_deltaTime: number): AIState {
+  public override onUpdate(_deltaTime: number): State {
     // If currently performing an attack, do not transition to another state until the attack is finished
     if (this._isAttacking) return this;
 
@@ -45,6 +47,10 @@ export class AIAttackState extends AIStateWithHealthEvents {
     // If no transition conditions are met, perform the attack
     this._performAttack(bestAttack);
 
+    return this;
+  }
+
+  public onInput(_inputState: InputState): State {
     return this;
   }
 

@@ -1,6 +1,6 @@
-import { randFromRange } from '@tgdf';
+import { InputState, randFromRange } from '@tgdf';
 
-import { AIState } from './AIState';
+import { State } from '../State';
 import { AIAttackState } from './AIAttackState';
 import { AIRoamingState } from './AIRoamingState';
 import { AIChasingState } from './AIChasingState';
@@ -9,7 +9,7 @@ import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
 import { AnimationClipNamesShared } from '../../../types';
 
-export class AIIdleState extends AIState {
+export class AIIdleState extends State {
   private _startRoamingTimeout: NodeJS.Timeout | null = null;
   private _shouldTransitionToRoaming: boolean = false;
 
@@ -38,7 +38,11 @@ export class AIIdleState extends AIState {
     }
   }
 
-  public override onUpdate(_deltaTime: number): AIState {
+  public override onInput(_inputState: InputState): State {
+    return this;
+  }
+
+  public override onUpdate(_deltaTime: number): State {
     const targetEnemy = getTargetEnemy(this.entity);
     let bestAttack = null;
 

@@ -10,6 +10,7 @@ export abstract class StateWithHealthEvents extends State {
   }
 
   public override enter(): void {
+    this.entity.healthPointsController.isImmuneToDamage = false;
     this.entity.healthPointsController.events.on('damagetaken', this._onDamageTaken);
     this.onEnter();
   }
