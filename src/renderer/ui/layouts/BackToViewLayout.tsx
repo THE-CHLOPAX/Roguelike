@@ -1,6 +1,6 @@
 import { InternalButton, useKeyPress, useViewsStore } from '@tgdf';
 
-import * as views from '../ui/views';
+import * as views from '../views';
 
 export type BackToViewLayoutProps = {
   backToView: keyof typeof views;
