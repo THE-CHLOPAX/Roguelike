@@ -28,27 +28,22 @@ export type FMODPlayEventInChannelOptions = {
   parameters?: Record<string, number>;
 };
 
-export type FMODPrivateFieldOverrides = {
-  fmod: Partial<FMODObject>;
-  system: Partial<FMODStudioSystem>;
-  banks: Map<string, FMODBank>;
-  initialized: boolean;
-  initPromise: Promise<boolean>;
-  updateInterval: ReturnType<typeof setInterval>;
-  channelSubscriptions: Map<number, () => void>;
+export type FMODDependencies = {
+  fmod: FMODObject;
+  system: FMODStudioSystem | null;
 };
 
 export class FMODAudio {
-  public static getInstance(privateFieldOverrides?: Partial<FMODPrivateFieldOverrides>): FMODAudio {
+  public static getInstance(dependencies?: FMODDependencies): FMODAudio {
     if (!FMODAudio._instance) {
-      FMODAudio._instance = new FMODAudio(privateFieldOverrides);
+      FMODAudio._instance = new FMODAudio(dependencies);
     }
     return FMODAudio._instance;
   }
 
   private static _instance: FMODAudio | null = null;
 
-  private _fmod = {} as FMODObject;
+  private _fmod: FMODObject;
   private _system: FMODStudioSystem | null = null;
   private _banks = new Map<string, FMODBank>();
   private _bankLoadPromises = new Map<string, Promise<void>>();
@@ -57,17 +52,9 @@ export class FMODAudio {
   private _updateInterval: ReturnType<typeof setInterval> | null = null;
   private _channelSubscriptions = new Map<number, () => void>();
 
-  constructor(privateFieldOverrides?: Partial<FMODPrivateFieldOverrides>) {
-    if (!privateFieldOverrides) return;
-    const { fmod, system, banks, initialized, initPromise, updateInterval, channelSubscriptions } =
-      privateFieldOverrides;
-    if (fmod !== undefined) this._fmod = fmod as FMODObject;
-    if (system !== undefined) this._system = system as FMODStudioSystem;
-    if (banks !== undefined) this._banks = banks;
-    if (initialized !== undefined) this._initialized = initialized;
-    if (initPromise !== undefined) this._initPromise = initPromise;
-    if (updateInterval !== undefined) this._updateInterval = updateInterval;
-    if (channelSubscriptions !== undefined) this._channelSubscriptions = channelSubscriptions;
+  constructor(dependencies: FMODDependencies = { fmod: {} as FMODObject, system: null }) {
+    this._fmod = dependencies.fmod;
+    this._system = dependencies.system;
   }
 
   /**

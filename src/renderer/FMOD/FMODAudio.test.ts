@@ -1,6 +1,7 @@
 import type {
   FMODEventInstance,
   FMODEventDescription,
+  FMODEventCallback,
   FMODBank,
   FMODObject,
   FMODStudioSystem,
@@ -16,6 +17,7 @@ import { MESSAGES } from './constants';
 import { FMODAudio } from './FMODAudio';
 import FMODModuleFactory from './fmodstudio';
 import { fetchBankBinary } from './utils/fetchBankBinary';
+import { getInstancePointer } from './utils/getInstancePointer';
 
 vi.mock('./fmodstudio', () => ({ default: vi.fn() }));
 vi.mock('./utils/fetchBankBinary', () => ({ fetchBankBinary: vi.fn() }));
@@ -30,8 +32,10 @@ vi.mock('@tgdf', () => ({
 }));
 
 const OK = 0;
+const STUDIO_EVENT_CALLBACK_STOPPED = 0x20;
+const INSTANCE_PTR = 42;
 
-function buildInstanceMock() {
+function buildInstanceMock(onSetCallback?: (callback: FMODEventCallback) => void) {
   const m = new Mock<FMODEventInstanceWithPointer>();
   m.setup((x) => x.start()).returns(OK);
   m.setup((x) => x.release()).returns(OK);
@@ -39,7 +43,14 @@ function buildInstanceMock() {
   m.setup((x) => x.setVolume(It.IsAny())).returns(OK);
   m.setup((x) => x.setPitch(It.IsAny())).returns(OK);
   m.setup((x) => x.setParameterByName(It.IsAny(), It.IsAny(), It.IsAny())).returns(OK);
-  m.setup((x) => x.setCallback(It.IsAny(), It.IsAny())).returns(OK);
+  if (onSetCallback) {
+    m.setup((x) => x.setCallback(It.IsAny(), It.IsAny())).callback((interaction) => {
+      onSetCallback(interaction.args[0] as FMODEventCallback);
+      return OK;
+    });
+  } else {
+    m.setup((x) => x.setCallback(It.IsAny(), It.IsAny())).returns(OK);
+  }
   return m;
 }
 
@@ -88,6 +99,7 @@ function makeMocks(instanceMock: Mock<FMODEventInstance>) {
     STUDIO_STOP_IMMEDIATE: 1,
     STUDIO_STOP_ALLOWFADEOUT: 2,
     STUDIO_LOAD_BANK_NORMAL: 0,
+    STUDIO_EVENT_CALLBACK_STOPPED,
     ErrorString: () => '',
     FS_createDataFile: vi.fn(),
   };
@@ -99,10 +111,10 @@ function makeMocks(instanceMock: Mock<FMODEventInstance>) {
 function wireAudio(instanceMock: Mock<FMODEventInstance>) {
   const mocks = makeMocks(instanceMock);
   const audio = FMODAudio.getInstance({
-    fmod: mocks.fmod as Partial<FMODObject>,
-    system: mocks.system as Partial<FMODStudioSystem>,
-    initialized: true,
+    fmod: mocks.fmod as unknown as FMODObject,
+    system: mocks.system as unknown as FMODStudioSystem,
   });
+  audio['_initialized'] = true;
   return { audio, ...mocks };
 }
 
@@ -156,6 +168,18 @@ describe('FMODAudio', () => {
       expect(await audio.init(wasmBinary)).toBe(true);
       expect(await audio.init(wasmBinary)).toBe(true); // idempotent
       expect(vi.mocked(FMODModuleFactory)).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns existing promise when init is called multiple times before it resolves', async () => {
+      vi.mocked(FMODModuleFactory).mockImplementation(() => {
+        // intentionally do NOT call onRuntimeInitialized yet
+      });
+
+      const wasmBinary = await mockFetchWasmBinary();
+      const audio = FMODAudio.getInstance();
+      const promise = audio.init(wasmBinary);
+      const concurrentPromise = audio.init(wasmBinary);
+      expect(promise).toBe(concurrentPromise);
     });
   });
 
@@ -267,11 +291,11 @@ describe('FMODAudio', () => {
       const m = buildInstanceMock();
       const { bank, system, fmod } = makeMocks(m);
       const audio = FMODAudio.getInstance({
-        fmod: fmod as Partial<FMODObject>,
-        system: system as Partial<FMODStudioSystem>,
-        banks: new Map([['Master.bank', bank as FMODBank]]),
-        initialized: true,
+        fmod: fmod as unknown as FMODObject,
+        system: system as unknown as FMODStudioSystem,
       });
+      audio['_initialized'] = true;
+      audio['_banks'] = new Map([['Master.bank', bank as FMODBank]]);
 
       audio.logEventPaths();
 
@@ -325,18 +349,45 @@ describe('FMODAudio', () => {
       m.verify((x) => x.setParameterByName('mood', 1, false), Times.Once());
     });
 
-    it('returns existing promise when init is called multiple times before it resolves', async () => {
-      vi.mocked(FMODModuleFactory).mockImplementation(() => {
-        // intentionally do NOT call onRuntimeInitialized yet
+    it('unsubscribes and releases when STOPPED callback fires after stopEvent', () => {
+      const captured: { callback: FMODEventCallback | null } = { callback: null };
+      const m = buildInstanceMock((callback) => {
+        captured.callback = callback;
       });
 
-      const wasmBinary = await mockFetchWasmBinary();
-      const audio = FMODAudio.getInstance();
-      const promise = audio.init(wasmBinary);
-      const concurrentPromise = audio.init(wasmBinary);
-      expect(promise).toBe(concurrentPromise);
-    });
+      vi.mocked(getInstancePointer).mockReturnValue(INSTANCE_PTR);
 
-    //TODO: Add test for unsubscribing from the store when event stops and releasing the instance
+      const unsubscribe = vi.fn();
+      vi.mocked(useSoundsStore.subscribe).mockReturnValue(unsubscribe);
+      vi.mocked(useSoundsStore.getState).mockReturnValue({
+        soundChannels: new Map([[CHANNEL, { id: CHANNEL, volume: 1, muted: false }]]),
+      } as never);
+
+      const { audio, fmod } = wireAudio(m);
+      const inst = audio.playEventInSoundChannel({
+        eventPath: 'event:/Sfx/Amb',
+        channelId: CHANNEL,
+      });
+
+      assert(inst !== null);
+      expect(audio['_channelSubscriptions'].has(INSTANCE_PTR)).toBe(true);
+
+      audio.stopEvent(inst);
+      m.verify((x) => x.stop(fmod.STUDIO_STOP_IMMEDIATE), Times.Once());
+
+      const callbackWrapper = {
+        release: vi.fn(() => OK),
+      } as unknown as FMODEventInstance;
+
+      assert(captured.callback !== null);
+      captured.callback(STUDIO_EVENT_CALLBACK_STOPPED, callbackWrapper);
+
+      expect(unsubscribe).toHaveBeenCalledTimes(1);
+      expect(audio['_channelSubscriptions'].has(INSTANCE_PTR)).toBe(false);
+      expect(callbackWrapper.release).toHaveBeenCalledTimes(1);
+      expect(logger).toHaveBeenCalledWith(
+        expect.objectContaining({ message: MESSAGES.EVENT_SOUND_CHANNEL_SUBSCRIPTION_CLEARED })
+      );
+    });
   });
 });
