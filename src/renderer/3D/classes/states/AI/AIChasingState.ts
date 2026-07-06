@@ -1,13 +1,10 @@
 import { InputState } from '@tgdf';
 
-import { State } from '../State';
-import { AIIdleState } from './AIIdleState';
-import { AIAttackState } from './AIAttackState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { StateWithHealthEvents } from '../StateWithHealthEvents';
 import { AIAttackAction, AnimationClipNamesShared } from '../../../types';
+import { State, StateWithHealthEvents, AIIdleState, AIAttackState } from '..';
 
 export class AIChasingState extends StateWithHealthEvents {
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {

@@ -1,11 +1,11 @@
 import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
-import { State } from './State';
 import { Entity } from '../gameObjects/Entity';
+import { State, StateWithHealthEvents } from '.';
 import { AnimationClipNamesShared } from '../../types';
 import { FMODAudio, FMODEventInstance, FMOD_EVENTS } from '../../../FMOD';
 
-export class DeadState extends State {
+export class DeadState extends StateWithHealthEvents {
   private _eventInstance: FMODEventInstance | null = null;
 
   constructor(public entity: Entity) {

@@ -1,13 +1,10 @@
 import { InputState, logger } from '@tgdf';
 
-import { State } from '../State';
-import { AIIdleState } from './AIIdleState';
-import { AIAttackState } from './AIAttackState';
-import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
 import { AnimationClipNamesShared } from '../../../types';
+import { State, AIIdleState, AIAttackState, AIChasingState } from '..';
 import { getRandomNavMeshPointInRadius } from '../../../utils/getRandomNavMeshPointInRadius';
 
 export class AIRoamingState extends State {

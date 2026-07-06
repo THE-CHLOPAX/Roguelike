@@ -1,5 +1,5 @@
 import { Player } from '../Player';
-import { IdleState } from './states/IdleState';
+import { IdleState } from './states';
 import { TestScene } from '../../../scenes/TestScene';
 import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
 

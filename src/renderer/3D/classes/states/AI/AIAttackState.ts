@@ -1,19 +1,16 @@
 import { InputState } from '@tgdf';
 
-import { State } from '../State';
-import { AIIdleState } from './AIIdleState';
 import { AIAttackAction } from '../../../types';
-import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { StateWithHealthEvents } from '../StateWithHealthEvents';
+import { State, StateWithHealthEvents, AIIdleState, AIChasingState } from '..';
 
 export class AIAttackState extends StateWithHealthEvents {
   private _isAttacking: boolean = false;
 
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
-    // Check if there's a target enemy
+    // Check if there's a target enemys
     const targetEnemy = getTargetEnemy(entity);
     if (!targetEnemy) return false;
 

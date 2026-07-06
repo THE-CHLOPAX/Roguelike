@@ -1,13 +1,10 @@
 import { InputState, randFromRange } from '@tgdf';
 
-import { State } from '../State';
-import { AIAttackState } from './AIAttackState';
-import { AIRoamingState } from './AIRoamingState';
-import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
 import { AnimationClipNamesShared } from '../../../types';
+import { State, AIAttackState, AIRoamingState, AIChasingState } from '..';
 
 export class AIIdleState extends State {
   private _startRoamingTimeout: NodeJS.Timeout | null = null;

@@ -2,11 +2,10 @@ import * as THREE from 'three';
 import { Input, InputState, logger } from '@tgdf';
 
 import { Entity } from '../../../Entity';
-import { State } from '../../../../states';
 import { SprintingState, IdleState } from './index';
 import { AnimationClipNamesShared } from '../../../../../types';
+import { State, StateWithHealthEvents } from '../../../../states';
 import { mapInputToControls } from '../../../../../utils/mapInputToControls';
-import { StateWithHealthEvents } from '../../../../states/StateWithHealthEvents';
 
 export class RunningState extends StateWithHealthEvents {
   constructor(public entity: Entity) {

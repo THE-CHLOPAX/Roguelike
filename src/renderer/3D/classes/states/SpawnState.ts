@@ -1,9 +1,8 @@
 import { InputState } from '@tgdf';
 
-import { State } from './State';
+import { State, StateNoHealthEvents } from '.';
 import { Entity } from '../gameObjects/Entity';
 import { AnimationClipNamesShared } from '../../types';
-import { StateNoHealthEvents } from './StateNoHealthEvents';
 
 export class SpawnState extends StateNoHealthEvents {
   private _spawnAnimationEnded: boolean = false;

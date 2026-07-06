@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { EntityAI } from '../../EntityAI';
 import { attackActions } from './attacks';
 import { Player } from '../../players/Player';
-import { AIIdleState } from '../../../states/index';
+import { AIIdleState } from '../../../states';
 import { TestScene } from '../../../scenes/TestScene';
 import { AnimationClipNamesShared } from '../../../../types';
 import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
