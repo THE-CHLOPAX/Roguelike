@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Mock, It, Times } from 'moq.ts';
 import RAPIER from '@dimforge/rapier3d-compat';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { assert, describe, it, expect, vi, beforeAll } from 'vitest';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
@@ -75,10 +75,12 @@ describe('RigidBody', () => {
     const { rigidBody } = await createRigidBody({ colliderShape: 'box' }, size);
     const collider = rigidBody.getPhysicsCollider();
 
-    expect(collider).not.toBeNull();
-    expect(getBoxColliderSize(collider!)).toEqual(size);
+    assert(collider !== null, 'Collider is null');
+    expect(getBoxColliderSize(collider)).toEqual(size);
 
-    const debugGeo = (rigidBody.getDebugMesh()!.geometry as THREE.BoxGeometry).parameters;
+    const debugMesh = rigidBody.getDebugMesh();
+    assert(debugMesh !== null, 'Debug mesh is null');
+    const debugGeo = (debugMesh.geometry as THREE.BoxGeometry).parameters;
     expect(debugGeo.width).toBeCloseTo(size.x);
     expect(debugGeo.height).toBeCloseTo(size.y);
     expect(debugGeo.depth).toBeCloseTo(size.z);
@@ -89,13 +91,17 @@ describe('RigidBody', () => {
     const { rigidBody } = await createRigidBody({ colliderShape: 'cylinder' }, size);
     const collider = rigidBody.getPhysicsCollider();
 
-    expect(collider!.radius()).toBeCloseTo(1);
-    expect(collider!.halfHeight() * 2).toBeCloseTo(4);
+    assert(collider !== null, 'Collider is null');
+
+    expect(collider.radius()).toBeCloseTo(1);
+    expect(collider.halfHeight() * 2).toBeCloseTo(4);
   });
 
   it('removes and recreates collider when updatePhysicsCollider is called', async () => {
     const { gameObject, rigidBody, scene } = await createRigidBody({ colliderShape: 'box' });
-    const world = scene.physics!.world!;
+    assert(scene.physics !== undefined, 'Physics manager is undefined');
+    const { world } = scene.physics;
+    assert(world !== undefined, 'World is undefined');
     const removeSpy = vi.spyOn(world, 'removeCollider');
     const createSpy = vi.spyOn(world, 'createCollider');
 
@@ -108,14 +114,18 @@ describe('RigidBody', () => {
 
     rigidBody.updatePhysicsCollider();
 
+    const collider = rigidBody.getPhysicsCollider();
+    assert(collider !== null, 'Collider is null');
+
     expect(removeSpy).toHaveBeenCalledOnce();
     expect(createSpy).toHaveBeenCalledOnce();
-    expect(getBoxColliderSize(rigidBody.getPhysicsCollider()!)).toEqual(new THREE.Vector3(4, 2, 2));
+    expect(getBoxColliderSize(collider)).toEqual(new THREE.Vector3(4, 2, 2));
   });
 
   it('registers and removes collision listeners on physics manager', async () => {
     const { scene, rigidBody } = await createRigidBody({ enableCollisionDetection: true });
-    const physics = scene.physics!;
+    const physics = scene.physics;
+    assert(physics !== undefined, 'Physics manager is undefined');
     const onCollisionSpy = vi.spyOn(physics, 'onCollision');
     const offCollisionSpy = vi.spyOn(physics, 'offCollision');
 
@@ -148,7 +158,8 @@ describe('RigidBody', () => {
 
     const bodyA = createBody('a');
     const bodyB = createBody('b');
-    const physics = scene.physics!;
+    const physics = scene.physics;
+    assert(physics !== undefined, 'Physics manager is undefined');
 
     let physicsCallback: (h1: number, h2: number, started: boolean) => void = () => {};
     vi.spyOn(physics, 'onCollision').mockImplementation((cb) => {
@@ -164,7 +175,12 @@ describe('RigidBody', () => {
       observerMock.object().onCollision(a, b, s);
     });
 
-    physicsCallback(bodyA.getHandle()!, bodyB.getHandle()!, true);
+    const handleA = bodyA?.getHandle();
+    const handleB = bodyB?.getHandle();
+    assert(handleA !== null, 'Body A handle is null');
+    assert(handleB !== null, 'Body B handle is null');
+
+    physicsCallback(handleA, handleB, true);
 
     observerMock.verify((o) => o.onCollision(It.IsAny(), It.IsAny(), true), Times.Once());
   });

@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
+import { useState, useEffect } from 'react';
+import { InternalLoader, MAIN_SOUND_CHANNEL, useAssetStore, useGraphicsStore } from '@tgdf';
 
 import { MODELS } from '../../3D/constants';
 import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { FMODAudio, FMODEventInstance, FMOD_EVENTS } from '../../FMOD';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 
-export function PathfindingTestView() {
+export function TestView() {
   const { loadTexture, loadModelGLTF } = useAssetStore();
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
@@ -28,16 +29,31 @@ export function PathfindingTestView() {
 
   const [loadingFinished, setLoadingFinished] = useState(false);
 
+  useEffect(() => {
+    let eventInstance: FMODEventInstance | null = null;
+    if (loadingFinished) {
+      eventInstance = FMODAudio.playEventInSoundChannel({
+        eventPath: FMOD_EVENTS.MUSIC_SYSTEM,
+        channelId: MAIN_SOUND_CHANNEL,
+      });
+    }
+    return () => {
+      if (eventInstance !== null) {
+        FMODAudio.stopEvent(eventInstance);
+      }
+    };
+  }, [loadingFinished]);
+
   return (
     <BackToViewLayout backToView="MenuView">
-      {!loadingFinished ? (
+      {!loadingFinished || scene === null ? (
         <InternalLoader
           progress={loadingProgress * 100}
           onComplete={() => setLoadingFinished(true)}
         />
       ) : (
         <ThreeDViewerPixelated
-          scene={scene!}
+          scene={scene}
           resX={resolution.width}
           resY={resolution.height}
           debug

@@ -53,6 +53,10 @@ module.exports = {
           from: 'src/assets',
           to: 'assets',
         },
+        {
+          from: 'src/renderer/FMOD/fmodstudio.wasm',
+          to: 'fmodstudio.wasm',
+        },
       ],
     }),
   ],

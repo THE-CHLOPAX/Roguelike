@@ -25,6 +25,8 @@ export default defineConfig([
       'build/**',
       'release/**',
       '*.min.js',
+      'src/renderer/FMOD/fmodstudio.wasm',
+      'src/renderer/FMOD/fmodstudio.js',
       'webpack.*.js',
     ],
   },
@@ -70,10 +72,12 @@ export default defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
       '@typescript-eslint/no-namespace': 'off',
       '@typescript-eslint/triple-slash-reference': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'error',
 
       '@typescript-eslint/naming-convention': [
         'error',

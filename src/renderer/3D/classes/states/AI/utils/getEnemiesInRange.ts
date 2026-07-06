@@ -1,3 +1,5 @@
+import { assert } from '@tgdf';
+
 import { Entity } from '../../../gameObjects/Entity';
 import { EntityAI } from '../../../gameObjects/EntityAI';
 import { getEntitiesWithinRadius } from '../../../../utils/getEntitiesWithinRadius';
@@ -10,7 +12,8 @@ export function getEnemiesInRange(entity: EntityAI): Entity[] {
 
   // Return array of enemies in range
   return entitiesInRange.filter((enemy) => {
-    return entity.enemyTypes!.some((enemyType) => {
+    assert(entity.enemyTypes !== null, 'Enemy types are null');
+    return entity.enemyTypes.some((enemyType) => {
       return enemy instanceof enemyType;
     });
   });
