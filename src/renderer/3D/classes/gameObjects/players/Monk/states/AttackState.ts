@@ -57,4 +57,8 @@ export class AttackState extends StateWithHealthEvents {
 
     return this;
   }
+
+  protected override recreateInstance(): AttackState {
+    return new AttackState(this.entity, this._attackAction);
+  }
 }

@@ -36,4 +36,8 @@ export class DeadState extends StateWithHealthEvents {
   public onUpdate(_deltaTime: number): State {
     return this;
   }
+
+  protected override recreateInstance(): DeadState {
+    return new DeadState(this.entity);
+  }
 }

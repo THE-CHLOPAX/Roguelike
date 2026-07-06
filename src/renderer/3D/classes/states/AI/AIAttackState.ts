@@ -51,6 +51,10 @@ export class AIAttackState extends StateWithHealthEvents {
     return this;
   }
 
+  protected override recreateInstance(): AIAttackState {
+    return new AIAttackState(this.entity);
+  }
+
   private _performAttack(bestAttack: AIAttackAction): void {
     this._isAttacking = true;
     bestAttack.action(this.entity).then(() => {

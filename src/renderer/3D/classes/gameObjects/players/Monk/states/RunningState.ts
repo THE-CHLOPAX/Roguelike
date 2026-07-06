@@ -68,4 +68,8 @@ export class RunningState extends StateWithHealthEvents {
 
     this.entity.movementController.move(rotatedMove);
   }
+
+  protected override recreateInstance(): RunningState {
+    return new RunningState(this.entity);
+  }
 }

@@ -27,7 +27,9 @@ export abstract class StateWithHealthEvents extends State {
 
   public abstract onUpdate(_deltaTime: number): State;
 
+  protected abstract recreateInstance(): StateWithHealthEvents;
+
   private _onDamageTaken = () => {
-    this.entity.stateController.currentState = new HurtState(this.entity, this);
+    this.entity.stateController.currentState = new HurtState(this.entity, this.recreateInstance());
   };
 }

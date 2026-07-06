@@ -54,4 +54,8 @@ export class AIChasingState extends StateWithHealthEvents {
 
     return this;
   }
+
+  protected override recreateInstance(): AIChasingState {
+    return new AIChasingState(this.entity);
+  }
 }

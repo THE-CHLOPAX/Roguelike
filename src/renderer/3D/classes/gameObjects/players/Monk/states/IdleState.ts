@@ -35,4 +35,8 @@ export class IdleState extends StateWithHealthEvents {
   public override onUpdate(_deltaTime: number): State {
     return this;
   }
+
+  protected override recreateInstance(): IdleState {
+    return new IdleState(this.entity);
+  }
 }
