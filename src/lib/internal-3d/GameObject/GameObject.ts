@@ -9,11 +9,11 @@ import {
   logger,
 } from '@tgdf';
 
-import { Emitter } from './Emitter';
-import { Scene } from './Scene/Scene';
+import { Emitter } from '../Emitter';
+import { Scene } from '../Scene/Scene';
 import { GAME_OBJECT_MESSAGES } from './constants';
-import { InputNotifiable } from '../internal-input/Input';
-import { isChildOfObject } from './utils/isChildOfObject';
+import { isChildOfObject } from '../utils/isChildOfObject';
+import { InputNotifiable } from '../../internal-input/Input';
 
 export class GameObject extends THREE.Object3D implements InputNotifiable {
   private _gameObjectComponents: Map<string, GameObjectComponent>;

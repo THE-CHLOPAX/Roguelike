@@ -3,10 +3,10 @@ import { init } from '@recast-navigation/core';
 import { logger, ResourceTracker } from '@tgdf';
 
 import { Emitter } from '../Emitter';
-import { GameObject } from '../GameObject';
 import { SCENE_MESSAGES } from './constants';
 import { SceneEventsMap } from '../types/scene';
-import { PhysicsManager } from '../PhysicsManager';
+import { GameObject } from '../GameObject/GameObject';
+import { PhysicsManager } from '../PhysicsManager/PhysicsManager';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {

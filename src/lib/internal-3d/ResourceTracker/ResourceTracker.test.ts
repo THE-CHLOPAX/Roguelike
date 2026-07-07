@@ -137,10 +137,7 @@ describe('ResourceTracker', () => {
     });
 
     it('removes the object entry from resourcesForObjects after disposal', () => {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshBasicMaterial()
-      );
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
 
       tracker.trackObject(mesh);
       tracker.disposeObjectResources(mesh);
@@ -149,10 +146,7 @@ describe('ResourceTracker', () => {
     });
 
     it('does not throw when disposing an untracked object', () => {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshBasicMaterial()
-      );
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
 
       expect(() => tracker.disposeObjectResources(mesh)).not.toThrow();
       expect(tracker.resourcesForObjects.has(mesh.uuid)).toBe(false);

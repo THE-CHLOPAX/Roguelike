@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { RigidBody } from '@tgdf/internal-game-components';
 
-import { Emitter } from './Emitter';
-import { GameObject } from './GameObject';
-import { logger } from '../internal-ui/utils/logger';
-import { PhysicsCollisionCallback, PhysicsManagerEventsMap } from './types/physics';
+import { Emitter } from '../Emitter';
+import { GameObject } from '../GameObject/GameObject';
+import { PHYSICS_MANAGER_MESSAGES } from './constants';
+import { logger } from '../../internal-ui/utils/logger';
+import { PhysicsCollisionCallback, PhysicsManagerEventsMap } from '../types/physics';
 
 const FIXED_TIME_STEP = 1 / 144; // 144 FPS = ~0.00694 seconds
 const MAX_SUB_STEPS = 5; // Prevent spiral of death
@@ -34,16 +35,12 @@ export class PhysicsManager {
 
   public get world(): RAPIER.World | undefined {
     if (!this._world) {
-      logger({ message: 'Physics world is not initialized for this scene', type: 'warn' });
+      logger({ message: PHYSICS_MANAGER_MESSAGES.WORLD_NOT_INITIALIZED, type: 'warn' });
     }
     return this._world;
   }
 
-  public get bodies(): Map<GameObject, RigidBody> | undefined {
-    if (!this._bodies) {
-      logger({ message: 'Physics bodies map is not initialized for this scene', type: 'warn' });
-      return undefined;
-    }
+  public get bodies(): Map<GameObject, RigidBody> {
     return this._bodies;
   }
 
@@ -98,14 +95,14 @@ export class PhysicsManager {
 
   public addBody(object: GameObject, body: RigidBody): void {
     if (!this._bodies) {
-      logger({ message: 'Physics bodies map is not initialized', type: 'warn' });
+      logger({ message: PHYSICS_MANAGER_MESSAGES.BODIES_MAP_NOT_INITIALIZED, type: 'warn' });
       return;
     }
 
     const bodyHandle = body.getHandle();
     if (bodyHandle === null) {
       logger({
-        message: 'Cannot add body to PhysicsManager: RigidBody does not have a valid handle',
+        message: PHYSICS_MANAGER_MESSAGES.INVALID_RIGID_BODY_HANDLE,
         type: 'error',
       });
       return;
@@ -129,7 +126,7 @@ export class PhysicsManager {
 
   public removeBody(object: GameObject): void {
     if (!this._bodies) {
-      logger({ message: 'Physics bodies map is not initialized', type: 'warn' });
+      logger({ message: PHYSICS_MANAGER_MESSAGES.BODIES_MAP_NOT_INITIALIZED, type: 'warn' });
       return;
     }
     const body = this._bodies.get(object);
@@ -145,7 +142,7 @@ export class PhysicsManager {
       }
     } else {
       logger({
-        message: 'Physics Manager: unable to remove body - body not found for the given object',
+        message: PHYSICS_MANAGER_MESSAGES.BODY_NOT_FOUND,
         type: 'error',
       });
     }
@@ -169,7 +166,10 @@ export class PhysicsManager {
 
   private _step(): void {
     if (!this._world || !this._eventQueue) {
-      logger({ message: 'Physics world or event queue is not initialized', type: 'warn' });
+      logger({
+        message: PHYSICS_MANAGER_MESSAGES.WORLD_OR_EVENT_QUEUE_NOT_INITIALIZED,
+        type: 'warn',
+      });
       return;
     }
 

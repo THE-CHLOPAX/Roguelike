@@ -8,8 +8,8 @@ vi.mock('electron', () => ({
 }));
 
 import { Scene } from '../internal-3d/Scene/Scene';
-import { GameObject } from '../internal-3d/GameObject';
 import { RigidBody, RigidBodyOptions } from './RigidBody';
+import { GameObject } from '../internal-3d/GameObject/GameObject';
 
 class MockScene extends Scene {
   camera = new THREE.PerspectiveCamera();

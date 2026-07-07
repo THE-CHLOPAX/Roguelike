@@ -4,8 +4,8 @@ import { PhysicsManager, ResourceTracker } from '@tgdf';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { Scene } from './Scene';
-import { GameObject } from '../GameObject';
 import { NavMeshManager } from '../NavMeshManager';
+import { GameObject } from '../GameObject/GameObject';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },

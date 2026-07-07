@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { Input, InputState, GameObjectComponent } from '@tgdf';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { Scene } from './Scene/Scene';
+import { Scene } from '../Scene/Scene';
 import { GameObject } from './GameObject';
-import { Input as InputClass } from '../internal-input/Input';
+import { Input as InputClass } from '../../internal-input/Input';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
