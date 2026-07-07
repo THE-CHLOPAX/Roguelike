@@ -45,7 +45,7 @@ export class Skeleton extends EntityAI {
         actions: attackActions,
       },
       healthOptions: {
-        initialHealthPoints: 100,
+        initialHealthPoints: 10,
       },
     });
 

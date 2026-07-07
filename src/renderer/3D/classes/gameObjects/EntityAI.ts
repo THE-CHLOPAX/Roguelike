@@ -23,6 +23,7 @@ export class EntityAI extends Entity {
   private _detectionRadius: number | null = null;
   private _roaming: AIRoamingOptions | null = null;
   private _attack: AIAttackOptions | null = null;
+  private _despawnTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     scene: Scene,
@@ -76,6 +77,14 @@ export class EntityAI extends Entity {
   protected onInit(): void {}
 
   private _despawnAfterTimeout = (): void => {
-    setTimeout(() => this.destroy(), DESPAWN_TIMEOUT);
+    this._despawnTimeout = setTimeout(() => this.destroy(), DESPAWN_TIMEOUT);
   };
+
+  protected override onDestroyed(): void {
+    if (this._despawnTimeout) {
+      clearTimeout(this._despawnTimeout);
+      this._despawnTimeout = null;
+    }
+    super.onDestroyed();
+  }
 }
