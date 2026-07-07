@@ -10,6 +10,7 @@ import {
 
 import { Emitter } from './Emitter';
 import { Scene } from './Scene/Scene';
+import { GAME_OBJECT_MESSAGES } from './constants';
 import { InputNotifiable } from '../internal-input/Input';
 import { isChildOfObject } from './utils/isChildOfObject';
 import { ResourceTracker } from './ResourceTracker/ResourceTracker';
@@ -65,38 +66,46 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
       }
     }
 
-    this._gameObjectComponents.forEach((component) => {
-      component.update(deltaTime);
-    });
-
     this.events.trigger('update', { deltaTime });
 
     this.onUpdate(deltaTime);
   }
 
   public addComponent<C extends GameObjectComponent>(name: string, component: C): C {
+    const alreadyAddedComponent = this._gameObjectComponents.get(name);
+    if (alreadyAddedComponent) {
+      logger({
+        message: GAME_OBJECT_MESSAGES.ADD_COMPONENT_DUPLICATE(name),
+        type: 'warn',
+      });
+      return alreadyAddedComponent as C;
+    }
+
     this._gameObjectComponents.set(name, component);
     return component;
   }
 
   public removeComponent(name: string): void {
     const component = this._gameObjectComponents.get(name);
-    if (component) {
-      component.destroy();
-      this._gameObjectComponents.delete(name);
+    if (!component) {
+      logger({
+        message: GAME_OBJECT_MESSAGES.REMOVE_COMPONENT_NOT_FOUND(name),
+        type: 'warn',
+      });
+      return;
     }
+    component.destroy();
+    this._gameObjectComponents.delete(name);
   }
 
   public destroy(): void {
     // Unregister from Input singleton
     Input.unregisterNotifiable(this);
 
-    this._gameObjectComponents.forEach((component) => {
-      component.destroy();
-    });
+    this._emitter.trigger('destroyed');
+
     this._gameObjectComponents.clear();
     this.removeFromParent();
-    this._emitter.trigger('destroyed');
     this.onDestroyed();
     this._isAwake = false;
   }
@@ -106,7 +115,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
 
     objects.forEach((object) => {
       logger({
-        message: `GameObject: Adding object to GameObject: ${object.name || object.type}`,
+        message: GAME_OBJECT_MESSAGES.ADDING_OBJECT_TO_GAME_OBJECT(object),
         type: 'info',
       });
       this.addObjectResourceTracker(object);
@@ -120,7 +129,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
 
     objects.forEach((object) => {
       logger({
-        message: `GameObject: Removing object from GameObject: ${object.name || object.type}`,
+        message: GAME_OBJECT_MESSAGES.REMOVING_OBJECT_FROM_GAME_OBJECT(object),
         type: 'info',
       });
       this.removeObjectResourceTracker(object);
@@ -146,9 +155,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   public onInputNotify(_inputState: InputState): void {
     this.onInput(_inputState);
 
-    this._gameObjectComponents.forEach((component) => {
-      component.onInput(_inputState);
-    });
+    this._emitter.trigger('input', { inputState: _inputState });
   }
 
   protected onAwake(): void {}
