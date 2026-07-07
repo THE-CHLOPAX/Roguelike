@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { isChildOfObject } from '@tgdf/internal-3d/utils/isChildOfObject';
 import { GameObject, GameObjectComponent, logger, ResourceTracker } from '@tgdf';
 
+import { MODEL_RENDERER_MESSAGES } from './constants';
+
 export type ModelRendererOptions = {
   model: THREE.Object3D;
 };
@@ -28,7 +30,7 @@ export class ModelRenderer extends GameObjectComponent {
   public getModelMaterials(): THREE.Material[] | null {
     if (!this._model) {
       logger({
-        message: '[ModelRenderer] getModelMaterials failed: No model set on ModelRenderer.',
+        message: MODEL_RENDERER_MESSAGES.GET_MATERIALS_NO_MODEL,
         type: 'warn',
       });
       return null;
@@ -48,8 +50,7 @@ export class ModelRenderer extends GameObjectComponent {
 
     if (materials.length === 0) {
       logger({
-        message:
-          '[ModelRenderer] getModelMaterials warning: No mesh found in model hierarchy to retrieve material from.',
+        message: MODEL_RENDERER_MESSAGES.GET_MATERIALS_NO_MESH,
         type: 'warn',
       });
       return null;
@@ -113,7 +114,7 @@ export class ModelRenderer extends GameObjectComponent {
   public addAttachment(options: AddAttachmentOptions): void {
     if (!this._model) {
       logger({
-        message: '[ModelRenderer] addAttachment failed: No model set on ModelRenderer.',
+        message: MODEL_RENDERER_MESSAGES.ADD_ATTACHMENT_NO_MODEL,
         type: 'warn',
       });
       return;
@@ -128,7 +129,7 @@ export class ModelRenderer extends GameObjectComponent {
 
     if (!targetParent) {
       logger({
-        message: '[ModelRenderer] addAttachment failed: No valid parent provided.',
+        message: MODEL_RENDERER_MESSAGES.ADD_ATTACHMENT_NO_PARENT,
         type: 'warn',
       });
       return;
@@ -136,8 +137,7 @@ export class ModelRenderer extends GameObjectComponent {
 
     if (!isChildOfObject(targetParent, this._model)) {
       logger({
-        message:
-          '[ModelRenderer] addAttachment failed: Provided parent is not part of the model hierarchy.',
+        message: MODEL_RENDERER_MESSAGES.ADD_ATTACHMENT_INVALID_PARENT,
         type: 'warn',
       });
       return;
@@ -161,7 +161,7 @@ export class ModelRenderer extends GameObjectComponent {
   public removeAttachment(object: THREE.Object3D): void {
     if (!this._model) {
       logger({
-        message: '[ModelRenderer] removeAttachment failed: No model set on ModelRenderer.',
+        message: MODEL_RENDERER_MESSAGES.REMOVE_ATTACHMENT_NO_MODEL,
         type: 'warn',
       });
       return;
@@ -169,8 +169,7 @@ export class ModelRenderer extends GameObjectComponent {
 
     if (!isChildOfObject(object, this._model)) {
       logger({
-        message:
-          '[ModelRenderer] removeAttachment failed: Provided object is not part of the model hierarchy.',
+        message: MODEL_RENDERER_MESSAGES.REMOVE_ATTACHMENT_NOT_IN_HIERARCHY,
         type: 'warn',
       });
       return;
@@ -180,7 +179,7 @@ export class ModelRenderer extends GameObjectComponent {
 
     if (!parent) {
       logger({
-        message: '[ModelRenderer] removeAttachment failed: Provided object has no parent.',
+        message: MODEL_RENDERER_MESSAGES.REMOVE_ATTACHMENT_NO_PARENT,
         type: 'warn',
       });
       return;

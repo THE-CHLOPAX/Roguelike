@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GameObject, getModelFromStore, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
-import { ModelRenderer } from '../gameObjectComponents/ModelRenderer';
+import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
@@ -12,7 +12,7 @@ import {
 import {
   AnimationController,
   AnimationControllerOptions,
-} from '../gameObjectComponents/AnimationController';
+} from '../gameObjectComponents/AnimationController/AnimationController';
 
 export type EntityOptions = {
   model: {

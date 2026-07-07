@@ -91,7 +91,7 @@ export class ResourceTracker {
 
     if (!objectResources) {
       logger({
-        type: 'error',
+        type: 'warn',
         message: RESOURCE_TRACKER_MESSAGES.NO_RESOURCES_FOUND_FOR_OBJECT(
           object.name ?? object.type
         ),
