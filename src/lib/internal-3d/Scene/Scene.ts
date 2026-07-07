@@ -4,6 +4,7 @@ import { logger, ResourceTracker } from '@tgdf';
 
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
+import { SCENE_MESSAGES } from './constants';
 import { SceneEventsMap } from '../types/scene';
 import { PhysicsManager } from '../PhysicsManager';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
@@ -72,19 +73,20 @@ export abstract class Scene extends THREE.Scene {
 
   public dispose(): void {
     this._emitter.removeAll();
-    this._physicsManager?.dispose();
 
     const childrenToRemove = [...this.children];
 
     childrenToRemove.forEach((child) => {
       this.remove(child);
     });
+
+    this._physicsManager?.dispose();
   }
 
   public override add(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
       logger({
-        message: `Scene: Adding object to scene: ${object.name || object.type}`,
+        message: SCENE_MESSAGES.ADDING_OBJECT(object),
         type: 'info',
       });
       super.add(object);
@@ -98,7 +100,7 @@ export abstract class Scene extends THREE.Scene {
   public override remove(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
       logger({
-        message: `Scene: Removing object from scene: ${object.name || object.type}`,
+        message: SCENE_MESSAGES.REMOVING_OBJECT(object),
         type: 'info',
       });
       super.remove(object);
@@ -125,7 +127,7 @@ export abstract class Scene extends THREE.Scene {
   public async initializePhysicsWorld(gravity: THREE.Vector3): Promise<void> {
     this._physicsManager = new PhysicsManager();
     await this._physicsManager.init(gravity);
-    logger({ message: 'Scene: Physics world initialized', type: 'info' });
+    logger({ message: SCENE_MESSAGES.PHYSICS_WORLD_INITIALIZED, type: 'info' });
   }
 
   protected onUpdate(_deltaTime: number): void {}
