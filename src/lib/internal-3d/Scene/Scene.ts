@@ -1,12 +1,11 @@
 import * as THREE from 'three';
-import { logger } from '@tgdf';
 import { init } from '@recast-navigation/core';
+import { logger, ResourceTracker } from '@tgdf';
 
 import { Emitter } from '../Emitter';
 import { GameObject } from '../GameObject';
 import { SceneEventsMap } from '../types/scene';
 import { PhysicsManager } from '../PhysicsManager';
-import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {
@@ -17,7 +16,6 @@ export abstract class Scene extends THREE.Scene {
 
   private _physicsManager?: PhysicsManager;
   private _navMeshManager?: NavMeshManager;
-  private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
   constructor() {
     super();
@@ -80,13 +78,7 @@ export abstract class Scene extends THREE.Scene {
 
     childrenToRemove.forEach((child) => {
       this.remove(child);
-
-      if (child instanceof GameObject) {
-        child.destroy();
-      }
     });
-
-    this._resourceTrackerMap.clear();
   }
 
   public override add(...objects: THREE.Object3D[]): this {
@@ -97,9 +89,7 @@ export abstract class Scene extends THREE.Scene {
       });
       super.add(object);
 
-      const resourceTracker = new ResourceTracker();
-      resourceTracker.track(object);
-      this._resourceTrackerMap.set(object.uuid, resourceTracker);
+      ResourceTracker.trackObject(object);
     });
 
     return this;
@@ -117,11 +107,8 @@ export abstract class Scene extends THREE.Scene {
         object.destroy();
       }
 
-      const resourceTracker = this._resourceTrackerMap.get(object.uuid);
-      if (resourceTracker) {
-        resourceTracker.dispose();
-        this._resourceTrackerMap.delete(object.uuid);
-      }
+      ResourceTracker.disposeObjectResources(object);
+      ResourceTracker.untrackObject(object);
     });
 
     return this;

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {
+  ResourceTracker,
   GameObjectComponent,
   GameObjectConstructorOptions,
   GameObjectEventMap,
@@ -13,14 +14,12 @@ import { Scene } from './Scene/Scene';
 import { GAME_OBJECT_MESSAGES } from './constants';
 import { InputNotifiable } from '../internal-input/Input';
 import { isChildOfObject } from './utils/isChildOfObject';
-import { ResourceTracker } from './ResourceTracker/ResourceTracker';
 
 export class GameObject extends THREE.Object3D implements InputNotifiable {
   private _gameObjectComponents: Map<string, GameObjectComponent>;
   private _scene: Scene;
   private _emitter: Emitter<GameObjectEventMap> = new Emitter<GameObjectEventMap>();
   private _isAwake: boolean = false;
-  private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
   constructor({ scene }: GameObjectConstructorOptions) {
     super();
@@ -103,8 +102,12 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
     Input.unregisterNotifiable(this);
 
     this._emitter.trigger('destroyed');
-
     this._gameObjectComponents.clear();
+
+    this.children.forEach((child) => {
+      this.remove(child);
+    });
+
     this.removeFromParent();
     this.onDestroyed();
     this._isAwake = false;
@@ -118,7 +121,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
         message: GAME_OBJECT_MESSAGES.ADDING_OBJECT_TO_GAME_OBJECT(object),
         type: 'info',
       });
-      this.addObjectResourceTracker(object);
+      ResourceTracker.trackObject(object);
     });
 
     return this;
@@ -132,24 +135,11 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
         message: GAME_OBJECT_MESSAGES.REMOVING_OBJECT_FROM_GAME_OBJECT(object),
         type: 'info',
       });
-      this.removeObjectResourceTracker(object);
+      ResourceTracker.disposeObjectResources(object);
+      ResourceTracker.untrackObject(object);
     });
 
     return this;
-  }
-
-  public addObjectResourceTracker(object: THREE.Object3D): void {
-    const resourceTracker = new ResourceTracker();
-    resourceTracker.track(object);
-    this._resourceTrackerMap.set(object.uuid, resourceTracker);
-  }
-
-  public removeObjectResourceTracker(object: THREE.Object3D): void {
-    const resourceTracker = this._resourceTrackerMap.get(object.uuid);
-    if (resourceTracker) {
-      resourceTracker.dispose();
-      this._resourceTrackerMap.delete(object.uuid);
-    }
   }
 
   public onInputNotify(_inputState: InputState): void {

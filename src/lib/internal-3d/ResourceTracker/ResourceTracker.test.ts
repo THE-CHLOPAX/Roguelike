@@ -3,6 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ResourceTracker } from './ResourceTracker';
 
+function getTrackedResources(tracker: ResourceTracker, object: THREE.Object3D) {
+  const resources = tracker.resourcesForObjects.get(object.uuid);
+  expect(resources).toBeDefined();
+  return resources as Set<THREE.BufferGeometry | THREE.Material | THREE.Texture>;
+}
+
 describe('ResourceTracker', () => {
   let tracker: ResourceTracker;
 
@@ -10,69 +16,146 @@ describe('ResourceTracker', () => {
     tracker = new ResourceTracker();
   });
 
-  it('should dispose of geometry', () => {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const disposeSpy = vi.spyOn(geometry, 'dispose');
+  describe('trackObject', () => {
+    it('stores all disposable resources for a mesh object', () => {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial();
+      const mesh = new THREE.Mesh(geometry, material);
 
-    tracker.track(geometry);
-    tracker.dispose();
+      tracker.trackObject(mesh);
 
-    expect(disposeSpy).toHaveBeenCalledOnce();
-  });
-
-  it('should dispose of material and its textures', () => {
-    const texture = new THREE.Texture();
-    const material = new THREE.MeshStandardMaterial({ map: texture });
-
-    const materialDisposeSpy = vi.spyOn(material, 'dispose');
-    const textureDisposeSpy = vi.spyOn(texture, 'dispose');
-
-    tracker.track(material);
-    tracker.dispose();
-
-    expect(materialDisposeSpy).toHaveBeenCalledOnce();
-    expect(textureDisposeSpy).toHaveBeenCalledOnce();
-  });
-
-  it('should dispose of mesh and all its resources', () => {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
-
-    const geometryDisposeSpy = vi.spyOn(geometry, 'dispose');
-    const materialDisposeSpy = vi.spyOn(material, 'dispose');
-
-    tracker.track(mesh);
-    tracker.dispose();
-
-    expect(geometryDisposeSpy).toHaveBeenCalledOnce();
-    expect(materialDisposeSpy).toHaveBeenCalledOnce();
-  });
-
-  it('should handle shader material uniforms', () => {
-    const texture = new THREE.Texture();
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        uTexture: { value: texture },
-      },
+      const resources = getTrackedResources(tracker, mesh);
+      expect(resources.has(geometry)).toBe(true);
+      expect(resources.has(material)).toBe(true);
     });
 
-    const textureDisposeSpy = vi.spyOn(texture, 'dispose');
+    it('stores all disposable resources for nested meshes on a parent object', () => {
+      const geometryA = new THREE.BoxGeometry(1, 1, 1);
+      const materialA = new THREE.MeshBasicMaterial();
+      const meshA = new THREE.Mesh(geometryA, materialA);
 
-    tracker.track(material);
-    tracker.dispose();
+      const geometryB = new THREE.SphereGeometry(1);
+      const materialB = new THREE.MeshStandardMaterial();
+      const meshB = new THREE.Mesh(geometryB, materialB);
 
-    expect(textureDisposeSpy).toHaveBeenCalledOnce();
+      const group = new THREE.Group();
+      group.add(meshA, meshB);
+
+      tracker.trackObject(group);
+
+      const resources = getTrackedResources(tracker, group);
+      expect(resources.has(geometryA)).toBe(true);
+      expect(resources.has(materialA)).toBe(true);
+      expect(resources.has(geometryB)).toBe(true);
+      expect(resources.has(materialB)).toBe(true);
+    });
+
+    it('stores textures referenced by materials', () => {
+      const texture = new THREE.Texture();
+      const material = new THREE.MeshStandardMaterial({ map: texture });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+
+      tracker.trackObject(mesh);
+
+      const resources = getTrackedResources(tracker, mesh);
+      expect(resources.has(texture)).toBe(true);
+      expect(resources.has(material)).toBe(true);
+    });
+
+    it('stores textures from shader material uniforms', () => {
+      const texture = new THREE.Texture();
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          uTexture: { value: texture },
+        },
+      });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+
+      tracker.trackObject(mesh);
+
+      const resources = getTrackedResources(tracker, mesh);
+      expect(resources.has(texture)).toBe(true);
+    });
+
+    it('stores all materials when a mesh uses a material array', () => {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const materials = [new THREE.MeshBasicMaterial(), new THREE.MeshStandardMaterial()];
+      const mesh = new THREE.Mesh(geometry, materials);
+
+      tracker.trackObject(mesh);
+
+      const resources = getTrackedResources(tracker, mesh);
+      expect(resources.has(materials[0])).toBe(true);
+      expect(resources.has(materials[1])).toBe(true);
+      expect(resources.has(geometry)).toBe(true);
+    });
   });
 
-  it('should handle array of materials', () => {
-    const materials = [new THREE.MeshBasicMaterial(), new THREE.MeshStandardMaterial()];
+  describe('disposeObjectResources', () => {
+    it('disposes all tracked disposable resources for the object', () => {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const texture = new THREE.Texture();
+      const material = new THREE.MeshStandardMaterial({ map: texture });
+      const mesh = new THREE.Mesh(geometry, material);
 
-    const spies = materials.map((m) => vi.spyOn(m, 'dispose'));
+      const geometryDisposeSpy = vi.spyOn(geometry, 'dispose');
+      const materialDisposeSpy = vi.spyOn(material, 'dispose');
+      const textureDisposeSpy = vi.spyOn(texture, 'dispose');
 
-    tracker.track(materials);
-    tracker.dispose();
+      tracker.trackObject(mesh);
+      tracker.disposeObjectResources(mesh);
 
-    spies.forEach((spy) => expect(spy).toHaveBeenCalledOnce());
+      expect(geometryDisposeSpy).toHaveBeenCalledOnce();
+      expect(materialDisposeSpy).toHaveBeenCalledOnce();
+      expect(textureDisposeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('disposes all nested mesh resources for a parent object', () => {
+      const geometryA = new THREE.BoxGeometry(1, 1, 1);
+      const materialA = new THREE.MeshBasicMaterial();
+      const meshA = new THREE.Mesh(geometryA, materialA);
+
+      const geometryB = new THREE.SphereGeometry(1);
+      const materialB = new THREE.MeshStandardMaterial();
+      const meshB = new THREE.Mesh(geometryB, materialB);
+
+      const group = new THREE.Group();
+      group.add(meshA, meshB);
+
+      const geometryADisposeSpy = vi.spyOn(geometryA, 'dispose');
+      const materialADisposeSpy = vi.spyOn(materialA, 'dispose');
+      const geometryBDisposeSpy = vi.spyOn(geometryB, 'dispose');
+      const materialBDisposeSpy = vi.spyOn(materialB, 'dispose');
+
+      tracker.trackObject(group);
+      tracker.disposeObjectResources(group);
+
+      expect(geometryADisposeSpy).toHaveBeenCalledOnce();
+      expect(materialADisposeSpy).toHaveBeenCalledOnce();
+      expect(geometryBDisposeSpy).toHaveBeenCalledOnce();
+      expect(materialBDisposeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('removes the object entry from resourcesForObjects after disposal', () => {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial()
+      );
+
+      tracker.trackObject(mesh);
+      tracker.disposeObjectResources(mesh);
+
+      expect(tracker.resourcesForObjects.has(mesh.uuid)).toBe(false);
+    });
+
+    it('does not throw when disposing an untracked object', () => {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial()
+      );
+
+      expect(() => tracker.disposeObjectResources(mesh)).not.toThrow();
+      expect(tracker.resourcesForObjects.has(mesh.uuid)).toBe(false);
+    });
   });
 });

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { GameObject, GameObjectComponent, logger } from '@tgdf';
 import { isChildOfObject } from '@tgdf/internal-3d/utils/isChildOfObject';
+import { GameObject, GameObjectComponent, logger, ResourceTracker } from '@tgdf';
 
 export type ModelRendererOptions = {
   model: THREE.Object3D;
@@ -143,7 +143,7 @@ export class ModelRenderer extends GameObjectComponent {
       return;
     }
 
-    this.gameObject.addObjectResourceTracker(options.object);
+    ResourceTracker.trackObject(options.object);
 
     // Get parent's world scale to compensate for it
     const parentWorldScale = new THREE.Vector3();
@@ -191,7 +191,8 @@ export class ModelRenderer extends GameObjectComponent {
     }
 
     parent.remove(object);
-    this.gameObject.removeObjectResourceTracker(object);
+    ResourceTracker.disposeObjectResources(object);
+    ResourceTracker.untrackObject(object);
   }
 
   public onModelChange(_newModel: THREE.Object3D | null): void {}

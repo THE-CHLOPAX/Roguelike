@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { logger } from '@tgdf/internal-ui/utils/logger';
 
+import { isMesh } from '../utils/isMesh';
+import { RESOURCE_TRACKER_MESSAGES } from './constants';
+
 export type ResourceType =
   | THREE.Object3D
   | THREE.BufferGeometry
@@ -15,89 +18,103 @@ export type ResourceType =
  * This helps prevent memory leaks by ensuring that all resources are properly disposed of when no longer needed.
  */
 export class ResourceTracker {
-  public resources: Set<ResourceType>;
+  public static getInstance(): ResourceTracker {
+    if (!ResourceTracker._instance) {
+      ResourceTracker._instance = new ResourceTracker();
+    }
+    return ResourceTracker._instance;
+  }
+
+  private static _instance: ResourceTracker | null = null;
+
+  public resourcesForObjects: Map<string, Set<ResourceType>>;
 
   constructor() {
-    this.resources = new Set();
+    this.resourcesForObjects = new Map();
   }
 
-  public track(resource: ResourceType): ResourceType {
-    if (!resource) {
-      return resource;
+  public trackObject(object: THREE.Object3D): THREE.Object3D {
+    const objectResources: Set<ResourceType> = new Set();
+
+    object.traverse((child) => {
+      if (!isMesh(child)) return;
+
+      objectResources.add(child.geometry);
+      this._trackMaterial(objectResources, child.material);
+    });
+
+    this.resourcesForObjects.set(object.uuid, objectResources);
+    return object;
+  }
+
+  private _trackMaterial(
+    objectResources: Set<ResourceType>,
+    material: THREE.Material | THREE.Material[]
+  ): void {
+    if (Array.isArray(material)) {
+      material.forEach((entry) => this._trackMaterial(objectResources, entry));
+      return;
     }
 
-    // Handle children and when material is an array of materials or
-    // uniform is array of textures
-    if (Array.isArray(resource)) {
-      resource.forEach((resource) => this.track(resource));
-      return resource;
-    }
+    objectResources.add(material);
 
-    // Check for dispose method (Materials and Textures have it, Object3D doesn't)
-    if ('dispose' in resource && typeof resource.dispose === 'function') {
-      this.resources.add(resource);
-    }
-
-    if (resource instanceof THREE.Object3D) {
-      // If it's a Mesh, we also want to track its geometry and material
-      if (resource instanceof THREE.Mesh) {
-        this.track(resource.geometry);
-        this.track(resource.material);
+    for (const value of Object.values(material)) {
+      if (value instanceof THREE.Texture) {
+        objectResources.add(value);
       }
+    }
 
-      this.track(resource.children);
-    } else if (resource instanceof THREE.Material) {
-      // We have to check if there are any textures on the material
-      for (const value of Object.values(resource)) {
-        if (value instanceof THREE.Texture) {
-          this.track(value);
-        }
-      }
+    if (material instanceof THREE.ShaderMaterial || material instanceof THREE.RawShaderMaterial) {
+      for (const uniform of Object.values(material.uniforms)) {
+        if (!uniform) continue;
 
-      // We also have to check if any uniforms reference textures or arrays of textures
-      if (
-        (resource instanceof THREE.ShaderMaterial || resource instanceof THREE.RawShaderMaterial) &&
-        resource.uniforms
-      ) {
-        for (const value of Object.values(resource.uniforms)) {
-          if (value) {
-            const uniformValue = value.value;
-            if (uniformValue instanceof THREE.Texture || Array.isArray(uniformValue)) {
-              this.track(uniformValue);
+        const uniformValue = uniform.value;
+        if (uniformValue instanceof THREE.Texture) {
+          objectResources.add(uniformValue);
+        } else if (Array.isArray(uniformValue)) {
+          uniformValue.forEach((entry) => {
+            if (entry instanceof THREE.Texture) {
+              objectResources.add(entry);
             }
-          }
+          });
         }
       }
     }
-
-    return resource;
   }
 
-  public untrack(resource: ResourceType) {
-    this.resources.delete(resource);
+  public untrackObject(object: THREE.Object3D): void {
+    this.resourcesForObjects.delete(object.uuid);
   }
 
-  public dispose() {
-    console.groupCollapsed(`ResourceTracker: Disposing of ${this.resources.size} resources`);
+  public disposeObjectResources(object: THREE.Object3D): void {
+    const objectResources = this.resourcesForObjects.get(object.uuid);
 
-    for (const resource of this.resources) {
+    if (!objectResources) {
+      logger({
+        type: 'error',
+        message: RESOURCE_TRACKER_MESSAGES.NO_RESOURCES_FOUND_FOR_OBJECT(
+          object.name ?? object.type
+        ),
+      });
+      return;
+    }
+
+    logger({
+      type: 'info',
+      group: {
+        label: RESOURCE_TRACKER_MESSAGES.DISPOSING_RESOURCES_FOR_OBJECT(object.name ?? object.type),
+        body: Array.from(objectResources.values())
+          .map((resource) => resource?.constructor.name)
+          .join('\n'),
+      },
+    });
+
+    for (const resource of objectResources) {
       if (resource && 'dispose' in resource && typeof resource.dispose === 'function') {
-        logger({
-          type: 'info',
-          message: `ResourceTracker: Disposing of ${resource.constructor.name}.`,
-        });
         resource.dispose();
-      } else {
-        logger({
-          type: 'warn',
-          message: `ResourceTracker: Resource of type ${resource?.constructor.name}
-          does not have a dispose method.`,
-        });
       }
     }
 
-    console.groupEnd();
-
-    this.resources.clear();
+    this.resourcesForObjects.delete(object.uuid);
   }
 }
