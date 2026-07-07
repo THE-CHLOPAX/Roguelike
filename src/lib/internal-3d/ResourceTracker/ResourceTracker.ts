@@ -102,7 +102,7 @@ export class ResourceTracker {
     logger({
       type: 'info',
       group: {
-        label: RESOURCE_TRACKER_MESSAGES.DISPOSING_RESOURCES_FOR_OBJECT(object.name ?? object.type),
+        label: RESOURCE_TRACKER_MESSAGES.DISPOSING_RESOURCES_FOR_OBJECT(object.name || object.type),
         body: Array.from(objectResources.values())
           .map((resource) => resource?.constructor.name)
           .join('\n'),
