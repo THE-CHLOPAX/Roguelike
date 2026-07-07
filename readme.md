@@ -1,3 +1,5 @@
+<img width="1280" height="640" alt="unshackled-logo- wide" src="https://github.com/user-attachments/assets/ec48ad12-b8d2-4f0a-9e4c-5b9f9a84bfc3" />
+
 # Unshackled
 
 A roguelike game prototype where you have to fight your way through a hostile world to defeat the final boss.
