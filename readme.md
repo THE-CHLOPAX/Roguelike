@@ -1,6 +1,6 @@
-# Three.js Game Development Framework
+# Unshackled
 
-A game development framework built with Electron and React.
+A roguelike game prototype where you have to fight your way through a hostile world to defeat the final boss.
 
 ## Project Structure
 
