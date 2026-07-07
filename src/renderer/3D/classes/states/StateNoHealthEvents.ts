@@ -1,6 +1,6 @@
 import { InputState } from '@tgdf';
 
-import { State } from './State';
+import { State } from '.';
 import { Entity } from '../gameObjects/Entity';
 
 export abstract class StateNoHealthEvents extends State {

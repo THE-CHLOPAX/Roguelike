@@ -1,17 +1,16 @@
-import { AIState } from './AIState';
-import { AIIdleState } from './AIIdleState';
+import { InputState } from '@tgdf';
+
 import { AIAttackAction } from '../../../types';
-import { AIChasingState } from './AIChasingState';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { AIStateWithHealthEvents } from './AIStateWithHealthEvents';
+import { State, StateWithHealthEvents, AIIdleState, AIChasingState } from '..';
 
-export class AIAttackState extends AIStateWithHealthEvents {
+export class AIAttackState extends StateWithHealthEvents {
   private _isAttacking: boolean = false;
 
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
-    // Check if there's a target enemy
+    // Check if there's a target enemys
     const targetEnemy = getTargetEnemy(entity);
     if (!targetEnemy) return false;
 
@@ -28,7 +27,7 @@ export class AIAttackState extends AIStateWithHealthEvents {
 
   public onExit(): void {}
 
-  public override onUpdate(_deltaTime: number): AIState {
+  public override onUpdate(_deltaTime: number): State {
     // If currently performing an attack, do not transition to another state until the attack is finished
     if (this._isAttacking) return this;
 
@@ -46,6 +45,14 @@ export class AIAttackState extends AIStateWithHealthEvents {
     this._performAttack(bestAttack);
 
     return this;
+  }
+
+  public onInput(_inputState: InputState): State {
+    return this;
+  }
+
+  protected override recreateInstance(): AIAttackState {
+    return new AIAttackState(this.entity);
   }
 
   private _performAttack(bestAttack: AIAttackAction): void {

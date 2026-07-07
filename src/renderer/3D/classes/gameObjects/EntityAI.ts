@@ -1,20 +1,21 @@
 import { Scene } from '@tgdf';
 import { NavMesh } from '@recast-navigation/core';
 
-import { Entity } from './Entity';
 import { MAIN_CROWD_ID } from '../../constants';
+import { Entity, EntityOptions } from './Entity';
 import { AIAttackOptions, AIRoamingOptions } from '../../types';
 import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
-import { EntityMovable, EntityMovableOptions } from './EntityMovable';
 
-export type EntityAIOptions = EntityMovableOptions & {
+export type EntityAIOptions = EntityOptions & {
   detectionRadius?: number;
   roaming?: AIRoamingOptions;
   attack?: AIAttackOptions;
   enemyTypes?: (typeof Entity)[];
 };
 
-export class EntityAI extends EntityMovable {
+const DESPAWN_TIMEOUT = 3000;
+
+export class EntityAI extends Entity {
   public navMeshAgent: NavMeshAgent;
   public navMesh: NavMesh;
 
@@ -22,6 +23,7 @@ export class EntityAI extends EntityMovable {
   private _detectionRadius: number | null = null;
   private _roaming: AIRoamingOptions | null = null;
   private _attack: AIAttackOptions | null = null;
+  private _despawnTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     scene: Scene,
@@ -51,6 +53,8 @@ export class EntityAI extends EntityMovable {
     this._attack = options.attack ?? null;
     this._enemyTypes = options.enemyTypes ?? null;
 
+    this.healthPointsController.events.once('death', this._despawnAfterTimeout);
+
     this.onInit();
   }
 
@@ -71,4 +75,16 @@ export class EntityAI extends EntityMovable {
   }
 
   protected onInit(): void {}
+
+  private _despawnAfterTimeout = (): void => {
+    this._despawnTimeout = setTimeout(() => this.destroy(), DESPAWN_TIMEOUT);
+  };
+
+  protected override onDestroyed(): void {
+    if (this._despawnTimeout) {
+      clearTimeout(this._despawnTimeout);
+      this._despawnTimeout = null;
+    }
+    super.onDestroyed();
+  }
 }

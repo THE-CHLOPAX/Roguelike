@@ -1,23 +1,23 @@
 import { InputState } from '@tgdf';
 
+import { Entity } from '../../../Entity';
 import { State } from '../../../../states';
 import { IdleState, RunningState } from './index';
-import { EntityMovable } from '../../../EntityMovable';
 import { AnimationClipNamesShared } from '../../../../../types';
 import { mapInputToControls } from '../../../../../utils/mapInputToControls';
 
 export class SprintingState extends RunningState {
-  constructor(public entity: EntityMovable) {
+  constructor(public entity: Entity) {
     super(entity);
   }
 
   public override onEnter(): void {
     this.entity.animationController.playAnimation(AnimationClipNamesShared.SPRINT, { loop: true });
-    this.entity.toggleSprint(true);
+    this.entity.movementController.toggleSprint(true);
   }
 
   public override onExit(): void {
-    this.entity.toggleSprint(false);
+    this.entity.movementController.toggleSprint(false);
   }
 
   public override onInput(inputState: InputState): State {

@@ -1,17 +1,17 @@
 import * as THREE from 'three';
-import { compareFloats, logger, Scene } from '@tgdf';
+import { compareFloats, GameObjectComponent, logger } from '@tgdf';
 
-import { Entity, EntityOptions } from './Entity';
+import { Entity } from '../gameObjects/Entity';
 
-export type EntityMovableOptions = EntityOptions & {
-  speed: number;
+export type MovementControllerOptions = {
+  speed?: number;
   sprintSpeed?: number;
   walkSpeed?: number;
 };
 
-const ROTATION_LERP_FACTOR = 0.1; // Adjust for faster/slower rotation
+const ROTATION_LERP_FACTOR = 0.1;
 
-export class EntityMovable extends Entity {
+export class MovementController extends GameObjectComponent<MovementControllerOptions> {
   public defaultSpeed: number;
   public sprintSpeed: number;
   public walkSpeed: number;
@@ -19,18 +19,21 @@ export class EntityMovable extends Entity {
   private _currentSpeed: number;
   private _movementDisabled: boolean = false;
   private _currentRotation: number = 0;
-
   private _currentRotationTargetDirection: THREE.Vector3 | null = null;
   private _currentMovementTarget: THREE.Vector3 | null = null;
 
-  constructor(scene: Scene, options: EntityMovableOptions) {
-    super(scene, options);
+  constructor(gameObject: Entity, options?: MovementControllerOptions) {
+    super(gameObject, options);
 
-    this.defaultSpeed = options.speed;
-    this.sprintSpeed = options.sprintSpeed ?? options.speed;
-    this.walkSpeed = options.walkSpeed ?? options.speed * 0.5;
-
+    const speed = options?.speed ?? 0;
+    this.defaultSpeed = speed;
+    this.sprintSpeed = options?.sprintSpeed ?? speed;
+    this.walkSpeed = options?.walkSpeed ?? speed * 0.5;
     this._currentSpeed = this.defaultSpeed;
+  }
+
+  public override get gameObject(): Entity {
+    return super.gameObject as Entity;
   }
 
   public get currentSpeed(): number {
@@ -38,11 +41,11 @@ export class EntityMovable extends Entity {
   }
 
   public get velocity(): THREE.Vector3 | null {
-    if (this.rigidBody) {
-      return this.rigidBody.getLinearVelocity();
-    } else {
-      return null;
+    const rigidBody = this.gameObject.rigidBody;
+    if (rigidBody) {
+      return rigidBody.getLinearVelocity();
     }
+    return null;
   }
 
   public get isMoving(): boolean {
@@ -70,12 +73,12 @@ export class EntityMovable extends Entity {
 
   public moveTo(position: THREE.Vector3, speed = this.defaultSpeed): void {
     if (this.movementDisabled) return;
-    // Set a simple straight-line movement towards the target using Rigidbody
     this._moveRigidBodyToPosition(position, speed);
   }
 
   public rotate(direction: THREE.Vector3): void {
-    if (!this.rigidBody) {
+    const rigidBody = this.gameObject.rigidBody;
+    if (!rigidBody) {
       logger({
         message: 'Cannot rotate using Rigidbody because it is not initialized.',
         type: 'error',
@@ -91,15 +94,12 @@ export class EntityMovable extends Entity {
         return;
       }
 
-      // Lerp rotation for smooth turning
       const delta = targetRotation - this._currentRotation;
-      // Find the shortest angle difference and normalize to [-PI, PI]
       const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
       this._currentRotation += shortestAngle * ROTATION_LERP_FACTOR;
     }
 
-    // Sync rotation to physics body so it's not overwritten
-    this.rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
+    rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
   }
 
   public rotateTowards(direction: THREE.Vector3): void {
@@ -114,15 +114,13 @@ export class EntityMovable extends Entity {
     this._currentMovementTarget = null;
   }
 
-  protected override onUpdate(deltaTime: number): void {
-    super.onUpdate(deltaTime);
-
+  protected override onUpdate(_deltaTime: number): void {
     if (this._currentRotationTargetDirection) {
       this.rotate(this._currentRotationTargetDirection);
     }
 
     if (this._currentMovementTarget && !this._movementDisabled) {
-      const direction = this._currentMovementTarget.clone().sub(this.position);
+      const direction = this._currentMovementTarget.clone().sub(this.gameObject.position);
       const distance = direction.length();
 
       if (distance > 0.1) {
@@ -135,7 +133,8 @@ export class EntityMovable extends Entity {
   }
 
   private _moveRigidbody(direction: THREE.Vector3, speed: number): void {
-    if (!this.rigidBody) {
+    const rigidBody = this.gameObject.rigidBody;
+    if (!rigidBody) {
       logger({
         message: 'Cannot move using Rigidbody because it is not initialized.',
         type: 'error',
@@ -145,16 +144,14 @@ export class EntityMovable extends Entity {
 
     const velocity = direction.clone().multiplyScalar(speed);
 
-    // Preserve Y velocity (gravity)
-    const currentVelocity = this.rigidBody.getLinearVelocity();
+    const currentVelocity = rigidBody.getLinearVelocity();
     if (currentVelocity) {
       velocity.y = currentVelocity.y;
     }
 
-    // Rotate the object to face the movement direction (only if moving)
     this.rotateTowards(direction);
 
-    this.rigidBody.setLinearVelocity(velocity);
+    rigidBody.setLinearVelocity(velocity);
   }
 
   private _moveRigidBodyToPosition(position: THREE.Vector3, speed: number): void {

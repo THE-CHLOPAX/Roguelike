@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { EntityAI } from '../../EntityAI';
 import { attackActions } from './attacks';
 import { Player } from '../../players/Player';
-import { AIIdleState } from '../../../states/index';
+import { AIIdleState } from '../../../states';
 import { TestScene } from '../../../scenes/TestScene';
 import { AnimationClipNamesShared } from '../../../../types';
 import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
@@ -15,9 +15,11 @@ export class Skeleton extends EntityAI {
         id: MODELS.SKELETON.id,
         scale: new THREE.Vector3(1.2, 1.2, 1.2),
       },
-      speed: 2.5,
-      sprintSpeed: 4,
-      walkSpeed: 0.5,
+      movementOptions: {
+        speed: 2.5,
+        sprintSpeed: 4,
+        walkSpeed: 0.5,
+      },
       rigidBodyOptions: {
         ...DEFAULT_RIGID_BODY_OPTIONS,
       },

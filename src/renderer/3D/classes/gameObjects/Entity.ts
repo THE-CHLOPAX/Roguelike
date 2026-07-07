@@ -6,6 +6,10 @@ import { StateController } from '../gameObjectComponents/StateController';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
 import {
+  MovementController,
+  MovementControllerOptions,
+} from '../gameObjectComponents/MovementController';
+import {
   AnimationController,
   AnimationControllerOptions,
 } from '../gameObjectComponents/AnimationController';
@@ -20,17 +24,19 @@ export type EntityOptions = {
   };
   rigidBodyOptions?: RigidBodyOptions;
   animationControllerOptions?: AnimationControllerOptions;
+  movementOptions?: MovementControllerOptions;
 };
 
 const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
 
 export class Entity extends GameObject {
-  private _rigidBody: RigidBody;
-  private _modelRenderer: ModelRenderer;
-  private _stateController: StateController;
-  private _animationController: AnimationController;
-  private _damageHitboxController: DamageHitboxController;
-  private _healthPointsController: HealthPointsController;
+  public rigidBody: RigidBody;
+  public modelRenderer: ModelRenderer;
+  public stateController: StateController;
+  public animationController: AnimationController;
+  public damageHitboxController: DamageHitboxController;
+  public healthPointsController: HealthPointsController;
+  public movementController: MovementController;
 
   private _spawnPosition: THREE.Vector3 = new THREE.Vector3();
 
@@ -49,62 +55,43 @@ export class Entity extends GameObject {
       model.scale.copy(options.model.scale);
     }
 
-    this._modelRenderer = this.addComponent(
+    this.modelRenderer = this.addComponent(
       'ModelRenderer',
       new ModelRenderer(this, {
         model,
       })
     );
 
-    this._animationController = this.addComponent(
+    this.animationController = this.addComponent(
       'AnimationController',
-      new AnimationController(this, this._modelRenderer, options.animationControllerOptions)
+      new AnimationController(this, this.modelRenderer, options.animationControllerOptions)
     );
 
-    this._rigidBody = this.addComponent(
+    this.rigidBody = this.addComponent(
       RIGID_BODY_COMPONENT_ID,
       new RigidBody(this, this.options.rigidBodyOptions)
     );
 
-    this._healthPointsController = this.addComponent(
+    this.movementController = this.addComponent(
+      'MovementController',
+      new MovementController(this, options.movementOptions)
+    );
+
+    this.healthPointsController = this.addComponent(
       'HealthPointsController',
       new HealthPointsController(this, options.healthOptions?.initialHealthPoints)
     );
 
-    this._damageHitboxController = this.addComponent(
+    this.damageHitboxController = this.addComponent(
       'DamageHitboxController',
       new DamageHitboxController(this)
     );
 
-    this._stateController = this.addComponent('StateController', new StateController(this));
-  }
-
-  public get stateController(): StateController {
-    return this._stateController;
-  }
-
-  public get modelRenderer(): ModelRenderer {
-    return this._modelRenderer;
-  }
-
-  public get animationController(): AnimationController {
-    return this._animationController;
-  }
-
-  public get damageHitboxController(): DamageHitboxController {
-    return this._damageHitboxController;
-  }
-
-  public get healthPointsController(): HealthPointsController {
-    return this._healthPointsController;
-  }
-
-  public get rigidBody(): RigidBody {
-    return this._rigidBody;
+    this.stateController = this.addComponent('StateController', new StateController(this));
   }
 
   public get spawnPosition(): THREE.Vector3 {
-    return this._spawnPosition;
+    return this._spawnPosition.clone();
   }
 
   protected override onAwake(): void {

@@ -1,10 +1,8 @@
 import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
-import { State } from './State';
-import { DeadState } from './DeadState';
 import { Entity } from '../gameObjects/Entity';
 import { AnimationClipNamesShared } from '../../types';
-import { StateNoHealthEvents } from './StateNoHealthEvents';
+import { State, DeadState, StateNoHealthEvents } from '.';
 import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../FMOD';
 
 export class HurtState extends StateNoHealthEvents {

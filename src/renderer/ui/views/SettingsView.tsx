@@ -13,7 +13,7 @@ import {
   setChannelMuted,
 } from '@tgdf';
 
-import { BackToViewLayout } from '../../layouts/BackToViewLayout';
+import { BackToViewLayout } from '../layouts/BackToViewLayout';
 
 export function SettingsView() {
   const { soundChannels } = useSoundsStore();

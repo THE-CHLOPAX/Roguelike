@@ -1,15 +1,14 @@
 import * as THREE from 'three';
 import { Input, InputState, logger } from '@tgdf';
 
-import { State } from '../../../../states';
+import { Entity } from '../../../Entity';
 import { SprintingState, IdleState } from './index';
-import { EntityMovable } from '../../../EntityMovable';
 import { AnimationClipNamesShared } from '../../../../../types';
+import { State, StateWithHealthEvents } from '../../../../states';
 import { mapInputToControls } from '../../../../../utils/mapInputToControls';
-import { StateWithHealthEvents } from '../../../../states/StateWithHealthEvents';
 
 export class RunningState extends StateWithHealthEvents {
-  constructor(public entity: EntityMovable) {
+  constructor(public entity: Entity) {
     super(entity);
   }
 
@@ -67,6 +66,10 @@ export class RunningState extends StateWithHealthEvents {
     rotatedMove.addScaledVector(cameraRight, moveVector.x);
     rotatedMove.addScaledVector(cameraForward, -moveVector.z);
 
-    this.entity.move(rotatedMove);
+    this.entity.movementController.move(rotatedMove);
+  }
+
+  protected override recreateInstance(): RunningState {
+    return new RunningState(this.entity);
   }
 }

@@ -1,13 +1,12 @@
-import { AIState } from './AIState';
-import { AIIdleState } from './AIIdleState';
-import { AIAttackState } from './AIAttackState';
+import { InputState } from '@tgdf';
+
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { AIStateWithHealthEvents } from './AIStateWithHealthEvents';
 import { AIAttackAction, AnimationClipNamesShared } from '../../../types';
+import { State, StateWithHealthEvents, AIIdleState, AIAttackState } from '..';
 
-export class AIChasingState extends AIStateWithHealthEvents {
+export class AIChasingState extends StateWithHealthEvents {
   public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
     // Check if there is a target enemy
     const targetEnemy = getTargetEnemy(entity);
@@ -32,7 +31,11 @@ export class AIChasingState extends AIStateWithHealthEvents {
     this.entity.navMeshAgent.resetMovementTarget();
   }
 
-  public onUpdate(_deltaTime: number): AIState {
+  public onInput(_inputState: InputState): State {
+    return this;
+  }
+
+  public onUpdate(_deltaTime: number): State {
     // If no enemies are in range, transition back to idle
     const targetEnemy = getTargetEnemy(this.entity);
     if (targetEnemy === null) return new AIIdleState(this.entity);
@@ -44,8 +47,15 @@ export class AIChasingState extends AIStateWithHealthEvents {
       return new AIAttackState(this.entity);
     }
 
-    this.entity.navMeshAgent.setDestination(targetEnemy.position, this.entity.defaultSpeed);
+    this.entity.navMeshAgent.setDestination(
+      targetEnemy.position,
+      this.entity.movementController.defaultSpeed
+    );
 
     return this;
+  }
+
+  protected override recreateInstance(): AIChasingState {
+    return new AIChasingState(this.entity);
   }
 }
