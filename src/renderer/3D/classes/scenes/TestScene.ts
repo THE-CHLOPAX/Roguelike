@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { useAssetStore } from '@tgdf';
+import { assert, useAssetStore } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { GameScene } from './GameScene';
@@ -54,17 +54,22 @@ export class TestScene extends GameScene {
   }
 
   protected override onInit(navMeshManager: NavMeshManager): void {
-    navMeshManager.addCrowd(MAIN_CROWD_ID, {
+    const crowd = navMeshManager.addCrowd(MAIN_CROWD_ID, {
       maxAgents: 100,
       maxAgentRadius: NAVMESH_AGENT_RADIUS,
     });
+
+    const navMesh = navMeshManager.navMesh;
+
+    assert(crowd, 'Crowd is not initialized');
+    assert(navMesh, 'NavMesh is not initialized');
 
     const monk = new Monk(this);
     this.add(monk);
 
     this.camera.follow(monk);
 
-    const skeleton = new Skeleton(this);
+    const skeleton = new Skeleton(this, navMesh, crowd);
     this.add(skeleton);
   }
 }

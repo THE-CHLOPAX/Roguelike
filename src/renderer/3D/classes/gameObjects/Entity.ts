@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { GameObject, getModelFromStore, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
-import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 import { StateController } from '../gameObjectComponents/StateController';
+import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
 import {

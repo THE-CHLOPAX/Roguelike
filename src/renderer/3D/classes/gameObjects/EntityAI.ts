@@ -1,7 +1,6 @@
 import { Scene } from '@tgdf';
-import { NavMesh } from '@recast-navigation/core';
+import { NavMesh, Crowd } from '@recast-navigation/core';
 
-import { MAIN_CROWD_ID } from '../../constants';
 import { Entity, EntityOptions } from './Entity';
 import { AIAttackOptions, AIRoamingOptions } from '../../types';
 import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
@@ -17,7 +16,6 @@ const DESPAWN_TIMEOUT = 3000;
 
 export class EntityAI extends Entity {
   public navMeshAgent: NavMeshAgent;
-  public navMesh: NavMesh;
 
   private _enemyTypes: (typeof Entity)[] | null = null;
   private _detectionRadius: number | null = null;
@@ -27,26 +25,13 @@ export class EntityAI extends Entity {
 
   constructor(
     scene: Scene,
+    public navMesh: NavMesh,
+    public crowd: Crowd,
     public options: EntityAIOptions
   ) {
     super(scene, options);
 
-    if (!scene.navMeshManager) {
-      throw new Error('Scene NavMeshManager is not initialized');
-    }
-
-    if (!scene.navMeshManager.navMesh) {
-      throw new Error('NavMesh is not available in NavMeshManager');
-    }
-
-    this.navMesh = scene.navMeshManager.navMesh;
-
-    const mainCrowd = scene.navMeshManager.getCrowd(MAIN_CROWD_ID);
-    if (!mainCrowd) {
-      throw new Error(`Main enemy crowd with ID ${MAIN_CROWD_ID} not found in NavMeshManager`);
-    }
-
-    this.navMeshAgent = this.addComponent('NavMeshAgent', new NavMeshAgent(this, mainCrowd));
+    this.navMeshAgent = this.addComponent('NavMeshAgent', new NavMeshAgent(this, this.crowd));
 
     this._detectionRadius = options.detectionRadius ?? null;
     this._roaming = options.roaming ?? null;

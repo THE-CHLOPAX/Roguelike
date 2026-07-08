@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { NavMesh, Crowd } from '@recast-navigation/core';
 
 import { EntityAI } from '../../EntityAI';
 import { attackActions } from './attacks';
@@ -9,8 +10,12 @@ import { AnimationClipNamesShared } from '../../../../types';
 import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
 
 export class Skeleton extends EntityAI {
-  constructor(scene: TestScene) {
-    super(scene, {
+  constructor(
+    scene: TestScene,
+    public navMesh: NavMesh,
+    public crowd: Crowd
+  ) {
+    super(scene, navMesh, crowd, {
       model: {
         id: MODELS.SKELETON.id,
         scale: new THREE.Vector3(1.2, 1.2, 1.2),
@@ -45,7 +50,7 @@ export class Skeleton extends EntityAI {
         actions: attackActions,
       },
       healthOptions: {
-        initialHealthPoints: 10,
+        initialHealthPoints: 20,
       },
     });
 
