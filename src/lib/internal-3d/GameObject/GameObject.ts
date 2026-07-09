@@ -20,6 +20,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   private _scene: Scene;
   private _emitter: Emitter<GameObjectEventMap> = new Emitter<GameObjectEventMap>();
   private _isAwake: boolean = false;
+  private _isDestroyed: boolean = false;
 
   constructor({ scene }: GameObjectConstructorOptions) {
     super();
@@ -77,6 +78,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
         message: GAME_OBJECT_MESSAGES.ADD_COMPONENT_DUPLICATE(name),
         type: 'warn',
       });
+      component.destroy();
       return alreadyAddedComponent as C;
     }
 
@@ -97,18 +99,20 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
     this._gameObjectComponents.delete(name);
   }
 
+  /**
+   * Unregisters from Input singleton and triggers the destroyed event.
+   * Does not remove the 3D object from the parent.
+   */
   public destroy(): void {
+    if (this._isDestroyed) return;
+    this._isDestroyed = true;
+
     // Unregister from Input singleton
     Input.unregisterNotifiable(this);
 
     this._emitter.trigger('destroyed');
     this._gameObjectComponents.clear();
 
-    this.children.forEach((child) => {
-      this.remove(child);
-    });
-
-    this.removeFromParent();
     this.onDestroyed();
     this._isAwake = false;
   }
@@ -128,13 +132,20 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   }
 
   public override remove(...objects: THREE.Object3D[]): this {
-    super.remove(...objects);
-
     objects.forEach((object) => {
       logger({
         message: GAME_OBJECT_MESSAGES.REMOVING_OBJECT_FROM_GAME_OBJECT(object),
         type: 'info',
       });
+
+      object.traverse((child) => {
+        if (child instanceof GameObject) {
+          child.destroy();
+        }
+      });
+
+      super.remove(object);
+
       ResourceTracker.disposeObjectResources(object);
       ResourceTracker.untrackObject(object);
     });

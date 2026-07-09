@@ -20,19 +20,14 @@ export abstract class GameObjectComponent<T = unknown> {
   }
 
   public destroy(): void {
-    this.onDestroyed();
+    this._onDestroyedHandler();
   }
 
   protected onUpdate(_deltaTime: number): void {}
 
   protected onAwake(): void {}
 
-  protected onDestroyed(): void {
-    this._gameObject.events.off('awake', this._onAwakeHandler);
-    this._gameObject.events.off('input', this._onInputHandler);
-    this._gameObject.events.off('update', this._onUpdateHandler);
-    this._gameObject.events.off('destroyed', this._onDestroyedHandler);
-  }
+  protected onDestroyed(): void {}
 
   protected onInput(_inputState: InputState): void {}
 
@@ -61,6 +56,10 @@ export abstract class GameObjectComponent<T = unknown> {
   };
 
   private _onDestroyedHandler = () => {
+    this._gameObject.events.off('awake', this._onAwakeHandler);
+    this._gameObject.events.off('input', this._onInputHandler);
+    this._gameObject.events.off('update', this._onUpdateHandler);
+    this._gameObject.events.off('destroyed', this._onDestroyedHandler);
     this.onDestroyed();
   };
 }

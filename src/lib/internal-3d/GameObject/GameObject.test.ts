@@ -92,14 +92,18 @@ describe('GameObject', () => {
 
     it('returns the existing component when adding a duplicate name', () => {
       const gameObject = new TestGameObject({ scene });
-      const first = new TestComponent(gameObject);
-      const second = new TestComponent(gameObject);
 
+      const first = new TestComponent(gameObject);
       gameObject.addComponent('TestComponent', first);
+      const listenersCountAfterFirst = gameObject.events.listeners.length;
+
+      const second = new TestComponent(gameObject);
       const result = gameObject.addComponent('TestComponent', second);
+      const listenersCountAfterSecond = gameObject.events.listeners.length;
 
       expect(result).toBe(first);
       expect(gameObject.gameObjectComponents.size).toBe(1);
+      expect(listenersCountAfterSecond).toEqual(listenersCountAfterFirst);
     });
 
     it('removeComponent calls destroy on the component and removes it from the map', () => {
@@ -276,21 +280,6 @@ describe('GameObject', () => {
   });
 
   describe('resource tracking', () => {
-    it('disposes tracked child resources when destroyed', () => {
-      const gameObject = new TestGameObject({ scene });
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshBasicMaterial();
-      const mesh = new THREE.Mesh(geometry, material);
-      const geometryDisposeSpy = vi.spyOn(geometry, 'dispose');
-      const materialDisposeSpy = vi.spyOn(material, 'dispose');
-
-      gameObject.add(mesh);
-      gameObject.destroy();
-
-      expect(geometryDisposeSpy).toHaveBeenCalledOnce();
-      expect(materialDisposeSpy).toHaveBeenCalledOnce();
-    });
-
     it('disposes tracked resources when a child is removed', () => {
       const gameObject = new TestGameObject({ scene });
       const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -308,16 +297,6 @@ describe('GameObject', () => {
   });
 
   describe('destroy', () => {
-    it('removes itself from the scene when destroyed', () => {
-      const gameObject = new TestGameObject({ scene });
-      scene.add(gameObject);
-
-      gameObject.destroy();
-
-      expect(scene.children).not.toContain(gameObject);
-      expect(gameObject.parent).toBeNull();
-    });
-
     it('resets isAwake to false when destroyed', () => {
       const gameObject = new TestGameObject({ scene });
       scene.add(gameObject);
@@ -335,6 +314,30 @@ describe('GameObject', () => {
       gameObject.destroy();
 
       expect(gameObject.gameObjectComponents.size).toBe(0);
+    });
+
+    it('destroys a GameObject child when removing it', () => {
+      const gameObject = new TestGameObject({ scene });
+      const child = new THREE.Object3D();
+      const gameObjectChild = new TestGameObject({ scene });
+      gameObject.add(child, gameObjectChild);
+
+      gameObject.remove(gameObjectChild);
+
+      expect(gameObjectChild.onDestroyedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('triggers a cascade destruction of all nested game objects when removing them', () => {
+      const gameObject = new TestGameObject({ scene });
+      const childObject3D = new THREE.Object3D();
+      const gameObjectChild = new TestGameObject({ scene });
+
+      childObject3D.add(gameObjectChild);
+      gameObject.add(childObject3D);
+
+      gameObject.remove(childObject3D);
+
+      expect(gameObjectChild.onDestroyedSpy).toHaveBeenCalledOnce();
     });
   });
 });

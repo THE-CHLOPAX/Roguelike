@@ -120,6 +120,7 @@ export class AnimationController extends GameObjectComponent {
   protected override onDestroyed(): void {
     this._disposeAnimationMixer();
     this._animations = [];
+    super.onDestroyed();
   }
 
   private _getAnimationAction(animationName: string): THREE.AnimationAction | null {

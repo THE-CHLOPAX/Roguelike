@@ -149,6 +149,22 @@ describe('Scene', () => {
       expect(destroySpy).toHaveBeenCalledOnce();
       expect(scene.children).toHaveLength(0);
     });
+
+    it('destroys nested GameObject instances when they are removed from the scene', () => {
+      const gameObject = new TestGameObject({ scene });
+      const childObject3D = new THREE.Object3D();
+      const nestedGameObject = new TestGameObject({ scene });
+      const destroySpy = vi.spyOn(nestedGameObject, 'destroy');
+
+      childObject3D.add(nestedGameObject);
+      gameObject.add(childObject3D);
+
+      scene.add(gameObject);
+      scene.remove(gameObject);
+
+      expect(destroySpy).toHaveBeenCalledOnce();
+      expect(scene.children).toHaveLength(0);
+    });
   });
 
   describe('dispose', () => {

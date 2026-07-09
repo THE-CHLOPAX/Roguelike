@@ -103,11 +103,14 @@ export abstract class Scene extends THREE.Scene {
         message: SCENE_MESSAGES.REMOVING_OBJECT(object),
         type: 'info',
       });
-      super.remove(object);
 
-      if (object instanceof GameObject) {
-        object.destroy();
-      }
+      object.traverse((child) => {
+        if (child instanceof GameObject) {
+          child.destroy();
+        }
+      });
+
+      super.remove(object);
 
       ResourceTracker.disposeObjectResources(object);
       ResourceTracker.untrackObject(object);

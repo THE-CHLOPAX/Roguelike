@@ -62,7 +62,10 @@ export class EntityAI extends Entity {
   protected onInit(): void {}
 
   private _despawnAfterTimeout = (): void => {
-    this._despawnTimeout = setTimeout(() => this.destroy(), DESPAWN_TIMEOUT);
+    this._despawnTimeout = setTimeout(() => {
+      this.destroy();
+      this.removeFromParent();
+    }, DESPAWN_TIMEOUT);
   };
 
   protected override onDestroyed(): void {
