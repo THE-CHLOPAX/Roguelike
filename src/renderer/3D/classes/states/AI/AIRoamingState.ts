@@ -88,7 +88,7 @@ export class AIRoamingState extends State {
       }
 
       navMeshAgent
-        .moveTo(randomNavMeshPoint, this.entity.movementController.walkSpeed)
+        .setDestinationPromise(randomNavMeshPoint, this.entity.walkSpeed)
         .then(() => {
           resolve();
         })

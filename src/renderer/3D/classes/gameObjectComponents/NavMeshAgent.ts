@@ -1,8 +1,6 @@
 import * as THREE from 'three';
-import { GameObjectComponent, logger } from '@tgdf';
+import { GameObject, GameObjectComponent, logger } from '@tgdf';
 import { Crowd, CrowdAgent, CrowdAgentParams } from '@recast-navigation/core';
-
-import { Entity } from '../gameObjects/Entity';
 
 /**
  * Those are arbitrary, tunable values that were
@@ -24,17 +22,14 @@ export class NavMeshAgent extends GameObjectComponent {
     target: THREE.Vector3;
   } | null = null;
 
-  constructor(gameObject: Entity, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
+  constructor(gameObject: GameObject, crowd: Crowd, options?: Partial<CrowdAgentParams>) {
     super(gameObject);
 
     this._crowd = crowd;
     this._options = options;
   }
 
-  public setDestination(
-    target: THREE.Vector3,
-    speed = this.gameObject.movementController.defaultSpeed
-  ): void {
+  public setDestination(target: THREE.Vector3, speed: number): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return;
@@ -47,15 +42,7 @@ export class NavMeshAgent extends GameObjectComponent {
     this._agentInstance.requestMoveTarget(target);
   }
 
-  public moveTo(
-    target: THREE.Vector3,
-    speed = this.gameObject.movementController.defaultSpeed
-  ): Promise<void> {
-    if (!this._agentInstance) {
-      this._logNoAgentError();
-      return Promise.reject(new Error('NavMeshAgent instance not initialized yet.'));
-    }
-
+  public setDestinationPromise(target: THREE.Vector3, speed: number): Promise<void> {
     this.setDestination(target, speed);
 
     // If there's an active movement, resolve it (interrupted)
@@ -89,10 +76,7 @@ export class NavMeshAgent extends GameObjectComponent {
     this._agentInstance.resetMoveTarget();
   }
 
-  public move(
-    direction: THREE.Vector3,
-    speed = this.gameObject.movementController.defaultSpeed
-  ): void {
+  public move(direction: THREE.Vector3, speed: number): void {
     if (!this._agentInstance) {
       this._logNoAgentError();
       return;
@@ -124,11 +108,11 @@ export class NavMeshAgent extends GameObjectComponent {
   }
 
   public get velocity(): THREE.Vector3 | null {
-    return this.gameObject.movementController.velocity;
-  }
-
-  public override get gameObject(): Entity {
-    return super.gameObject as Entity;
+    if (!this._agentInstance) {
+      this._logNoAgentError();
+      return null;
+    }
+    return new THREE.Vector3().copy(this._agentInstance.velocity());
   }
 
   protected override onAwake(): void {

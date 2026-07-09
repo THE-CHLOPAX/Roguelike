@@ -2,17 +2,20 @@ import * as THREE from 'three';
 import { GameObject, getModelFromStore, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { StateController } from '../gameObjectComponents/StateController';
+import { MovementController } from '../gameObjectComponents/MovementController';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
 import {
-  MovementController,
-  MovementControllerOptions,
-} from '../gameObjectComponents/MovementController';
-import {
   AnimationController,
   AnimationControllerOptions,
 } from '../gameObjectComponents/AnimationController/AnimationController';
+
+export type EntityMovementOptions = {
+  speed?: number;
+  sprintSpeed?: number;
+  walkSpeed?: number;
+};
 
 export type EntityOptions = {
   model: {
@@ -24,7 +27,7 @@ export type EntityOptions = {
   };
   rigidBodyOptions?: RigidBodyOptions;
   animationControllerOptions?: AnimationControllerOptions;
-  movementOptions?: MovementControllerOptions;
+  movementOptions?: EntityMovementOptions;
 };
 
 const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
@@ -37,6 +40,9 @@ export class Entity extends GameObject {
   public damageHitboxController: DamageHitboxController;
   public healthPointsController: HealthPointsController;
   public movementController: MovementController;
+  public defaultSpeed: number;
+  public sprintSpeed: number;
+  public walkSpeed: number;
 
   private _spawnPosition: THREE.Vector3 = new THREE.Vector3();
 
@@ -54,6 +60,11 @@ export class Entity extends GameObject {
     if (options.model.scale) {
       model.scale.copy(options.model.scale);
     }
+
+    const speed = options.movementOptions?.speed ?? 0;
+    this.defaultSpeed = speed;
+    this.sprintSpeed = options.movementOptions?.sprintSpeed ?? speed;
+    this.walkSpeed = options.movementOptions?.walkSpeed ?? speed * 0.5;
 
     this.modelRenderer = this.addComponent(
       'ModelRenderer',
@@ -74,7 +85,7 @@ export class Entity extends GameObject {
 
     this.movementController = this.addComponent(
       'MovementController',
-      new MovementController(this, options.movementOptions)
+      new MovementController(this)
     );
 
     this.healthPointsController = this.addComponent(

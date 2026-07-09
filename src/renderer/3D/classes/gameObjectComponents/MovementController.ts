@@ -3,33 +3,19 @@ import { compareFloats, GameObjectComponent, logger } from '@tgdf';
 
 import { Entity } from '../gameObjects/Entity';
 
-export type MovementControllerOptions = {
-  speed?: number;
-  sprintSpeed?: number;
-  walkSpeed?: number;
-};
-
 const ROTATION_LERP_FACTOR = 0.1;
 
-export class MovementController extends GameObjectComponent<MovementControllerOptions> {
-  public defaultSpeed: number;
-  public sprintSpeed: number;
-  public walkSpeed: number;
-
+export class MovementController extends GameObjectComponent {
   private _currentSpeed: number;
   private _movementDisabled: boolean = false;
   private _currentRotation: number = 0;
   private _currentRotationTargetDirection: THREE.Vector3 | null = null;
   private _currentMovementTarget: THREE.Vector3 | null = null;
 
-  constructor(gameObject: Entity, options?: MovementControllerOptions) {
-    super(gameObject, options);
+  constructor(gameObject: Entity) {
+    super(gameObject);
 
-    const speed = options?.speed ?? 0;
-    this.defaultSpeed = speed;
-    this.sprintSpeed = options?.sprintSpeed ?? speed;
-    this.walkSpeed = options?.walkSpeed ?? speed * 0.5;
-    this._currentSpeed = this.defaultSpeed;
+    this._currentSpeed = this.gameObject.defaultSpeed;
   }
 
   public override get gameObject(): Entity {
@@ -58,7 +44,7 @@ export class MovementController extends GameObjectComponent<MovementControllerOp
   }
 
   public toggleSprint(enabled: boolean): void {
-    this._currentSpeed = enabled ? this.sprintSpeed : this.defaultSpeed;
+    this._currentSpeed = enabled ? this.gameObject.sprintSpeed : this.gameObject.defaultSpeed;
   }
 
   public toggleMovementDisabled(disabled: boolean): void {
@@ -71,7 +57,7 @@ export class MovementController extends GameObjectComponent<MovementControllerOp
     this._moveRigidbody(direction, speed);
   }
 
-  public moveTo(position: THREE.Vector3, speed = this.defaultSpeed): void {
+  public moveTo(position: THREE.Vector3, speed = this.gameObject.defaultSpeed): void {
     if (this.movementDisabled) return;
     this._moveRigidBodyToPosition(position, speed);
   }
