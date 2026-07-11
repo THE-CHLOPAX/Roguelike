@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { GameObject, GameObjectComponent, logger } from '@tgdf';
 
-import { ModelRenderer } from './ModelRenderer';
+import { ANIMATION_CONTROLLER_MESSAGES } from './constants';
+import { ModelRenderer } from '../ModelRenderer/ModelRenderer';
 
 export type AnimationEvent = {
   type: string;
@@ -119,12 +120,13 @@ export class AnimationController extends GameObjectComponent {
   protected override onDestroyed(): void {
     this._disposeAnimationMixer();
     this._animations = [];
+    super.onDestroyed();
   }
 
   private _getAnimationAction(animationName: string): THREE.AnimationAction | null {
     if (!this._animationMixer) {
       logger({
-        message: 'No animation mixer available. Make sure a model with animations is set.',
+        message: ANIMATION_CONTROLLER_MESSAGES.NO_MIXER,
         type: 'warn',
       });
       return null;
@@ -139,7 +141,7 @@ export class AnimationController extends GameObjectComponent {
     const clip = this._animations.find((anim) => anim.name === animationName);
     if (!clip) {
       logger({
-        message: `Animation "${animationName}" not found on model.`,
+        message: ANIMATION_CONTROLLER_MESSAGES.ANIMATION_NOT_FOUND(animationName),
         type: 'warn',
       });
       return null;

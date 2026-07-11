@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { ThreeDViewerDebugInfo } from './ThreeDViewerDebugInfo';
 import { useWebGLRenderer, UseWebGLRendererOptions } from './useWebGLRenderer';
-import { isPerspectiveOrOrtographicCamera } from '../utils/isPerspectiveOrOrtographicCamera';
+import { isPerspectiveOrOrtographicCamera } from '../../internal-3d/utils/isPerspectiveOrOrtographicCamera';
 
 export type ThreeDViewerProps = {
   scene: Scene;

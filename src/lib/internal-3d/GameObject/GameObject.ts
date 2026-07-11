@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {
+  ResourceTracker,
   GameObjectComponent,
   GameObjectConstructorOptions,
   GameObjectEventMap,
@@ -8,18 +9,18 @@ import {
   logger,
 } from '@tgdf';
 
-import { Emitter } from './Emitter';
-import { Scene } from './Scene/Scene';
-import { InputNotifiable } from '../internal-input/Input';
-import { isChildOfObject } from './utils/isChildOfObject';
-import { ResourceTracker } from './ResourceTracker/ResourceTracker';
+import { Emitter } from '../Emitter';
+import { Scene } from '../Scene/Scene';
+import { GAME_OBJECT_MESSAGES } from './constants';
+import { isChildOfObject } from '../utils/isChildOfObject';
+import { InputNotifiable } from '../../internal-input/Input';
 
 export class GameObject extends THREE.Object3D implements InputNotifiable {
   private _gameObjectComponents: Map<string, GameObjectComponent>;
   private _scene: Scene;
   private _emitter: Emitter<GameObjectEventMap> = new Emitter<GameObjectEventMap>();
   private _isAwake: boolean = false;
-  private _resourceTrackerMap = new Map<string, ResourceTracker>();
+  private _isDestroyed: boolean = false;
 
   constructor({ scene }: GameObjectConstructorOptions) {
     super();
@@ -65,38 +66,53 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
       }
     }
 
-    this._gameObjectComponents.forEach((component) => {
-      component.update(deltaTime);
-    });
-
     this.events.trigger('update', { deltaTime });
 
     this.onUpdate(deltaTime);
   }
 
   public addComponent<C extends GameObjectComponent>(name: string, component: C): C {
+    const alreadyAddedComponent = this._gameObjectComponents.get(name);
+    if (alreadyAddedComponent) {
+      logger({
+        message: GAME_OBJECT_MESSAGES.ADD_COMPONENT_DUPLICATE(name),
+        type: 'warn',
+      });
+      component.destroy();
+      return alreadyAddedComponent as C;
+    }
+
     this._gameObjectComponents.set(name, component);
     return component;
   }
 
   public removeComponent(name: string): void {
     const component = this._gameObjectComponents.get(name);
-    if (component) {
-      component.destroy();
-      this._gameObjectComponents.delete(name);
+    if (!component) {
+      logger({
+        message: GAME_OBJECT_MESSAGES.REMOVE_COMPONENT_NOT_FOUND(name),
+        type: 'warn',
+      });
+      return;
     }
+    component.destroy();
+    this._gameObjectComponents.delete(name);
   }
 
+  /**
+   * Unregisters from Input singleton and triggers the destroyed event.
+   * Does not remove the 3D object from the parent.
+   */
   public destroy(): void {
+    if (this._isDestroyed) return;
+    this._isDestroyed = true;
+
     // Unregister from Input singleton
     Input.unregisterNotifiable(this);
 
-    this._gameObjectComponents.forEach((component) => {
-      component.destroy();
-    });
-    this._gameObjectComponents.clear();
-    this.removeFromParent();
     this._emitter.trigger('destroyed');
+    this._gameObjectComponents.clear();
+
     this.onDestroyed();
     this._isAwake = false;
   }
@@ -106,49 +122,41 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
 
     objects.forEach((object) => {
       logger({
-        message: `GameObject: Adding object to GameObject: ${object.name || object.type}`,
+        message: GAME_OBJECT_MESSAGES.ADDING_OBJECT_TO_GAME_OBJECT(object),
         type: 'info',
       });
-      this.addObjectResourceTracker(object);
+      ResourceTracker.trackObject(object);
     });
 
     return this;
   }
 
   public override remove(...objects: THREE.Object3D[]): this {
-    super.remove(...objects);
-
     objects.forEach((object) => {
       logger({
-        message: `GameObject: Removing object from GameObject: ${object.name || object.type}`,
+        message: GAME_OBJECT_MESSAGES.REMOVING_OBJECT_FROM_GAME_OBJECT(object),
         type: 'info',
       });
-      this.removeObjectResourceTracker(object);
+
+      object.traverse((child) => {
+        if (child instanceof GameObject) {
+          child.destroy();
+        }
+      });
+
+      super.remove(object);
+
+      ResourceTracker.disposeObjectResources(object);
+      ResourceTracker.untrackObject(object);
     });
 
     return this;
   }
 
-  public addObjectResourceTracker(object: THREE.Object3D): void {
-    const resourceTracker = new ResourceTracker();
-    resourceTracker.track(object);
-    this._resourceTrackerMap.set(object.uuid, resourceTracker);
-  }
-
-  public removeObjectResourceTracker(object: THREE.Object3D): void {
-    const resourceTracker = this._resourceTrackerMap.get(object.uuid);
-    if (resourceTracker) {
-      resourceTracker.dispose();
-      this._resourceTrackerMap.delete(object.uuid);
-    }
-  }
-
   public onInputNotify(_inputState: InputState): void {
     this.onInput(_inputState);
 
-    this._gameObjectComponents.forEach((component) => {
-      component.onInput(_inputState);
-    });
+    this._emitter.trigger('input', { inputState: _inputState });
   }
 
   protected onAwake(): void {}

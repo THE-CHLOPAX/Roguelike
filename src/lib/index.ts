@@ -1,4 +1,5 @@
 import { Input } from './internal-input/Input';
+import { ResourceTracker } from './internal-3d/ResourceTracker/ResourceTracker';
 
 // Ipc handle
 export { ipc } from './ipc';
@@ -31,15 +32,18 @@ export { AppInput as Input };
 
 // Internal 3D
 export * from './internal-3d/Emitter';
-export * from './internal-3d/GameObject';
-export * from './internal-3d/PhysicsManager';
+export * from './internal-3d/GameObject/GameObject';
+export * from './internal-3d/PhysicsManager/PhysicsManager';
 export * from './internal-3d/Scene';
-export * from './internal-3d/ThreeDViewer/ThreeDViewer';
+export * from './internal-ui/ThreeDViewer/ThreeDViewer';
 export * from './internal-3d/types/gameObjects';
 export * from './internal-3d/types/physics';
 export * from './internal-3d/types/scene';
 export * from './internal-3d/utils/traverseFind';
 export * from './internal-3d/utils/isMesh';
+
+const ResourceTrackerInstance = ResourceTracker.getInstance();
+export { ResourceTrackerInstance as ResourceTracker };
 
 // Internal Game Components
 export * from './internal-game-components';

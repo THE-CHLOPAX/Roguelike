@@ -4,7 +4,7 @@ import { Emitter, GameObjectEventMap, Scene } from '@tgdf';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { Entity } from '../gameObjects/Entity';
-import { ModelRenderer } from './ModelRenderer';
+import { ModelRenderer } from './ModelRenderer/ModelRenderer';
 import { DamageHitboxController } from './DamageHitboxController';
 import { HealthPointsController, HealthPointsControllerEvents } from './HealthPointsController';
 

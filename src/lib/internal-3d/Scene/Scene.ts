@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { logger } from '@tgdf';
 import { init } from '@recast-navigation/core';
+import { logger, ResourceTracker } from '@tgdf';
 
 import { Emitter } from '../Emitter';
-import { GameObject } from '../GameObject';
+import { SCENE_MESSAGES } from './constants';
 import { SceneEventsMap } from '../types/scene';
-import { PhysicsManager } from '../PhysicsManager';
-import { ResourceTracker } from '../ResourceTracker/ResourceTracker';
+import { GameObject } from '../GameObject/GameObject';
+import { PhysicsManager } from '../PhysicsManager/PhysicsManager';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {
@@ -17,7 +17,6 @@ export abstract class Scene extends THREE.Scene {
 
   private _physicsManager?: PhysicsManager;
   private _navMeshManager?: NavMeshManager;
-  private _resourceTrackerMap = new Map<string, ResourceTracker>();
 
   constructor() {
     super();
@@ -74,32 +73,25 @@ export abstract class Scene extends THREE.Scene {
 
   public dispose(): void {
     this._emitter.removeAll();
-    this._physicsManager?.dispose();
 
     const childrenToRemove = [...this.children];
 
     childrenToRemove.forEach((child) => {
       this.remove(child);
-
-      if (child instanceof GameObject) {
-        child.destroy();
-      }
     });
 
-    this._resourceTrackerMap.clear();
+    this._physicsManager?.dispose();
   }
 
   public override add(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
       logger({
-        message: `Scene: Adding object to scene: ${object.name || object.type}`,
+        message: SCENE_MESSAGES.ADDING_OBJECT(object),
         type: 'info',
       });
       super.add(object);
 
-      const resourceTracker = new ResourceTracker();
-      resourceTracker.track(object);
-      this._resourceTrackerMap.set(object.uuid, resourceTracker);
+      ResourceTracker.trackObject(object);
     });
 
     return this;
@@ -108,20 +100,20 @@ export abstract class Scene extends THREE.Scene {
   public override remove(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
       logger({
-        message: `Scene: Removing object from scene: ${object.name || object.type}`,
+        message: SCENE_MESSAGES.REMOVING_OBJECT(object),
         type: 'info',
       });
+
+      object.traverse((child) => {
+        if (child instanceof GameObject) {
+          child.destroy();
+        }
+      });
+
       super.remove(object);
 
-      if (object instanceof GameObject) {
-        object.destroy();
-      }
-
-      const resourceTracker = this._resourceTrackerMap.get(object.uuid);
-      if (resourceTracker) {
-        resourceTracker.dispose();
-        this._resourceTrackerMap.delete(object.uuid);
-      }
+      ResourceTracker.disposeObjectResources(object);
+      ResourceTracker.untrackObject(object);
     });
 
     return this;
@@ -138,7 +130,7 @@ export abstract class Scene extends THREE.Scene {
   public async initializePhysicsWorld(gravity: THREE.Vector3): Promise<void> {
     this._physicsManager = new PhysicsManager();
     await this._physicsManager.init(gravity);
-    logger({ message: 'Scene: Physics world initialized', type: 'info' });
+    logger({ message: SCENE_MESSAGES.PHYSICS_WORLD_INITIALIZED, type: 'info' });
   }
 
   protected onUpdate(_deltaTime: number): void {}

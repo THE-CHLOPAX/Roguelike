@@ -8,27 +8,19 @@ export abstract class GameObjectComponent<T = unknown> {
     this._gameObject = gameObject;
     this.options = options ?? {};
 
-    if (this._gameObject.isAwake) {
-      this.onAwake();
-    } else {
-      this._gameObject.events.once('awake', this.onAwake.bind(this));
-    }
+    this._bindGameObjectEvents();
   }
 
   public get gameObject(): GameObject {
     return this._gameObject;
   }
 
-  public destroy(): void {
-    this.onDestroyed();
-  }
-
-  public update(deltaTime: number): void {
-    this.onUpdate(deltaTime);
-  }
-
   public get scene(): Scene | undefined {
     return this.gameObject.scene;
+  }
+
+  public destroy(): void {
+    this._onDestroyedHandler();
   }
 
   protected onUpdate(_deltaTime: number): void {}
@@ -37,5 +29,37 @@ export abstract class GameObjectComponent<T = unknown> {
 
   protected onDestroyed(): void {}
 
-  public onInput(_inputState: InputState): void {}
+  protected onInput(_inputState: InputState): void {}
+
+  private _bindGameObjectEvents(): void {
+    if (this._gameObject.isAwake) {
+      this._onAwakeHandler();
+    } else {
+      this._gameObject.events.once('awake', this._onAwakeHandler);
+    }
+
+    this._gameObject.events.on('input', this._onInputHandler);
+    this._gameObject.events.on('update', this._onUpdateHandler);
+    this._gameObject.events.on('destroyed', this._onDestroyedHandler);
+  }
+
+  private _onAwakeHandler = () => {
+    this.onAwake();
+  };
+
+  private _onInputHandler = ({ inputState }: { inputState: InputState }) => {
+    this.onInput(inputState);
+  };
+
+  private _onUpdateHandler = ({ deltaTime }: { deltaTime: number }) => {
+    this.onUpdate(deltaTime);
+  };
+
+  private _onDestroyedHandler = () => {
+    this._gameObject.events.off('awake', this._onAwakeHandler);
+    this._gameObject.events.off('input', this._onInputHandler);
+    this._gameObject.events.off('update', this._onUpdateHandler);
+    this._gameObject.events.off('destroyed', this._onDestroyedHandler);
+    this.onDestroyed();
+  };
 }

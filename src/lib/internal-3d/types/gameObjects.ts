@@ -1,4 +1,5 @@
 import { Scene } from '../Scene/Scene';
+import { InputState } from '../../internal-input/types';
 
 export type GameObjectComponentTemplate = {
   name: string;
@@ -28,4 +29,5 @@ export interface GameObjectEventMap {
   awake: void;
   destroyed: void;
   update: { deltaTime: number };
+  input: { inputState: InputState };
 }

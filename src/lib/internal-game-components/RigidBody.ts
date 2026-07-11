@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
-import { PhysicsManager } from '@tgdf/internal-3d/PhysicsManager';
+import { PhysicsManager } from '@tgdf/internal-3d/PhysicsManager/PhysicsManager';
 
 import { logger } from '../internal-ui/utils/logger';
-import { GameObject } from '../internal-3d/GameObject';
 import { GameObjectComponent } from './GameObjectComponent';
+import { GameObject } from '../internal-3d/GameObject/GameObject';
 import { getMeshFromCollider } from './utils/getMeshFromCollider';
 import { PhysicsCollisionCallback } from '../internal-3d/types/physics';
 import { getRigidBodyColliderDescription } from './utils/getRigidBodyColliderDescription';

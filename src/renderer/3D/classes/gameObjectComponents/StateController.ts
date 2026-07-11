@@ -28,7 +28,7 @@ export class StateController extends GameObjectComponent {
     }
   }
 
-  public override onInput(_inputState: InputState): void {
+  protected override onInput(_inputState: InputState): void {
     if (this._currentState) {
       const newState = this._currentState.input(_inputState);
       if (newState !== this._currentState) {
