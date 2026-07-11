@@ -77,8 +77,6 @@ export class PhysicsManager {
   }
 
   public syncDynamicBodies(): void {
-    if (!this._bodies) return;
-
     for (const body of this._bodies.values()) {
       body.syncFromPhysics();
     }
@@ -94,11 +92,6 @@ export class PhysicsManager {
   }
 
   public addBody(object: GameObject, body: RigidBody): void {
-    if (!this._bodies) {
-      logger({ message: PHYSICS_MANAGER_MESSAGES.BODIES_MAP_NOT_INITIALIZED, type: 'warn' });
-      return;
-    }
-
     const bodyHandle = body.getHandle();
     if (bodyHandle === null) {
       logger({
@@ -125,10 +118,6 @@ export class PhysicsManager {
   }
 
   public removeBody(object: GameObject): void {
-    if (!this._bodies) {
-      logger({ message: PHYSICS_MANAGER_MESSAGES.BODIES_MAP_NOT_INITIALIZED, type: 'warn' });
-      return;
-    }
     const body = this._bodies.get(object);
     if (body && this._world) {
       const rigidBody = body.getRigidBody();
