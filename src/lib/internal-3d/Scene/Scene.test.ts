@@ -205,7 +205,7 @@ describe('Scene', () => {
       expect(mockPhysicsManager.dispose).toHaveBeenCalledOnce();
     });
 
-    it('leaves no tracked resources in ResourceTracker', () => {
+    it('disposes and untracks tracked resources in ResourceTracker', () => {
       const meshA = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
       const meshB = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial());
 
@@ -213,6 +213,11 @@ describe('Scene', () => {
       expect(ResourceTracker.resourcesForObjects.size).toBe(2);
 
       scene.dispose();
+
+      expect(ResourceTracker.disposeObjectResources).toHaveBeenCalledWith(meshA);
+      expect(ResourceTracker.disposeObjectResources).toHaveBeenCalledWith(meshB);
+      expect(ResourceTracker.untrackObject).toHaveBeenCalledWith(meshA);
+      expect(ResourceTracker.untrackObject).toHaveBeenCalledWith(meshB);
 
       expect(ResourceTracker.resourcesForObjects.size).toBe(0);
     });
