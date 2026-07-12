@@ -1,11 +1,16 @@
 import * as THREE from 'three';
-import { GameObject, getModelFromStore, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { GameObject, MovementController, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
 
 import { StateController } from '../gameObjectComponents/StateController';
-import { MovementController } from '../gameObjectComponents/MovementController';
-import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
-import { HealthPointsController } from '../gameObjectComponents/HealthPointsController';
+import {
+  ModelRenderer,
+  ModelRendererOptions,
+} from '../gameObjectComponents/ModelRenderer/ModelRenderer';
+import {
+  HealthPointsController,
+  HealthPointsControllerOptions,
+} from '../gameObjectComponents/HealthPointsController';
 import {
   AnimationController,
   AnimationControllerOptions,
@@ -18,19 +23,12 @@ export type EntityMovementOptions = {
 };
 
 export type EntityOptions = {
-  model: {
-    id: string;
-    scale?: THREE.Vector3;
-  };
-  healthOptions?: {
-    initialHealthPoints?: number;
-  };
+  modelOptions: ModelRendererOptions;
+  healthOptions: HealthPointsControllerOptions;
   rigidBodyOptions?: RigidBodyOptions;
   animationControllerOptions?: AnimationControllerOptions;
   movementOptions?: EntityMovementOptions;
 };
-
-const RIGID_BODY_COMPONENT_ID = 'RigidBodyComponent';
 
 export class Entity extends GameObject {
   public rigidBody: RigidBody;
@@ -52,25 +50,14 @@ export class Entity extends GameObject {
   ) {
     super({ scene });
 
-    const model = getModelFromStore(options.model.id);
-    if (!model) {
-      throw new Error(`Model not found in cache: ${options.model.id}`);
-    }
-
-    if (options.model.scale) {
-      model.scale.copy(options.model.scale);
-    }
-
     const speed = options.movementOptions?.speed ?? 0;
     this.defaultSpeed = speed;
-    this.sprintSpeed = options.movementOptions?.sprintSpeed ?? speed;
+    this.sprintSpeed = options.movementOptions?.sprintSpeed ?? speed * 1.5;
     this.walkSpeed = options.movementOptions?.walkSpeed ?? speed * 0.5;
 
     this.modelRenderer = this.addComponent(
       'ModelRenderer',
-      new ModelRenderer(this, {
-        model,
-      })
+      new ModelRenderer(this, options.modelOptions)
     );
 
     this.animationController = this.addComponent(
@@ -79,18 +66,21 @@ export class Entity extends GameObject {
     );
 
     this.rigidBody = this.addComponent(
-      RIGID_BODY_COMPONENT_ID,
+      'RigidBody',
       new RigidBody(this, this.options.rigidBodyOptions)
     );
 
     this.movementController = this.addComponent(
       'MovementController',
-      new MovementController(this)
+      new MovementController(this, this.rigidBody, {
+        defaultSpeed: this.defaultSpeed,
+        sprintSpeed: this.sprintSpeed,
+      })
     );
 
     this.healthPointsController = this.addComponent(
       'HealthPointsController',
-      new HealthPointsController(this, options.healthOptions?.initialHealthPoints)
+      new HealthPointsController(this, options.healthOptions)
     );
 
     this.damageHitboxController = this.addComponent(

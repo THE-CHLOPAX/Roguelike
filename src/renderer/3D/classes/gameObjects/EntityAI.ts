@@ -1,9 +1,8 @@
-import { Scene } from '@tgdf';
+import { NavMeshAgent, Scene } from '@tgdf';
 import { NavMesh, Crowd } from '@recast-navigation/core';
 
 import { Entity, EntityOptions } from './Entity';
 import { AIAttackOptions, AIRoamingOptions } from '../../types';
-import { NavMeshAgent } from '../gameObjectComponents/NavMeshAgent';
 
 export type EntityAIOptions = EntityOptions & {
   detectionRadius?: number;

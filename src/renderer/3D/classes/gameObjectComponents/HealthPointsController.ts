@@ -9,6 +9,11 @@ export type HealthPointsControllerEvents = {
   heal: { currentHealth: number; healAmount: number };
   death: void;
 };
+
+export type HealthPointsControllerOptions = {
+  initialHealthPoints: number;
+};
+
 export class HealthPointsController extends GameObjectComponent {
   private _healthPoints: number;
   private _initialHealthPoints: number;
@@ -17,10 +22,10 @@ export class HealthPointsController extends GameObjectComponent {
 
   public events: Emitter<HealthPointsControllerEvents> = new Emitter();
 
-  constructor(gameObject: Entity, initialHealthPoints: number = 100) {
+  constructor(gameObject: Entity, options: HealthPointsControllerOptions) {
     super(gameObject);
-    this._initialHealthPoints = initialHealthPoints;
-    this._healthPoints = initialHealthPoints;
+    this._initialHealthPoints = options.initialHealthPoints;
+    this._healthPoints = options.initialHealthPoints;
   }
 
   public get isImmuneToDamage(): boolean {

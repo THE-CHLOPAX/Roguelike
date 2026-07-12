@@ -16,7 +16,7 @@ export class Skeleton extends EntityAI {
     public crowd: Crowd
   ) {
     super(scene, navMesh, crowd, {
-      model: {
+      modelOptions: {
         id: MODELS.SKELETON.id,
         scale: new THREE.Vector3(1.2, 1.2, 1.2),
       },

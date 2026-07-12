@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { isChildOfObject } from '@tgdf/internal-3d/utils/isChildOfObject';
-import { GameObject, GameObjectComponent, logger, ResourceTracker } from '@tgdf';
+import { GameObject, GameObjectComponent, getModelFromStore, logger, ResourceTracker } from '@tgdf';
 
 import { MODEL_RENDERER_MESSAGES } from './constants';
 
 export type ModelRendererOptions = {
-  model: THREE.Object3D;
+  id: string;
+  scale?: THREE.Vector3;
 };
 
 export type AddAttachmentOptions =
@@ -19,7 +20,16 @@ export class ModelRenderer extends GameObjectComponent {
   constructor(gameObject: GameObject, options: ModelRendererOptions) {
     super(gameObject);
 
-    this.setModel(options.model);
+    const model = getModelFromStore(options.id);
+    if (!model) {
+      throw new Error(`Model not found in cache: ${options.id}`);
+    }
+
+    if (options.scale) {
+      model.scale.copy(options.scale);
+    }
+
+    this.setModel(model);
     this._modelOriginalMaterials = this.getMaterialsCopy();
   }
 

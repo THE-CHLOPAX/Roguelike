@@ -16,6 +16,7 @@ export class AIAttackState extends StateWithHealthEvents {
 
     // If entity is in range to perform its most preferred attack, it should attack
     const distanceToEnemy = entity.position.distanceTo(targetEnemy.position);
+
     return distanceToEnemy >= attack.minRange && distanceToEnemy <= attack.maxRange;
   }
 
@@ -29,9 +30,15 @@ export class AIAttackState extends StateWithHealthEvents {
 
   public override onUpdate(_deltaTime: number): State {
     // If currently performing an attack, do not transition to another state until the attack is finished
-    if (this._isAttacking) return this;
-
     const targetEnemy = getTargetEnemy(this.entity);
+
+    if (this._isAttacking) {
+      if (targetEnemy) {
+        this.entity.movementController.rotateTowardsPosition(targetEnemy.position);
+      }
+      return this;
+    }
+
     if (targetEnemy === null) return new AIIdleState(this.entity);
 
     const bestAttack = getBestAttack(this.entity, targetEnemy);
