@@ -6,7 +6,7 @@ import { DEFAULT_RIGID_BODY_OPTIONS, MODELS } from '../../../../constants';
 export class Monk extends Player {
   constructor(scene: TestScene) {
     super(scene, {
-      model: {
+      modelOptions: {
         id: MODELS.MONK.id,
       },
       movementOptions: {

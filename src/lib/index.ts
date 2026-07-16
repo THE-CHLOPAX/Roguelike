@@ -58,3 +58,5 @@ export * from './internal-math/utils/randFromRange';
 // Internal Utils
 export { executeAsyncOperationsWithProgress } from './internal-utils/executeAsyncOperationsWithProgress';
 export { assert } from './internal-utils/assert';
+export { throttle } from './internal-utils/throttle';
+export { throttleWithLastValue } from './internal-utils/throttleWithLastValue';

@@ -28,7 +28,7 @@ export class AIRoamingState extends State {
       });
   }
   public override onExit(): void {
-    this.entity.navMeshAgent.resetMovementTarget();
+    this.entity.movementController.resetMoveTo();
   }
 
   public override onInput(_inputState: InputState): State {
@@ -73,7 +73,6 @@ export class AIRoamingState extends State {
         return;
       }
 
-      const navMeshAgent = this.entity.navMeshAgent;
       const navMesh = this.entity.navMesh;
 
       const randomNavMeshPoint = getRandomNavMeshPointInRadius(
@@ -87,14 +86,16 @@ export class AIRoamingState extends State {
         return;
       }
 
-      navMeshAgent
-        .moveTo(randomNavMeshPoint, this.entity.movementController.walkSpeed)
-        .then(() => {
-          resolve();
-        })
-        .catch((error) => {
-          reject(error);
-        });
+      const path = this.entity.navMeshAgent.calculatePath(randomNavMeshPoint);
+      if (path === null) {
+        reject(new Error('Failed to calculate path to target'));
+        return;
+      }
+
+      this.entity.movementController
+        .moveAlongPath(path, this.entity.walkSpeed)
+        .then(() => resolve())
+        .catch(() => {});
     });
   }
 }

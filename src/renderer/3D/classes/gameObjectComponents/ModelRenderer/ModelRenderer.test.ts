@@ -1,12 +1,20 @@
 import * as THREE from 'three';
-import { GameObject, ResourceTracker, Scene } from '@tgdf';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { GameObject, getModelFromStore, ResourceTracker, Scene } from '@tgdf';
 
 import { ModelRenderer } from './ModelRenderer';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
+
+vi.mock('@tgdf', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tgdf')>();
+  return {
+    ...actual,
+    getModelFromStore: vi.fn(),
+  };
+});
 
 class TestScene extends Scene {
   camera = new THREE.PerspectiveCamera();
@@ -34,7 +42,10 @@ function createMeshModel(options?: { parentName?: string; parentScale?: number }
 function createRenderer(model?: THREE.Object3D) {
   const scene = new TestScene();
   const gameObject = new GameObject({ scene });
-  const modelRenderer = new ModelRenderer(gameObject, { model: model ?? createMeshModel() });
+
+  vi.mocked(getModelFromStore).mockReturnValue(model ?? createMeshModel());
+
+  const modelRenderer = new ModelRenderer(gameObject, { id: 'test-model' });
 
   return { scene, gameObject, modelRenderer };
 }

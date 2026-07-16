@@ -12,7 +12,7 @@ export const attackActions: AIAttackAction[] = [
   {
     action: punch,
     minRange: 0,
-    maxRange: 1,
+    maxRange: 2,
   },
 ];
 

@@ -12,7 +12,7 @@ export function getRandomNavMeshPointInRadius(
 
   if (result.success) {
     const randomPoint = result.randomPoint; // { x: number, y: number, z: number }
-    // Convert to THREE.Vector3 if needed:
+    // Convert to THREE.Vector3
     const randomVector3 = new THREE.Vector3(randomPoint.x, randomPoint.y, randomPoint.z);
     return randomVector3;
   }
