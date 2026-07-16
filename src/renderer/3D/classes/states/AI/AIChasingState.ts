@@ -61,7 +61,7 @@ export class AIChasingState extends StateWithHealthEvents {
 
       // Chase target enemy otherwise
       const path = this.entity.navMeshAgent.calculatePath(targetEnemy.position);
-      if (path === null) return new AIIdleState(this.entity);
+      if (path === null || path.length === 0) return new AIIdleState(this.entity);
 
       this.entity.movementController.moveAlongPath(path);
 
