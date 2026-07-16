@@ -6,12 +6,19 @@ import { GameObjectComponent } from '../GameObjectComponent';
 import { GameObject } from '../../internal-3d/GameObject/GameObject';
 import { MOVE_TO_ARRIVAL_THRESHOLD, MOVEMENT_CONTROLLER_MESSAGES } from './constants';
 
-const ROTATION_LERP_FACTOR = 0.1;
+export const ROTATION_LERP_FACTOR = 0.1;
 
 export type MovementControllerOptions = {
   defaultSpeed: number;
   sprintSpeed: number;
 };
+
+// Module scoped, allocated once to avoid allocating new vectors
+// and eulers every frame, which could cause GC overhead.
+// These are used for temporary calculations.
+const _tempVector = new THREE.Vector3();
+const _tempVelocity = new THREE.Vector3();
+const _tempEuler = new THREE.Euler();
 
 export class MovementController extends GameObjectComponent<MovementControllerOptions> {
   private _rigidBody: RigidBody;
@@ -131,24 +138,35 @@ export class MovementController extends GameObjectComponent<MovementControllerOp
     return moveAlongPathPromise;
   }
 
-  public rotate(direction: THREE.Vector3): void {
+  public rotate(angle: number): void;
+  public rotate(direction: THREE.Vector3): void;
+  public rotate(directionOrAngle: THREE.Vector3 | number): void {
+    // Argument is a angle in radians
+    if (typeof directionOrAngle === 'number') {
+      this._currentRotation = directionOrAngle;
+      _tempEuler.set(0, this._currentRotation, 0);
+      this._rigidBody.setEulerRotation(_tempEuler);
+      return;
+    }
+
+    // Argument is a direction vector
+    const direction = directionOrAngle as THREE.Vector3;
     if (direction.x !== 0 || direction.z !== 0) {
       const targetRotation = Math.atan2(direction.x, direction.z);
-
       const delta = targetRotation - this._currentRotation;
       const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
       this._currentRotation += shortestAngle * ROTATION_LERP_FACTOR;
     }
-
-    this._rigidBody.setEulerRotation(new THREE.Euler(0, this._currentRotation, 0));
+    _tempEuler.set(0, this._currentRotation, 0);
+    this._rigidBody.setEulerRotation(_tempEuler);
   }
 
   public rotateTowardsPosition(position: THREE.Vector3): void {
-    const direction = position.clone().sub(this.gameObject.position);
-    direction.y = 0;
-    direction.normalize();
+    _tempVector.copy(position).sub(this.gameObject.position);
+    _tempVector.y = 0;
+    _tempVector.normalize();
 
-    this.rotate(direction);
+    this.rotate(_tempVector);
   }
 
   protected override onUpdate(_deltaTime: number): void {
@@ -165,20 +183,20 @@ export class MovementController extends GameObjectComponent<MovementControllerOp
       return;
     }
 
-    const direction = this._currentMoveToTarget.clone().sub(this.gameObject.position);
-    direction.y = 0;
-    direction.normalize();
+    _tempVector.copy(this._currentMoveToTarget).sub(this.gameObject.position);
+    _tempVector.y = 0;
+    _tempVector.normalize();
 
-    this.move(direction, this._currentMoveToSpeed);
+    this.move(_tempVector, this._currentMoveToSpeed);
   }
 
   private _moveRigidbody(direction: THREE.Vector3, speed = this._currentSpeed): void {
-    const velocity = direction.clone().multiplyScalar(speed);
-    velocity.y = this._rigidBody.getLinearVelocity().y;
+    _tempVelocity.copy(direction).multiplyScalar(speed);
+    _tempVelocity.y = this._rigidBody.getLinearVelocity().y;
 
     this.rotate(direction);
 
-    this._rigidBody.setLinearVelocity(velocity);
+    this._rigidBody.setLinearVelocity(_tempVelocity);
   }
 
   private _getHorizontalDistanceTo(target: THREE.Vector3): number {

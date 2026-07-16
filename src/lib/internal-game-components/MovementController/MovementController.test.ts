@@ -8,8 +8,8 @@ vi.mock('electron', () => ({
 
 import { RigidBody } from '../RigidBody';
 import { Scene } from '../../internal-3d/Scene/Scene';
-import { MovementController } from './MovementController';
 import { GameObject } from '../../internal-3d/GameObject/GameObject';
+import { MovementController, ROTATION_LERP_FACTOR } from './MovementController';
 import { MOVE_TO_ARRIVAL_THRESHOLD, MOVEMENT_CONTROLLER_MESSAGES } from './constants';
 
 class TestScene extends Scene {
@@ -152,6 +152,53 @@ describe('MovementController', () => {
       const path = [new THREE.Vector3(10, 0, 0)];
       await expect(controller.moveAlongPath(path)).resolves.toBeUndefined();
       expect(setLinearVelocity).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rotation', () => {
+    it('rotates towards a given position', () => {
+      const { controller, gameObject } = createMovementController();
+      const targetPosition = new THREE.Vector3(10, 0, 10);
+      const rotateSpy = vi.spyOn(controller, 'rotate');
+
+      controller.rotateTowardsPosition(targetPosition);
+
+      const expectedDirection = targetPosition.clone().sub(gameObject.position);
+      expectedDirection.y = 0;
+      expectedDirection.normalize();
+
+      expect(rotateSpy).toHaveBeenCalledWith(expectedDirection);
+    });
+
+    it('rotates to a specific angle in radians', () => {
+      const { controller, rigidBody } = createMovementController();
+      const angle = Math.PI / 4;
+
+      controller.rotate(angle);
+
+      expect(rigidBody.setEulerRotation).toHaveBeenCalledWith(
+        expect.objectContaining({ x: 0, y: angle, z: 0 })
+      );
+      expect(controller['_currentRotation']).toBeCloseTo(angle);
+    });
+
+    it('rotates towards a given direction vector', () => {
+      const { controller, rigidBody } = createMovementController();
+      const direction = new THREE.Vector3(1, 0, 1);
+
+      const targetRotation = Math.atan2(direction.x, direction.z);
+      const delta = targetRotation - controller['_currentRotation'];
+      const shortestAngle = Math.atan2(Math.sin(delta), Math.cos(delta));
+
+      const expectedRotation =
+        controller['_currentRotation'] + shortestAngle * ROTATION_LERP_FACTOR;
+
+      controller.rotate(direction);
+
+      expect(controller['_currentRotation']).toBeCloseTo(expectedRotation);
+      expect(rigidBody.setEulerRotation).toHaveBeenCalledWith(
+        expect.objectContaining({ x: 0, y: expectedRotation, z: 0 })
+      );
     });
   });
 });
