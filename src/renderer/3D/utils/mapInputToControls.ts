@@ -1,23 +1,33 @@
 import * as THREE from 'three';
 import { InputState, GamepadButton } from '@tgdf';
 
+import { PlayerActionType } from '../types';
+
 export type ControlsState =
-  | { type: 'idle' }
   | {
-      type: 'run' | 'sprint';
+      type: PlayerActionType.RUN | PlayerActionType.SPRINT;
       direction: THREE.Vector3;
     }
-  | { type: 'action-up' | 'action-down' | 'action-left' | 'action-right' };
+  | {
+      type:
+        | PlayerActionType.IDLE
+        | PlayerActionType.ACTION_UP
+        | PlayerActionType.ACTION_DOWN
+        | PlayerActionType.ACTION_LEFT
+        | PlayerActionType.ACTION_RIGHT
+        | PlayerActionType.ACTION_FOCUS;
+    };
 
 const AXIS_DEADZONE = 0.15;
 
 export function mapInputToControls(inputState: InputState): ControlsState {
   // Priority 1: Check for action inputs
   const actionMappings = {
-    'action-up': ['ArrowUp', 'DPAD_UP'],
-    'action-down': ['ArrowDown', 'DPAD_DOWN'],
-    'action-left': ['ArrowLeft', 'DPAD_LEFT'],
-    'action-right': ['ArrowRight', 'DPAD_RIGHT'],
+    [PlayerActionType.ACTION_UP]: ['ArrowUp', 'DPAD_UP'],
+    [PlayerActionType.ACTION_DOWN]: ['ArrowDown', 'DPAD_DOWN'],
+    [PlayerActionType.ACTION_LEFT]: ['ArrowLeft', 'DPAD_LEFT'],
+    [PlayerActionType.ACTION_RIGHT]: ['ArrowRight', 'DPAD_RIGHT'],
+    [PlayerActionType.ACTION_FOCUS]: ['Space', 'RT'],
   } as const;
 
   for (const action of Object.keys(actionMappings)) {
@@ -53,15 +63,15 @@ export function mapInputToControls(inputState: InputState): ControlsState {
   };
 
   if (inputState.keyboard.isKeyPressed('ShiftLeft') || inputState.gamepad.isButtonPressed('RB')) {
-    return { type: 'sprint', direction: getMovementDirection() };
+    return { type: PlayerActionType.SPRINT, direction: getMovementDirection() };
   }
 
   // Priority 3: Check for run (movement keys/sticks)
   const hasMovementDirection = getMovementDirection().length() > 0;
 
   if (hasMovementDirection) {
-    return { type: 'run', direction: getMovementDirection() };
+    return { type: PlayerActionType.RUN, direction: getMovementDirection() };
   }
 
-  return { type: 'idle' };
+  return { type: PlayerActionType.IDLE };
 }

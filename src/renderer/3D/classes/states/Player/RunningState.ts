@@ -1,14 +1,13 @@
 import * as THREE from 'three';
 import { Input, InputState, logger } from '@tgdf';
 
-import { Entity } from '../../../Entity';
-import { SprintingState, IdleState } from './index';
-import { AnimationClipNamesShared } from '../../../../../types';
-import { State, StateWithHealthEvents } from '../../../../states';
-import { mapInputToControls } from '../../../../../utils/mapInputToControls';
+import { AnimationClipNamesShared } from '../../../types';
+import { Player } from '../../gameObjects/players/Player';
+import { mapInputToControls } from '../../../utils/mapInputToControls';
+import { State, StateWithHealthEvents, SprintingState, IdleState } from '..';
 
 export class RunningState extends StateWithHealthEvents {
-  constructor(public entity: Entity) {
+  constructor(public entity: Player) {
     super(entity);
   }
 

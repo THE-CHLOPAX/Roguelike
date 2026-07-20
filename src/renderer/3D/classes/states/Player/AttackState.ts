@@ -1,11 +1,10 @@
 import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
-import { Entity } from '../../../Entity';
-import { IdleState, RunningState } from './index';
-import { AttackAction } from '../../../../../types';
-import { State, StateWithHealthEvents } from '../../../../states';
-import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../../../../FMOD';
-import { ControlsState, mapInputToControls } from '../../../../../utils/mapInputToControls';
+import { AttackAction } from '../../../types';
+import { Player } from '../../gameObjects/players/Player';
+import { State, StateWithHealthEvents, IdleState, RunningState } from '..';
+import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../../FMOD';
+import { ControlsState, mapInputToControls } from '../../../utils/mapInputToControls';
 
 export class AttackState extends StateWithHealthEvents {
   private _attackInProgress = false;
@@ -13,7 +12,7 @@ export class AttackState extends StateWithHealthEvents {
   private _eventInstance: FMODEventInstance | null = null;
 
   constructor(
-    public entity: Entity,
+    public entity: Player,
     private _attackAction: AttackAction
   ) {
     super(entity);

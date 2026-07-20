@@ -12,6 +12,17 @@ export enum AnimationClipNamesShared {
   STAND_UP = 'stand-up',
 }
 
+export enum PlayerActionType {
+  IDLE = 'idle',
+  RUN = 'run',
+  SPRINT = 'sprint',
+  ACTION_UP = 'action-up',
+  ACTION_DOWN = 'action-down',
+  ACTION_LEFT = 'action-left',
+  ACTION_RIGHT = 'action-right',
+  ACTION_FOCUS = 'action-focus',
+}
+
 export enum StateGroup {
   MOVEMENT = 'movement',
   ACTION = 'action',

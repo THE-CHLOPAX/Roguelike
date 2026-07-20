@@ -6,7 +6,6 @@ import { GameScene } from './GameScene';
 import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { Monk } from '../gameObjects/players/Monk/Monk';
 import { pixelateTexture } from '../../utils/pixelateTexture';
-import { Skeleton } from '../gameObjects/mobs/Skeleton/Skeleton';
 import { MAIN_CROWD_ID, NAVMESH_AGENT_RADIUS } from '../../constants';
 
 export type TestSceneConstructorOptions = {
@@ -68,8 +67,5 @@ export class TestScene extends GameScene {
     this.add(monk);
 
     this.camera.follow(monk);
-
-    const skeleton = new Skeleton(this, navMesh, crowd);
-    this.add(skeleton);
   }
 }

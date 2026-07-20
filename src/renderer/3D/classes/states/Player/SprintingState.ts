@@ -1,13 +1,12 @@
 import { InputState } from '@tgdf';
 
-import { Entity } from '../../../Entity';
-import { State } from '../../../../states';
-import { IdleState, RunningState } from './index';
-import { AnimationClipNamesShared } from '../../../../../types';
-import { mapInputToControls } from '../../../../../utils/mapInputToControls';
+import { State, IdleState, RunningState } from '..';
+import { AnimationClipNamesShared } from '../../../types';
+import { Player } from '../../gameObjects/players/Player';
+import { mapInputToControls } from '../../../utils/mapInputToControls';
 
 export class SprintingState extends RunningState {
-  constructor(public entity: Entity) {
+  constructor(public entity: Player) {
     super(entity);
   }
 
