@@ -3,13 +3,13 @@ import { InputState, throttleWithLastValue } from '@tgdf';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { AIAttackAction, AnimationClipNamesShared } from '../../../types';
+import { AIAttack, AnimationClipNamesShared } from '../../../types';
 import { State, StateWithHealthEvents, AIIdleState, AIAttackState } from '..';
 
 const UPDATE_THROTTLE_INTERVAL_MS = 250;
 
 export class AIChasingState extends StateWithHealthEvents {
-  public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
+  public static checkCondition(entity: EntityAI, attack: AIAttack): boolean {
     // Check if there is a target enemy
     const targetEnemy = getTargetEnemy(entity);
     if (!targetEnemy) return false;

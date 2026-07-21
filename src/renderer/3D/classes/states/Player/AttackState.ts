@@ -1,9 +1,9 @@
 import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
-import { AttackAction } from '../../../types';
+import { ActionWithSound } from '../../../types';
 import { Player } from '../../gameObjects/players/Player';
+import { FMODAudio, FMODEventInstance } from '../../../../FMOD';
 import { State, StateWithHealthEvents, IdleState, RunningState } from '..';
-import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../../FMOD';
 import { ControlsState, mapInputToControls } from '../../../utils/mapInputToControls';
 
 export class AttackState extends StateWithHealthEvents {
@@ -13,20 +13,20 @@ export class AttackState extends StateWithHealthEvents {
 
   constructor(
     public entity: Player,
-    private _attackAction: AttackAction
+    private _attackAction: ActionWithSound
   ) {
     super(entity);
   }
 
   public override onEnter(): void {
     this._eventInstance = FMODAudio.playEventInSoundChannel({
-      eventPath: FMOD_EVENTS.ATTACK,
+      eventPath: this._attackAction.soundPath,
       channelId: MAIN_SOUND_CHANNEL,
     });
 
     this._attackInProgress = true;
 
-    this._attackAction(this.entity).then(() => {
+    this._attackAction.action(this.entity).then(() => {
       this._attackInProgress = false;
     });
   }

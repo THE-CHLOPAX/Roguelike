@@ -1,8 +1,15 @@
-import { kick } from './attacks';
+import { kick } from './actions';
 import { Player, PlayerOptions } from '../Player';
 import { PlayerActionType } from '../../../../../3D/types';
+import { FocusState } from '../../../states/Player/FocusState';
 import { AttackState, RunningState, SprintingState } from '../../../states';
 import { MODELS, DEFAULT_RIGID_BODY_OPTIONS } from '../../../../../3D/constants';
+
+enum MonkAnimationClipNames {
+  FOCUS_START = 'praying-start',
+  FOCUS_PROGRESS = 'praying',
+  FOCUS_END = 'spawn',
+}
 
 export const config: PlayerOptions = {
   modelOptions: {
@@ -16,10 +23,11 @@ export const config: PlayerOptions = {
   rigidBodyOptions: { ...DEFAULT_RIGID_BODY_OPTIONS },
   animationControllerOptions: {
     playbackRates: {
-      spawn: 2,
+      spawn: 2.5,
       kick: 1.5,
       hit: 1.8,
       run: 0.9,
+      [MonkAnimationClipNames.FOCUS_START]: 1.8,
     },
   },
   healthOptions: {
@@ -39,7 +47,12 @@ export const config: PlayerOptions = {
       return new AttackState(entity, kick);
     },
     [PlayerActionType.ACTION_FOCUS]: (entity: Player) => {
-      return new AttackState(entity, kick);
+      return new FocusState(
+        entity,
+        MonkAnimationClipNames.FOCUS_START,
+        MonkAnimationClipNames.FOCUS_PROGRESS,
+        MonkAnimationClipNames.FOCUS_END
+      );
     },
     [PlayerActionType.RUN]: (entity: Player) => {
       return new RunningState(entity);

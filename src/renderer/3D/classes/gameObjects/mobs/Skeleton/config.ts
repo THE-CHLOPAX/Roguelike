@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { attackActions } from './attacks';
+import { attackActions } from './actions';
 import { Player } from '../../players/Player';
 import { EntityAIOptions } from '../../EntityAI';
 import { AnimationClipNamesShared } from '../../../../../3D/types';

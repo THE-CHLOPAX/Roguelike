@@ -2,15 +2,17 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 
 import { Entity } from '../../Entity';
-import { AIAttackAction } from '../../../../types';
+import { AIAttack } from '../../../../types';
+import { FMOD_EVENTS } from '../../../../../FMOD/constants';
 
 export enum SkeletonAttackAnimations {
   PUNCH = 'punch',
 }
 
-export const attackActions: AIAttackAction[] = [
+export const attackActions: AIAttack[] = [
   {
     action: punch,
+    soundPath: FMOD_EVENTS.ATTACK,
     minRange: 0,
     maxRange: 2,
   },

@@ -42,10 +42,14 @@ export type StateConfig<T> = {
   interruptible: boolean;
 };
 
-export type AttackAction = (entity: Entity) => Promise<void>;
+export type AsyncAction = (entity: Entity) => Promise<void>;
 
-export type AIAttackAction = {
-  action: AttackAction;
+export type ActionWithSound = {
+  action: AsyncAction;
+  soundPath: string;
+};
+
+export type AIAttack = ActionWithSound & {
   minRange: number;
   maxRange: number;
 };
@@ -59,5 +63,5 @@ export type AIRoamingOptions = {
 };
 
 export type AIAttackOptions = {
-  actions: AIAttackAction[];
+  actions: AIAttack[];
 };

@@ -1,6 +1,6 @@
 import { Scene } from '@tgdf';
 
-import { State } from '../../states';
+import { IdleState, State } from '../../states';
 import { Entity, EntityOptions } from '../Entity';
 import { PlayerActionType } from '../../../../../renderer/3D/types';
 
@@ -15,6 +15,8 @@ export class Player extends Entity {
     public options: PlayerOptions
   ) {
     super(scene, options);
+
+    this.stateController.currentState = new IdleState(this);
   }
 
   public onAction(actionType: PlayerActionType): State | null {
