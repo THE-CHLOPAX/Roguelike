@@ -1,9 +1,11 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
 
+import { IdleState } from 'renderer/3D/classes/states';
+
 import { Entity } from '../../Entity';
 import { FMOD_EVENTS } from '../../../../../FMOD';
-import { ActionWithSound } from '../../../../types';
+import { ActionWithSound, SequenceSkill, PlayerActionType } from '../../../../types';
 
 export const kick: ActionWithSound = {
   action: (entity: Entity) =>
@@ -43,16 +45,17 @@ export const kick: ActionWithSound = {
   soundPath: FMOD_EVENTS.ATTACK,
 };
 
-export const enterFocusMode: ActionWithSound = {
-  action: (entity: Entity) =>
-    new Promise<void>((resolve) => {
-      entity.animationController.playAnimation('praying-start', {
-        clampWhenFinished: true,
-        playbackRate: 1.3,
-        onComplete: () => {
-          resolve();
-        },
-      });
-    }),
-  soundPath: '',
+export const summonOrbs: SequenceSkill = {
+  sequence: [
+    PlayerActionType.ACTION_UP,
+    PlayerActionType.ACTION_RIGHT,
+    PlayerActionType.ACTION_DOWN,
+    PlayerActionType.ACTION_LEFT,
+  ],
+  getState: (entity) => new IdleState(entity),
+  callback: (_entity) => {
+    return new Promise((resolve) => {
+      resolve();
+    });
+  },
 };

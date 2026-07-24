@@ -8,7 +8,7 @@ import { ControlsState, mapInputToControls } from '../../../utils/mapInputToCont
 
 export class AttackState extends StateWithHealthEvents {
   private _attackInProgress = false;
-  private _controlState: ControlsState | null = null;
+  private _controlsStates: ControlsState[] = [];
   private _eventInstance: FMODEventInstance | null = null;
 
   constructor(
@@ -38,18 +38,21 @@ export class AttackState extends StateWithHealthEvents {
   }
 
   public override onInput(inputState: InputState): State {
-    this._controlState = mapInputToControls(inputState);
+    this._controlsStates = mapInputToControls(inputState);
     return this;
   }
 
   public override onUpdate(_deltaTime: number): State {
-    if (!this._attackInProgress && this._controlState?.type === 'idle') {
+    if (this._attackInProgress) return this;
+
+    if (this._controlsStates.some((controlState) => controlState.type === 'idle')) {
       return new IdleState(this.entity);
     }
 
     if (
-      !this._attackInProgress &&
-      (this._controlState?.type === 'run' || this._controlState?.type === 'sprint')
+      this._controlsStates.some(
+        (controlState) => controlState.type === 'run' || controlState.type === 'sprint'
+      )
     ) {
       return new RunningState(this.entity);
     }

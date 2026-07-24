@@ -8,7 +8,9 @@ export type PlayerOptions = EntityOptions & {
   actions: {
     [key in PlayerActionType]?: (entity: Player) => State;
   };
+  focusOptions?: FocusOptions;
 };
+
 export class Player extends Entity {
   constructor(
     scene: Scene,

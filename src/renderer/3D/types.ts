@@ -1,4 +1,6 @@
+import { State } from './classes/states';
 import { Entity } from './classes/gameObjects/Entity';
+import { Player } from './classes/gameObjects/players/Player';
 
 export enum AnimationClipNamesShared {
   SPAWN = 'spawn',
@@ -23,23 +25,10 @@ export enum PlayerActionType {
   ACTION_FOCUS = 'action-focus',
 }
 
-export enum StateGroup {
-  MOVEMENT = 'movement',
-  ACTION = 'action',
-  PHYSICS = 'physics',
-  DEAD = 'dead',
-}
-
 export type ModelRecord = {
   id: string;
   path: string;
   nameExtractor?: string;
-};
-
-export type StateConfig<T> = {
-  allowedTransitions: T[];
-  stateGroup: StateGroup;
-  interruptible: boolean;
 };
 
 export type AsyncAction = (entity: Entity) => Promise<void>;
@@ -64,4 +53,22 @@ export type AIRoamingOptions = {
 
 export type AIAttackOptions = {
   actions: AIAttack[];
+};
+
+export type SequenceInputType =
+  | PlayerActionType.ACTION_UP
+  | PlayerActionType.ACTION_RIGHT
+  | PlayerActionType.ACTION_DOWN
+  | PlayerActionType.ACTION_LEFT;
+
+export type SequenceSkill = {
+  sequence: SequenceInputType[];
+  getState: (entity: Player) => State;
+  callback?: AsyncAction;
+};
+
+export type FocusOptions = {
+  clips: { enter: string; progress: string; exit: string };
+  skills: SequenceSkill[];
+  timeoutMs: number;
 };

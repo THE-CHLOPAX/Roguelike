@@ -17,11 +17,15 @@ export class IdleState extends StateWithHealthEvents {
   public override onExit(): void {}
 
   public override onInput(inputState: InputState): State {
-    const controlState = mapInputToControls(inputState);
+    const controlsStates = mapInputToControls(inputState);
 
-    const newState = this.entity.onAction(controlState.type);
+    for (const controlState of controlsStates) {
+      const newState = this.entity.onAction(controlState.type);
 
-    return newState ?? this;
+      if (newState) return newState;
+    }
+
+    return this;
   }
 
   public override onUpdate(_deltaTime: number): State {

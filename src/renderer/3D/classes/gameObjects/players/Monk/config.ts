@@ -1,4 +1,4 @@
-import { kick } from './actions';
+import { kick, summonOrbs } from './actions';
 import { Player, PlayerOptions } from '../Player';
 import { PlayerActionType } from '../../../../../3D/types';
 import { FocusState } from '../../../states/Player/FocusState';
@@ -47,12 +47,15 @@ export const config: PlayerOptions = {
       return new AttackState(entity, kick);
     },
     [PlayerActionType.ACTION_FOCUS]: (entity: Player) => {
-      return new FocusState(
-        entity,
-        MonkAnimationClipNames.FOCUS_START,
-        MonkAnimationClipNames.FOCUS_PROGRESS,
-        MonkAnimationClipNames.FOCUS_END
-      );
+      return new FocusState(entity, {
+        clips: {
+          enter: MonkAnimationClipNames.FOCUS_START,
+          progress: MonkAnimationClipNames.FOCUS_PROGRESS,
+          exit: MonkAnimationClipNames.FOCUS_END,
+        },
+        skills: [summonOrbs],
+        timeoutMs: 500,
+      });
     },
     [PlayerActionType.RUN]: (entity: Player) => {
       return new RunningState(entity);

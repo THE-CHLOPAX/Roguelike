@@ -1,31 +1,33 @@
 import { Input, InputState } from '@tgdf';
 
-import { PlayerActionType } from '3D/types';
 import { mapInputToControls } from '3D/utils/mapInputToControls';
+import { PlayerActionType, FocusOptions, SequenceInputType } from '3D/types';
 
 import { Player } from '../../gameObjects/players/Player';
 import { IdleState, State, StateWithHealthEvents } from '../';
+import { InputSequenceTracker } from './InputSequenceTracker/InputSequenceTracker';
 
 export class FocusState extends StateWithHealthEvents {
   private _focusInProgress: boolean = false;
   private _exitingFocus: boolean = false;
   private _exitFocusAnimationEnded: boolean = false;
+  private _inputSequenceTracker: InputSequenceTracker;
 
   constructor(
     public entity: Player,
-    public enterFocusClipName: string,
-    public focusProgressClipName: string,
-    public exitFocusClipName: string
+    public options: FocusOptions
   ) {
     super(entity);
+
+    this._inputSequenceTracker = new InputSequenceTracker(options.skills, options.timeoutMs);
   }
 
   public override onEnter(): void {
-    this.entity.animationController.playAnimation(this.enterFocusClipName, {
+    this.entity.animationController.playAnimation(this.options.clips.enter, {
       clampWhenFinished: true,
       onComplete: () => {
         this._focusInProgress = true;
-        this.entity.animationController.playAnimation(this.focusProgressClipName, {
+        this.entity.animationController.playAnimation(this.options.clips.progress, {
           loop: true,
         });
       },
@@ -37,15 +39,17 @@ export class FocusState extends StateWithHealthEvents {
       return this._exitFocusAnimationEnded ? new IdleState(this.entity) : this;
     }
 
-    const controlState = mapInputToControls(Input.getState());
+    const controlsStates = mapInputToControls(Input.getState());
 
-    const isFocusActionPressed = controlState.type === PlayerActionType.ACTION_FOCUS;
+    const isFocusActionPressed = controlsStates.some(
+      (controlState) => controlState.type === PlayerActionType.ACTION_FOCUS
+    );
 
     if (!isFocusActionPressed) {
       if (this._focusInProgress) {
         this._focusInProgress = false;
         this._exitingFocus = true;
-        this.entity.animationController.playAnimation(this.exitFocusClipName, {
+        this.entity.animationController.playAnimation(this.options.clips.exit, {
           clampWhenFinished: true,
           onComplete: () => {
             this._exitFocusAnimationEnded = true;
@@ -59,18 +63,35 @@ export class FocusState extends StateWithHealthEvents {
     return this;
   }
 
-  public override onInput(_inputState: InputState): State {
+  public override onInput(inputState: InputState): State {
+    const controlsState = mapInputToControls(inputState);
+    const lastInput = controlsState[0];
+
+    if (isSequenceInputType(lastInput.type)) {
+      const sequenceResult = this._inputSequenceTracker.push(lastInput.type, performance.now());
+
+      // Skill sequence complete
+      if (sequenceResult !== null) {
+        sequenceResult.callback?.(this.entity);
+        return sequenceResult.getState(this.entity);
+      }
+    }
+
     return this;
   }
 
   protected override recreateInstance(): FocusState {
-    return new FocusState(
-      this.entity,
-      this.enterFocusClipName,
-      this.focusProgressClipName,
-      this.exitFocusClipName
-    );
+    return new FocusState(this.entity, this.options);
   }
 
   public override onExit(): void {}
+}
+
+function isSequenceInputType(type: string): type is SequenceInputType {
+  return (
+    type === PlayerActionType.ACTION_UP ||
+    type === PlayerActionType.ACTION_DOWN ||
+    type === PlayerActionType.ACTION_RIGHT ||
+    type === PlayerActionType.ACTION_LEFT
+  );
 }

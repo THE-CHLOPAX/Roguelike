@@ -18,13 +18,13 @@ export class RunningState extends StateWithHealthEvents {
   public override onExit(): void {}
 
   public override onInput(inputState: InputState): State {
-    const controlsState = mapInputToControls(inputState);
+    const controlsStates = mapInputToControls(inputState);
 
-    if (controlsState.type === 'sprint') {
+    if (controlsStates.some((controlState) => controlState.type === 'sprint')) {
       return new SprintingState(this.entity);
     }
 
-    if (controlsState.type === 'idle') {
+    if (controlsStates.some((controlState) => controlState.type === 'idle')) {
       return new IdleState(this.entity);
     }
 
@@ -32,10 +32,12 @@ export class RunningState extends StateWithHealthEvents {
   }
 
   public override onUpdate(_deltaTime: number): State {
-    const controlState = mapInputToControls(Input.getState());
-    if (controlState === null || !('direction' in controlState)) return this;
+    const controlsStates = mapInputToControls(Input.getState());
+    const movementState = controlsStates.find((controlState) => 'direction' in controlState);
 
-    this._moveEntity(controlState.direction);
+    if (!movementState) return this;
+
+    this._moveEntity(movementState.direction);
     return this;
   }
 

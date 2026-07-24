@@ -20,13 +20,13 @@ export class SprintingState extends RunningState {
   }
 
   public override onInput(inputState: InputState): State {
-    const controlState = mapInputToControls(inputState);
+    const controlsStates = mapInputToControls(inputState);
 
-    if (controlState.type === 'idle') {
+    if (controlsStates.some((controlState) => controlState.type === 'idle')) {
       return new IdleState(this.entity);
     }
 
-    if (controlState.type === 'run') {
+    if (controlsStates.some((controlState) => controlState.type === 'run')) {
       return new RunningState(this.entity);
     }
 
