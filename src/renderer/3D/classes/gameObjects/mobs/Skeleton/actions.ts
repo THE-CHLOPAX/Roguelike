@@ -21,7 +21,7 @@ export const attackActions: AIAttack[] = [
 function punch(entity: Entity) {
   return new Promise<void>((resolve) => {
     const HITBOX_DELAY = 0.7; // Delay in seconds before the hitbox is attached
-    const HITBOX_DURATION = 0.8; // Duration in seconds for which the hitbox remains active
+    const HITBOX_DURATION = 0.4; // Duration in seconds for which the hitbox remains active
 
     entity.damageHitboxController.hitboxTimeline = gsap
       .timeline()

@@ -59,3 +59,28 @@ export const summonOrbs: SequenceSkill = {
     });
   },
 };
+
+export const healingAura: SequenceSkill = {
+  sequence: [
+    PlayerActionType.ACTION_UP,
+    PlayerActionType.ACTION_UP,
+    PlayerActionType.ACTION_LEFT,
+    PlayerActionType.ACTION_RIGHT,
+  ],
+  getState: (entity) => new IdleState(entity),
+  callback: (_entity) => {
+    return new Promise((resolve) => {
+      resolve();
+    });
+  },
+};
+
+export const roll: SequenceSkill = {
+  sequence: [PlayerActionType.ACTION_UP, PlayerActionType.ACTION_UP],
+  getState: (entity) => new IdleState(entity),
+  callback: (_entity) => {
+    return new Promise((resolve) => {
+      resolve();
+    });
+  },
+};

@@ -52,6 +52,7 @@ function createRenderer(model?: THREE.Object3D) {
 
 describe('ModelRenderer', () => {
   beforeEach(() => {
+    vi.mocked(getModelFromStore).mockClear();
     vi.spyOn(ResourceTracker, 'trackObject');
     vi.spyOn(ResourceTracker, 'disposeObjectResources');
     vi.spyOn(ResourceTracker, 'untrackObject');
@@ -67,6 +68,67 @@ describe('ModelRenderer', () => {
 
     expect(modelRenderer.getModel()).toBe(model);
     expect(gameObject.children).toContain(model);
+  });
+
+  describe('constructor options', () => {
+    it('resolves the model from the asset store when given an id', () => {
+      const scene = new TestScene();
+      const gameObject = new GameObject({ scene });
+      const model = createMeshModel();
+      vi.mocked(getModelFromStore).mockReturnValue(model);
+
+      const modelRenderer = new ModelRenderer(gameObject, { id: 'test-model' });
+
+      expect(getModelFromStore).toHaveBeenCalledWith('test-model');
+      expect(modelRenderer.getModel()).toBe(model);
+    });
+
+    it('uses the provided model directly without touching the asset store', () => {
+      const scene = new TestScene();
+      const gameObject = new GameObject({ scene });
+      const model = createMeshModel();
+
+      const modelRenderer = new ModelRenderer(gameObject, { model });
+
+      expect(getModelFromStore).not.toHaveBeenCalled();
+      expect(modelRenderer.getModel()).toBe(model);
+      expect(gameObject.children).toContain(model);
+    });
+
+    it('throws when the id cannot be resolved in the asset store', () => {
+      const scene = new TestScene();
+      const gameObject = new GameObject({ scene });
+      vi.mocked(getModelFromStore).mockReturnValue(undefined);
+
+      expect(() => new ModelRenderer(gameObject, { id: 'missing-model' })).toThrow();
+    });
+
+    it('applies the scale option when given a store id', () => {
+      const scene = new TestScene();
+      const gameObject = new GameObject({ scene });
+      const model = createMeshModel();
+      vi.mocked(getModelFromStore).mockReturnValue(model);
+
+      const modelRenderer = new ModelRenderer(gameObject, {
+        id: 'test-model',
+        scale: new THREE.Vector3(2, 2, 2),
+      });
+
+      expect(modelRenderer.getModel()?.scale).toEqual(new THREE.Vector3(2, 2, 2));
+    });
+
+    it('applies the scale option when given a ready model', () => {
+      const scene = new TestScene();
+      const gameObject = new GameObject({ scene });
+      const model = createMeshModel();
+
+      const modelRenderer = new ModelRenderer(gameObject, {
+        model,
+        scale: new THREE.Vector3(3, 3, 3),
+      });
+
+      expect(modelRenderer.getModel()?.scale).toEqual(new THREE.Vector3(3, 3, 3));
+    });
   });
 
   it('clones materials when setting a model', () => {

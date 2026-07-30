@@ -30,7 +30,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
     Input.registerNotifiable(this);
   }
 
-  public get scene(): Scene | undefined {
+  public get scene(): Scene {
     return this._scene;
   }
 
