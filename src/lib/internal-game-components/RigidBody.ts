@@ -21,6 +21,7 @@ export type RigidBodyOptions = {
   angularDamping?: number; // Rotation resistance
   lockRotation?: boolean;
   colliderShape?: RigidBodyShape;
+  colliderSize?: THREE.Vector3; // Explicit collider size; overrides the size derived from the mesh's bounding box
   sensor?: boolean; // If true, the collider will not produce physical responses but can still trigger collision events
   enableCollisionDetection?: boolean;
 };
@@ -115,6 +116,16 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     const body = this._getBody();
     const quat = new THREE.Quaternion().setFromEuler(euler);
     body.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }, true);
+  }
+
+  public setEnabled(enabled: boolean): void {
+    const body = this._getBody();
+    body.setEnabled(enabled);
+  }
+
+  public isEnabled(): boolean {
+    const body = this._getBody();
+    return body.isEnabled();
   }
 
   public syncFromPhysics(): void {

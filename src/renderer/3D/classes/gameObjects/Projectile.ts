@@ -18,16 +18,16 @@ const DEFAULT_RIGID_OPTIONS: RigidBodyOptions = {
   angularDamping: 0,
   friction: 0,
   linearDamping: 0,
-  sensor: false,
+  sensor: true,
   restitution: 0,
   lockRotation: true,
 };
 
 export class Projectile extends GameObject {
+  public rigidBody: RigidBody;
+
   private _speed: number;
   private _maxRange: number;
-
-  private _rigidBody: RigidBody;
 
   private _sentFromPosition: THREE.Vector3 | null = null;
   private _direction: THREE.Vector3 | null = null;
@@ -40,7 +40,7 @@ export class Projectile extends GameObject {
     this._maxRange = options.maxRange;
 
     this.addComponent('ModelRenderer', new ModelRenderer(this, { model: options.model }));
-    this._rigidBody = this.addComponent(
+    this.rigidBody = this.addComponent(
       'RigidBody',
       new RigidBody(this, { ...DEFAULT_RIGID_OPTIONS, ...options.rigidBodyOptions })
     );
@@ -57,9 +57,9 @@ export class Projectile extends GameObject {
 
     const collisionListenerId = `projectile-on-collision-listener-${this.name || this.id}`;
 
-    this._rigidBody.addCollisionListener(collisionListenerId, (_thisBody, otherBody, started) => {
+    this.rigidBody.addCollisionListener(collisionListenerId, (_thisBody, otherBody, started) => {
       if (!started) return;
-      this._rigidBody.removeCollisionListener(collisionListenerId);
+      this.rigidBody.removeCollisionListener(collisionListenerId);
       onCollision(otherBody.gameObject);
     });
 

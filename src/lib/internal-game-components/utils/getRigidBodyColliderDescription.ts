@@ -8,9 +8,11 @@ export function getRigidBodyColliderDescription(
   object: THREE.Object3D,
   options?: RigidBodyOptions
 ): RAPIER.ColliderDesc {
-  const bbox = new THREE.Box3().setFromObject(object);
-  const size = new THREE.Vector3();
-  bbox.getSize(size);
+  let size = options?.colliderSize;
+  if (!size) {
+    const bbox = new THREE.Box3().setFromObject(object);
+    size = bbox.getSize(new THREE.Vector3());
+  }
 
   let colliderDesc: RAPIER.ColliderDesc;
 
@@ -38,9 +40,12 @@ export function getRigidBodyColliderDescription(
     colliderDesc.setSensor(true);
   }
 
-  // Enable collision events if requested
+  // Enable collision events if requested. Rapier's default active collision types
+  // only cover pairs involving a dynamic body (e.g. kinematic-vs-kinematic is excluded),
+  // so widen this too or kinematic sensors (projectiles, hitboxes) never see each other.
   if (options?.enableCollisionDetection) {
     colliderDesc.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+    colliderDesc.setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL);
   }
 
   return colliderDesc;

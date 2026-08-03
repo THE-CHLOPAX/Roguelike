@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { IdleState } from 'renderer/3D/classes/states';
 
 import { Entity } from '../../Entity';
+import { SacredOrb } from './SacredOrb';
 import { FMOD_EVENTS } from '../../../../../FMOD';
 import { ActionWithSound, SequenceSkill, PlayerActionType } from '../../../../types';
 
@@ -45,6 +46,11 @@ export const kick: ActionWithSound = {
   soundPath: FMOD_EVENTS.ATTACK,
 };
 
+const SACRED_ORB_COUNT = 3;
+const SACRED_ORB_FORMATION_RADIUS = 1;
+const SACRED_ORB_ANGLE_STEP = (Math.PI * 2) / SACRED_ORB_COUNT;
+const SACRED_ORB_ROTATION_DURATION = 6;
+
 export const summonOrbs: SequenceSkill = {
   sequence: [
     PlayerActionType.ACTION_UP,
@@ -52,9 +58,34 @@ export const summonOrbs: SequenceSkill = {
     PlayerActionType.ACTION_DOWN,
     PlayerActionType.ACTION_LEFT,
   ],
-  getState: (entity) => new IdleState(entity),
-  callback: (_entity) => {
+  callback: (entity) => {
     return new Promise((resolve) => {
+      const sacredOrbGroup = new THREE.Group();
+
+      for (let i = 0; i < SACRED_ORB_COUNT; i++) {
+        const sacredOrb = new SacredOrb(entity);
+        const angle = i * SACRED_ORB_ANGLE_STEP;
+
+        sacredOrb.position.set(
+          Math.cos(angle) * SACRED_ORB_FORMATION_RADIUS,
+          0,
+          Math.sin(angle) * SACRED_ORB_FORMATION_RADIUS
+        );
+
+        sacredOrbGroup.add(sacredOrb);
+      }
+
+      sacredOrbGroup.position.set(0, 0, 0);
+
+      entity.add(sacredOrbGroup);
+
+      gsap.to(sacredOrbGroup.rotation, {
+        y: `+=${Math.PI * 2}`,
+        duration: SACRED_ORB_ROTATION_DURATION,
+        repeat: -1,
+        ease: 'none',
+      });
+
       resolve();
     });
   },

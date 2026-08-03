@@ -27,9 +27,12 @@ export class FocusState extends StateWithHealthEvents {
       clampWhenFinished: true,
       onComplete: () => {
         this._focusInProgress = true;
-        this.entity.animationController.playAnimation(this.options.clips.progress, {
-          loop: true,
-        });
+
+        const progressClip = this.options.clips.progress;
+        if (progressClip) {
+          // If no progress clip is provided, the enter animation stays clamped on its last frame.
+          this.entity.animationController.playAnimation(progressClip, { loop: true });
+        }
       },
     });
   }
@@ -48,13 +51,19 @@ export class FocusState extends StateWithHealthEvents {
     if (!isFocusActionPressed) {
       if (this._focusInProgress) {
         this._focusInProgress = false;
-        this._exitingFocus = true;
-        this.entity.animationController.playAnimation(this.options.clips.exit, {
-          clampWhenFinished: true,
-          onComplete: () => {
-            this._exitFocusAnimationEnded = true;
-          },
-        });
+
+        const exitClip = this.options.clips.exit;
+        if (exitClip) {
+          this._exitingFocus = true;
+          this.entity.animationController.playAnimation(exitClip, {
+            clampWhenFinished: true,
+            onComplete: () => {
+              this._exitFocusAnimationEnded = true;
+            },
+          });
+        } else {
+          return new IdleState(this.entity);
+        }
       } else {
         return new IdleState(this.entity);
       }
@@ -64,6 +73,8 @@ export class FocusState extends StateWithHealthEvents {
   }
 
   public override onInput(inputState: InputState): State {
+    if (!this._focusInProgress) return this;
+
     const controlsState = mapInputToControls(inputState);
     const lastInput = controlsState[0];
 
@@ -73,7 +84,7 @@ export class FocusState extends StateWithHealthEvents {
       // Skill sequence complete
       if (sequenceResult !== null) {
         sequenceResult.callback?.(this.entity);
-        return sequenceResult.getState(this.entity);
+        return sequenceResult.getState?.(this.entity) ?? this;
       }
     }
 

@@ -63,12 +63,12 @@ export type SequenceInputType =
 
 export type SequenceSkill = {
   sequence: SequenceInputType[];
-  getState: (entity: Player) => State;
+  getState?: (entity: Player) => State;
   callback?: AsyncAction;
 };
 
 export type FocusOptions = {
-  clips: { enter: string; progress: string; exit: string };
+  clips: { enter: string; progress?: string; exit?: string };
   skills: SequenceSkill[];
   timeoutMs: number;
 };

@@ -42,8 +42,6 @@ export const config: PlayerOptions = {
       return new FocusState(entity, {
         clips: {
           enter: MonkAnimationClipNames.FOCUS_START,
-          progress: MonkAnimationClipNames.FOCUS_PROGRESS,
-          exit: MonkAnimationClipNames.FOCUS_END,
         },
         skills: [summonOrbs],
         timeoutMs: 500,
