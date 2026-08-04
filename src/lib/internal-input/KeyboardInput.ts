@@ -7,11 +7,15 @@ export class KeyboardInput {
     this._onInputCallback = onInputCallback;
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
+    window.addEventListener('blur', this._onWindowEvents);
+    window.addEventListener('focus', this._onWindowEvents);
   }
 
   public dispose(): void {
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
+    window.removeEventListener('blur', this._onWindowEvents);
+    window.removeEventListener('focus', this._onWindowEvents);
     this._pressedKeys.clear();
   }
 
@@ -56,6 +60,13 @@ export class KeyboardInput {
     this._pressedKeys.delete(key);
     this._pressedKeys.delete(code);
 
+    this._onInputCallback?.();
+  };
+
+  private _onWindowEvents = (): void => {
+    if (this._pressedKeys.size === 0) return;
+
+    this._pressedKeys.clear();
     this._onInputCallback?.();
   };
 }

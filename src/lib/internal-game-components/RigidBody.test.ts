@@ -9,10 +9,11 @@ vi.mock('electron', () => ({
 
 import { Scene } from '../internal-3d/Scene/Scene';
 import { RigidBody, RigidBodyOptions } from './RigidBody';
+import { MockCamera } from '../internal-3d/testUtils/MockCamera';
 import { GameObject } from '../internal-3d/GameObject/GameObject';
 
 class MockScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 interface CollisionObserver {
@@ -81,9 +82,13 @@ describe('RigidBody', () => {
     const debugMesh = rigidBody.getDebugMesh();
     assert(debugMesh !== null, 'Debug mesh is null');
     const debugGeo = (debugMesh.geometry as THREE.BoxGeometry).parameters;
+
+    expect(collider.shapeType()).toBe(RAPIER.ShapeType.Cuboid);
     expect(debugGeo.width).toBeCloseTo(size.x);
     expect(debugGeo.height).toBeCloseTo(size.y);
     expect(debugGeo.depth).toBeCloseTo(size.z);
+
+    expect(debugMesh.geometry).toBeInstanceOf(THREE.BoxGeometry);
   });
 
   it('creates cylinder collider from model bounds', async () => {
@@ -93,8 +98,28 @@ describe('RigidBody', () => {
 
     assert(collider !== null, 'Collider is null');
 
+    expect(collider.shapeType()).toBe(RAPIER.ShapeType.Cylinder);
     expect(collider.radius()).toBeCloseTo(1);
     expect(collider.halfHeight() * 2).toBeCloseTo(4);
+
+    const debugMesh = rigidBody.getDebugMesh();
+    assert(debugMesh !== null, 'Debug mesh is null');
+    expect(debugMesh.geometry).toBeInstanceOf(THREE.CylinderGeometry);
+  });
+
+  it('creates sphere collider from model bounds', async () => {
+    const size = new THREE.Vector3(2, 4, 2);
+    const { rigidBody } = await createRigidBody({ colliderShape: 'sphere' }, size);
+    const collider = rigidBody.getPhysicsCollider();
+
+    assert(collider !== null, 'Collider is null');
+
+    expect(collider.shapeType()).toBe(RAPIER.ShapeType.Ball);
+    expect(collider.radius()).toBeCloseTo(2);
+
+    const debugMesh = rigidBody.getDebugMesh();
+    assert(debugMesh !== null, 'Debug mesh is null');
+    expect(debugMesh.geometry).toBeInstanceOf(THREE.SphereGeometry);
   });
 
   it('removes and recreates collider when updatePhysicsCollider is called', async () => {

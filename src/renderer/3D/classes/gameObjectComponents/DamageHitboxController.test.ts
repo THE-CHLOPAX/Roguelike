@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Mock, It, Times, IMock } from 'moq.ts';
 import { Emitter, GameObjectEventMap, Scene } from '@tgdf';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
 
 import { Entity } from '../gameObjects/Entity';
 import { ModelRenderer } from './ModelRenderer/ModelRenderer';
@@ -13,7 +14,7 @@ vi.mock('electron', () => ({
 }));
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 const SIZE = new THREE.Vector3(1, 1, 1);

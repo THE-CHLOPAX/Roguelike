@@ -8,12 +8,13 @@ vi.mock('electron', () => ({
 
 import { RigidBody } from '../RigidBody';
 import { Scene } from '../../internal-3d/Scene/Scene';
+import { MockCamera } from '../../internal-3d/testUtils/MockCamera';
 import { GameObject } from '../../internal-3d/GameObject/GameObject';
 import { MovementController, ROTATION_LERP_FACTOR } from './MovementController';
 import { MOVE_TO_ARRIVAL_THRESHOLD, MOVEMENT_CONTROLLER_MESSAGES } from './constants';
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 function createMovementController(position = new THREE.Vector3(0, 0, 0)) {

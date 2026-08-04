@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 import { Scene } from '../Scene/Scene';
 import { PhysicsManager } from './PhysicsManager';
+import { MockCamera } from '../testUtils/MockCamera';
 import { GameObject } from '../GameObject/GameObject';
 import { RigidBody } from '../../internal-game-components/RigidBody';
 
@@ -12,7 +13,7 @@ vi.mock('electron', () => ({
 }));
 
 class MockScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 async function setupRigidBody(type: 'dynamic' | 'kinematic' = 'dynamic') {

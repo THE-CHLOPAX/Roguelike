@@ -1,3 +1,6 @@
+import * as THREE from 'three';
+import { SceneCamera } from '@tgdf';
+
 import { State } from './classes/states';
 import { Entity } from './classes/gameObjects/Entity';
 import { Player } from './classes/gameObjects/players/Player';
@@ -71,4 +74,9 @@ export type FocusOptions = {
   clips: { enter: string; progress?: string; exit?: string };
   skills: SequenceSkill[];
   timeoutMs: number;
+};
+
+export type GameCamera = SceneCamera & {
+  addShake: (intensity: number) => void;
+  pivotPoint: THREE.Vector3;
 };

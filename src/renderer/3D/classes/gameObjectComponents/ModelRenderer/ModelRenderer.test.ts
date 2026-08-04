@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameObject, getModelFromStore, ResourceTracker, Scene } from '@tgdf';
 
@@ -17,7 +18,7 @@ vi.mock('@tgdf', async (importOriginal) => {
 });
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 function createMeshModel(options?: { parentName?: string; parentScale?: number }): THREE.Group {

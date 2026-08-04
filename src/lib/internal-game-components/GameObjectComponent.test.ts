@@ -1,17 +1,17 @@
 import { Mock } from 'moq.ts';
-import * as THREE from 'three';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Emitter, GameObject, GameObjectEventMap, InputState } from '@tgdf';
 
 import { Scene } from '../internal-3d/Scene/Scene';
 import { GameObjectComponent } from './GameObjectComponent';
+import { MockCamera } from '../internal-3d/testUtils/MockCamera';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 class TestComponent extends GameObjectComponent {

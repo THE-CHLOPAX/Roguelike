@@ -7,11 +7,13 @@ vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
+import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
+
 import { Projectile, ProjectileOptions } from './Projectile';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 
 class MockScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 function createModel(): THREE.Object3D {

@@ -1,9 +1,13 @@
 import * as THREE from 'three';
+import { filterBelow, logger, SceneCamera } from '@tgdf';
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise';
 
 import { CameraMoveToOptions } from './types';
 import { CAMERA_POSITION_OFFSET } from '../../constants';
 
 const DEFAULT_CAMERA_LERP = 0.025;
+const SHAKE_DAMPING_FACTOR = 0.97;
+const SHAKE_FREQUENCY = 10;
 
 export type OrtographicCameraOptions = {
   options: {
@@ -25,11 +29,16 @@ export type OrtographicCameraOptions = {
  * Extends THREE.OrthographicCamera.
  * @param {OrtographicCameraOptions} options - The options for the ortographic camera.
  */
-export class OrtographicCamera extends THREE.OrthographicCamera {
+export class OrtographicCamera extends THREE.OrthographicCamera implements SceneCamera {
   private _zoom: { min: number; max: number } = { min: 0.1, max: 1 };
   private _pivotPoint: THREE.Vector3 = new THREE.Vector3();
-
   private _followTarget: THREE.Object3D | null = null;
+  private _basePosition: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+
+  private _noise = new ImprovedNoise();
+  private _shakeOffset: THREE.Vector3 = new THREE.Vector3();
+  private _shakeIntensity: number = 0;
+  private _shakeTime: number = 0;
 
   constructor({ options = {}, zoom }: OrtographicCameraOptions) {
     super(
@@ -62,6 +71,17 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     this._pivotPoint.copy(point);
   }
 
+  public addShake(intensity: number): void {
+    if (intensity <= 0) {
+      logger({
+        message: `Camera shake intensity must be greater than 0. Received: ${intensity}`,
+        type: 'warn',
+      });
+      return;
+    }
+    this._shakeIntensity += intensity;
+  }
+
   public setZoomMax(max: number): void {
     this._zoom.max = max;
   }
@@ -83,9 +103,9 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     }
 
     if (options?.lerp) {
-      this.position.lerp(targetPosition, options.lerp);
+      this._basePosition.lerp(targetPosition, options.lerp);
     } else {
-      this.position.copy(targetPosition);
+      this._basePosition.copy(targetPosition);
     }
   }
 
@@ -100,8 +120,11 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
     this._pivotPoint = new THREE.Vector3();
   }
 
-  public update(): void {
+  public update(deltaTime: number): void {
     this._followCameraTarget();
+    this._applyCameraShake(deltaTime);
+
+    this.position.copy(this._basePosition).add(this._shakeOffset);
   }
 
   private _followCameraTarget(): void {
@@ -128,5 +151,24 @@ export class OrtographicCamera extends THREE.OrthographicCamera {
       offset: rotatedOffset,
       lerp: DEFAULT_CAMERA_LERP,
     });
+  }
+
+  private _applyCameraShake(deltaTime: number): void {
+    if (this._shakeIntensity <= 0) {
+      this._shakeOffset.set(0, 0, 0);
+      this._shakeTime = 0;
+      return;
+    }
+
+    this._shakeTime += deltaTime;
+
+    const shake = this._shakeIntensity;
+    const nx = this._noise.noise(this._shakeTime * SHAKE_FREQUENCY, 0, 0);
+    const ny = this._noise.noise(this._shakeTime * SHAKE_FREQUENCY, 100, 0);
+
+    this._shakeOffset.set(nx * shake, ny * shake, 0);
+
+    // Dampen the shake intensity over time
+    this._shakeIntensity = filterBelow(this._shakeIntensity * SHAKE_DAMPING_FACTOR, 0.01);
   }
 }

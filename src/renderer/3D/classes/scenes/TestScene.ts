@@ -3,6 +3,7 @@ import { assert, useAssetStore } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { GameScene } from './GameScene';
+import { Explosion } from '../gameObjects/Explosion';
 import { CHECKERBOARD_TEXTURE } from '../../constants';
 import { Monk } from '../gameObjects/players/Monk/Monk';
 import { pixelateTexture } from '../../utils/pixelateTexture';
@@ -65,6 +66,18 @@ export class TestScene extends GameScene {
 
     const monk = new Monk(this);
     this.add(monk);
+
+    setInterval(() => {
+      const explosion = new Explosion(this, {
+        position: new THREE.Vector3(-2, 1, -2),
+        size: new THREE.Vector2(3, 3),
+        colliderRadius: 1.75,
+        shakeIntensity: 2,
+        knockbackAmount: 0.5,
+        damageAmount: 1,
+      });
+      this.add(explosion);
+    }, 2000);
 
     this.camera.follow(monk);
   }

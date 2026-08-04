@@ -31,6 +31,8 @@ export type EntityOptions = {
 };
 
 export class Entity extends GameObject {
+  public isEntity = true;
+
   public rigidBody: RigidBody;
   public modelRenderer: ModelRenderer;
   public stateController: StateController;
