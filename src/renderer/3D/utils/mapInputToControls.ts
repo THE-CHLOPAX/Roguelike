@@ -1,37 +1,50 @@
 import * as THREE from 'three';
 import { InputState, GamepadButton } from '@tgdf';
 
+import { PlayerActionType } from '../types';
+
 export type ControlsState =
-  | { type: 'idle' }
   | {
-      type: 'run' | 'sprint';
+      type: PlayerActionType.RUN | PlayerActionType.SPRINT;
       direction: THREE.Vector3;
     }
-  | { type: 'action-up' | 'action-down' | 'action-left' | 'action-right' };
+  | {
+      type:
+        | PlayerActionType.IDLE
+        | PlayerActionType.ACTION_UP
+        | PlayerActionType.ACTION_DOWN
+        | PlayerActionType.ACTION_LEFT
+        | PlayerActionType.ACTION_RIGHT
+        | PlayerActionType.ACTION_FOCUS;
+    };
 
 const AXIS_DEADZONE = 0.15;
 
-export function mapInputToControls(inputState: InputState): ControlsState {
-  // Priority 1: Check for action inputs
+export function mapInputToControls(inputState: InputState): ControlsState[] {
+  const controls: ControlsState[] = [];
+
   const actionMappings = {
-    'action-up': ['ArrowUp', 'DPAD_UP'],
-    'action-down': ['ArrowDown', 'DPAD_DOWN'],
-    'action-left': ['ArrowLeft', 'DPAD_LEFT'],
-    'action-right': ['ArrowRight', 'DPAD_RIGHT'],
+    [PlayerActionType.ACTION_UP]: ['ArrowUp', 'DPAD_UP'],
+    [PlayerActionType.ACTION_DOWN]: ['ArrowDown', 'DPAD_DOWN'],
+    [PlayerActionType.ACTION_LEFT]: ['ArrowLeft', 'DPAD_LEFT'],
+    [PlayerActionType.ACTION_RIGHT]: ['ArrowRight', 'DPAD_RIGHT'],
+    [PlayerActionType.ACTION_FOCUS]: ['Space', 'RT'],
   } as const;
 
   for (const action of Object.keys(actionMappings)) {
-    for (const key of actionMappings[action as keyof typeof actionMappings]) {
-      if (
+    const keys = actionMappings[action as keyof typeof actionMappings];
+
+    const isActionPressed = keys.some(
+      (key) =>
         inputState.keyboard.isKeyPressed(key) ||
         inputState.gamepad.isButtonPressed(key as GamepadButton)
-      ) {
-        return { type: action as keyof typeof actionMappings };
-      }
+    );
+
+    if (isActionPressed) {
+      controls.push({ type: action as keyof typeof actionMappings });
     }
   }
 
-  // Priority 2: Check for sprint
   const getMovementDirection = () => {
     const direction = new THREE.Vector3();
 
@@ -52,16 +65,22 @@ export function mapInputToControls(inputState: InputState): ControlsState {
     return direction;
   };
 
-  if (inputState.keyboard.isKeyPressed('ShiftLeft') || inputState.gamepad.isButtonPressed('RB')) {
-    return { type: 'sprint', direction: getMovementDirection() };
+  const isSprintPressed =
+    inputState.keyboard.isKeyPressed('ShiftLeft') || inputState.gamepad.isButtonPressed('RB');
+
+  if (isSprintPressed) {
+    controls.push({ type: PlayerActionType.SPRINT, direction: getMovementDirection() });
+  } else {
+    const direction = getMovementDirection();
+
+    if (direction.length() > 0) {
+      controls.push({ type: PlayerActionType.RUN, direction });
+    }
   }
 
-  // Priority 3: Check for run (movement keys/sticks)
-  const hasMovementDirection = getMovementDirection().length() > 0;
-
-  if (hasMovementDirection) {
-    return { type: 'run', direction: getMovementDirection() };
+  if (controls.length === 0) {
+    controls.push({ type: PlayerActionType.IDLE });
   }
 
-  return { type: 'idle' };
+  return controls;
 }

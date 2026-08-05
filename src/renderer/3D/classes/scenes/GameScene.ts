@@ -26,6 +26,8 @@ export class GameScene extends Scene {
         far: 40,
       },
     });
+
+    this.camera.setZoom(1);
     this.camera.position.set(6, 6, 6);
     this.camera.lookAt(0, 0, 0);
 

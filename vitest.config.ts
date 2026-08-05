@@ -12,6 +12,8 @@ export default defineConfig({
       '@main': path.resolve(__dirname, './src/main'),
       '@renderer': path.resolve(__dirname, './src/renderer'),
       '@tgdf': path.resolve(__dirname, './src/lib'),
+      renderer: path.resolve(__dirname, './src/renderer'),
+      '3D': path.resolve(__dirname, './src/renderer/3D'),
     },
   },
 });

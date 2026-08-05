@@ -134,7 +134,9 @@ describe('RigidBody', () => {
       .returns()
       .object();
 
-    rigidBody.addCollisionListener('hit', (a, b, s) => observer.onCollision(a, b, s));
+    rigidBody.addCollisionListener('hit', ({ thisBody, otherBody, started }) =>
+      observer.onCollision(thisBody, otherBody, started)
+    );
     expect(onCollisionSpy).toHaveBeenCalledOnce();
 
     rigidBody.removeCollisionListener('hit');
@@ -171,8 +173,8 @@ describe('RigidBody', () => {
       .setup((o) => o.onCollision(It.IsAny(), It.IsAny(), true))
       .returns();
 
-    bodyA.addCollisionListener('overlap', (a, b, s) => {
-      observerMock.object().onCollision(a, b, s);
+    bodyA.addCollisionListener('overlap', ({ thisBody, otherBody, started }) => {
+      observerMock.object().onCollision(thisBody, otherBody, started);
     });
 
     const handleA = bodyA?.getHandle();

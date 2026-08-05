@@ -21,15 +21,18 @@ export type RigidBodyOptions = {
   angularDamping?: number; // Rotation resistance
   lockRotation?: boolean;
   colliderShape?: RigidBodyShape;
+  colliderSize?: THREE.Vector3; // Explicit collider size; overrides the size derived from the mesh's bounding box
   sensor?: boolean; // If true, the collider will not produce physical responses but can still trigger collision events
   enableCollisionDetection?: boolean;
 };
 
-export type RigidBodyCollisionCallback = (
-  thisBody: RigidBody,
-  otherBody: RigidBody,
-  started: boolean
-) => void;
+export type RigidBodyCollisionParams = {
+  thisBody: RigidBody;
+  otherBody: RigidBody;
+  started: boolean;
+};
+
+export type RigidBodyCollisionCallback = (params: RigidBodyCollisionParams) => void;
 
 export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   public static BodyType = RAPIER.RigidBodyType;
@@ -117,6 +120,16 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
     body.setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }, true);
   }
 
+  public setEnabled(enabled: boolean): void {
+    const body = this._getBody();
+    body.setEnabled(enabled);
+  }
+
+  public isEnabled(): boolean {
+    const body = this._getBody();
+    return body.isEnabled();
+  }
+
   public syncFromPhysics(): void {
     if (this.options.type !== 'dynamic') return;
 
@@ -176,7 +189,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       const otherBody = physics.getBodyFromHandle(otherHandle);
 
       if (thisBody && otherBody) {
-        callback(thisBody, otherBody, started);
+        callback({ thisBody, otherBody, started });
       }
     };
 

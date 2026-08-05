@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { Input, InputState, logger } from '@tgdf';
 
-import { Entity } from '../../../Entity';
-import { SprintingState, IdleState } from './index';
-import { AnimationClipNamesShared } from '../../../../../types';
-import { State, StateWithHealthEvents } from '../../../../states';
-import { mapInputToControls } from '../../../../../utils/mapInputToControls';
+import { AnimationClipNamesShared } from '../../../types';
+import { Player } from '../../gameObjects/players/Player';
+import { State, HurtState, SprintingState, IdleState } from '..';
+import { handleSequenceInput } from './utils/handleSequenceInput';
+import { mapInputToControls } from '../../../utils/mapInputToControls';
 
-export class RunningState extends StateWithHealthEvents {
-  constructor(public entity: Entity) {
+export class RunningState extends State {
+  constructor(public entity: Player) {
     super(entity);
   }
 
@@ -19,13 +19,16 @@ export class RunningState extends StateWithHealthEvents {
   public override onExit(): void {}
 
   public override onInput(inputState: InputState): State {
-    const controlsState = mapInputToControls(inputState);
+    const sequenceState = handleSequenceInput(this, this.entity, inputState);
+    if (sequenceState) return sequenceState;
 
-    if (controlsState.type === 'sprint') {
+    const controlsStates = mapInputToControls(inputState);
+
+    if (controlsStates.some((controlState) => controlState.type === 'sprint')) {
       return new SprintingState(this.entity);
     }
 
-    if (controlsState.type === 'idle') {
+    if (controlsStates.some((controlState) => controlState.type === 'idle')) {
       return new IdleState(this.entity);
     }
 
@@ -33,10 +36,12 @@ export class RunningState extends StateWithHealthEvents {
   }
 
   public override onUpdate(_deltaTime: number): State {
-    const controlState = mapInputToControls(Input.getState());
-    if (controlState === null || !('direction' in controlState)) return this;
+    const controlsStates = mapInputToControls(Input.getState());
+    const movementState = controlsStates.find((controlState) => 'direction' in controlState);
 
-    this._moveEntity(controlState.direction);
+    if (!movementState) return this;
+
+    this._moveEntity(movementState.direction);
     return this;
   }
 
@@ -69,7 +74,7 @@ export class RunningState extends StateWithHealthEvents {
     this.entity.movementController.move(rotatedMove);
   }
 
-  protected override recreateInstance(): RunningState {
-    return new RunningState(this.entity);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new RunningState(this.entity));
   }
 }

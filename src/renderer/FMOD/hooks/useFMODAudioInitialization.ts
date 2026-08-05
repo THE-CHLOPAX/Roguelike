@@ -13,17 +13,19 @@ export type UseFMODAudioResult = {
 };
 
 export type UseFMODAudioProps = {
-  bankUrls: string[];
+  preloadBankUrls: string[];
 };
 
-export const useFMODAudioInitialization = ({ bankUrls }: UseFMODAudioProps): UseFMODAudioResult => {
+export const useFMODAudioInitialization = ({
+  preloadBankUrls,
+}: UseFMODAudioProps): UseFMODAudioResult => {
   const [instance, setInstance] = useState<FMODAudio | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
   const loadBanks = async (audioInstance: FMODAudio) => {
-    const loadPromises = bankUrls.map((bankUrl) => audioInstance.loadBank(bankUrl));
+    const loadPromises = preloadBankUrls.map((bankUrl) => audioInstance.loadBank(bankUrl));
     await Promise.all(loadPromises);
   };
 

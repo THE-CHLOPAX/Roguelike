@@ -1,10 +1,10 @@
 import { InputState } from '@tgdf';
 
-import { State, StateNoHealthEvents } from '.';
+import { State } from '.';
 import { Entity } from '../gameObjects/Entity';
 import { AnimationClipNamesShared } from '../../types';
 
-export class SpawnState extends StateNoHealthEvents {
+export class SpawnState extends State {
   private _spawnAnimationEnded: boolean = false;
 
   constructor(
@@ -12,6 +12,14 @@ export class SpawnState extends StateNoHealthEvents {
     public nextState: State
   ) {
     super(entity);
+  }
+
+  protected override get isDamageImmune(): boolean {
+    return true;
+  }
+
+  protected override onDamageTaken(): State | null {
+    return null;
   }
 
   public onEnter(): void {

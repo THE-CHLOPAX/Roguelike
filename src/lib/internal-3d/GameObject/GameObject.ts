@@ -21,6 +21,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   private _emitter: Emitter<GameObjectEventMap> = new Emitter<GameObjectEventMap>();
   private _isAwake: boolean = false;
   private _isDestroyed: boolean = false;
+  private _inputEnabled: boolean = true;
 
   constructor({ scene }: GameObjectConstructorOptions) {
     super();
@@ -30,7 +31,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
     Input.registerNotifiable(this);
   }
 
-  public get scene(): Scene | undefined {
+  public get scene(): Scene {
     return this._scene;
   }
 
@@ -44,6 +45,14 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
 
   public get isAwake(): boolean {
     return this._isAwake;
+  }
+
+  public get inputEnabled(): boolean {
+    return this._inputEnabled;
+  }
+
+  public toggleInput(enabled: boolean): void {
+    this._inputEnabled = enabled;
   }
 
   public getGameObjectComponentByType<C extends GameObjectComponent>(
@@ -154,6 +163,8 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   }
 
   public onInputNotify(_inputState: InputState): void {
+    if (!this._inputEnabled) return;
+
     this.onInput(_inputState);
 
     this._emitter.trigger('input', { inputState: _inputState });

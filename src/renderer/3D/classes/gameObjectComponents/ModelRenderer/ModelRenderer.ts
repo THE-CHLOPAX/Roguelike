@@ -4,10 +4,17 @@ import { GameObject, GameObjectComponent, getModelFromStore, logger, ResourceTra
 
 import { MODEL_RENDERER_MESSAGES } from './constants';
 
-export type ModelRendererOptions = {
-  id: string;
-  scale?: THREE.Vector3;
-};
+export type ModelRendererOptions =
+  | {
+      id: string;
+      model?: never;
+      scale?: THREE.Vector3;
+    }
+  | {
+      id?: never;
+      model: THREE.Object3D;
+      scale?: THREE.Vector3;
+    };
 
 export type AddAttachmentOptions =
   | { object: THREE.Object3D; parent: THREE.Object3D }
@@ -20,9 +27,16 @@ export class ModelRenderer extends GameObjectComponent {
   constructor(gameObject: GameObject, options: ModelRendererOptions) {
     super(gameObject);
 
-    const model = getModelFromStore(options.id);
+    let model: THREE.Object3D | undefined;
+
+    if (options.id) {
+      model = getModelFromStore(options.id);
+    } else if (options.model) {
+      model = options.model;
+    }
+
     if (!model) {
-      throw new Error(`Model not found in cache: ${options.id}`);
+      throw new Error(`Model not found: ${options.id ?? 'provided model'}`);
     }
 
     if (options.scale) {

@@ -1,15 +1,15 @@
 import { InputState } from '@tgdf';
 
-import { AIAttackAction } from '../../../types';
+import { AIAttack } from '../../../types';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { State, StateWithHealthEvents, AIIdleState, AIChasingState } from '..';
+import { State, HurtState, AIIdleState, AIChasingState } from '..';
 
-export class AIAttackState extends StateWithHealthEvents {
+export class AIAttackState extends State {
   private _isAttacking: boolean = false;
 
-  public static checkCondition(entity: EntityAI, attack: AIAttackAction): boolean {
+  public static checkCondition(entity: EntityAI, attack: AIAttack): boolean {
     // Check if there's a target enemys
     const targetEnemy = getTargetEnemy(entity);
     if (!targetEnemy) return false;
@@ -58,11 +58,11 @@ export class AIAttackState extends StateWithHealthEvents {
     return this;
   }
 
-  protected override recreateInstance(): AIAttackState {
-    return new AIAttackState(this.entity);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new AIAttackState(this.entity));
   }
 
-  private _performAttack(bestAttack: AIAttackAction): void {
+  private _performAttack(bestAttack: AIAttack): void {
     this._isAttacking = true;
     bestAttack.action(this.entity).then(() => {
       this._isAttacking = false;

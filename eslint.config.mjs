@@ -98,10 +98,13 @@ export default defineConfig([
           groups: [
             ['type', 'builtin-type', 'internal-type', 'parent-type', 'sibling-type'],
             ['builtin', 'external'],
-            ['parent', 'sibling', 'index', 'internal'],
+            'internal',
+            ['parent', 'sibling', 'index'],
             'object',
             'unknown',
           ],
+
+          internalPattern: ['^renderer/.+', '^3D/.+'],
         },
       ],
     },

@@ -14,7 +14,10 @@ const App: React.FC = () => {
   useActivePlayersStore();
 
   const { isReady } = useFMODAudioInitialization({
-    bankUrls: ['/assets/sounds/banks/Master.bank', '/assets/sounds/banks/Master.strings.bank'],
+    preloadBankUrls: [
+      '/assets/sounds/banks/Master.bank',
+      '/assets/sounds/banks/Master.strings.bank',
+    ],
   });
 
   return (

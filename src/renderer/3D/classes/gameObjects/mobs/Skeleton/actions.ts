@@ -2,11 +2,25 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 
 import { Entity } from '../../Entity';
-import { AttackAction } from '../../../../types';
+import { AIAttack } from '../../../../types';
+import { FMOD_EVENTS } from '../../../../../FMOD/constants';
 
-export const kick: AttackAction = (entity: Entity) =>
-  new Promise<void>((resolve) => {
-    const HITBOX_DELAY = 0.3; // Delay in seconds before the hitbox is attached
+export enum SkeletonAttackAnimations {
+  PUNCH = 'punch',
+}
+
+export const attackActions: AIAttack[] = [
+  {
+    action: punch,
+    soundPath: FMOD_EVENTS.ATTACK,
+    minRange: 0,
+    maxRange: 2,
+  },
+];
+
+function punch(entity: Entity) {
+  return new Promise<void>((resolve) => {
+    const HITBOX_DELAY = 0.7; // Delay in seconds before the hitbox is attached
     const HITBOX_DURATION = 0.4; // Duration in seconds for which the hitbox remains active
 
     entity.damageHitboxController.hitboxTimeline = gsap
@@ -14,9 +28,9 @@ export const kick: AttackAction = (entity: Entity) =>
       .call(
         () =>
           entity.damageHitboxController.attachDamageHitbox(
-            new THREE.Vector3(0.3, 1, 0.3),
+            new THREE.Vector3(0.5, 0.5, 0.5),
             10,
-            'mixamorigRightFoot'
+            'mixamorigRightHand'
           ),
         [],
         HITBOX_DELAY
@@ -29,12 +43,13 @@ export const kick: AttackAction = (entity: Entity) =>
         HITBOX_DELAY + HITBOX_DURATION
       );
 
-    entity.animationController.playAnimation('kick', {
+    entity.animationController.playAnimation(SkeletonAttackAnimations.PUNCH, {
       clampWhenFinished: true,
-      playbackRate: 1.3,
+      playbackRate: 1.8,
       onComplete: () => {
-        resolve();
         entity.damageHitboxController.clearHitboxEvents();
+        resolve();
       },
     });
   });
+}

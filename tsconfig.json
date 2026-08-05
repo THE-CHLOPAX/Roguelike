@@ -18,7 +18,9 @@
     "outDir": "./dist-ts",
     "paths": {
       "@tgdf": ["src/lib/index.ts"],
-      "@tgdf/*": ["src/lib/*"]
+      "@tgdf/*": ["src/lib/*"],
+      "renderer/*": ["src/renderer/*"],
+      "3D/*": ["src/renderer/3D/*"]
     }
   },
   "include": ["src/**/*"],
