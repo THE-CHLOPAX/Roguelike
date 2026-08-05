@@ -1,11 +1,13 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
-import { RigidBody } from '@tgdf';
+import { RigidBodyCollisionCallback } from '@tgdf';
 
-import { Entity } from '../../Entity';
-import { Projectile } from '../../Projectile';
+import { COLORS } from 'renderer/constants';
 
-const SACRED_ORB_COLOR = 0xfffd88;
+import { Entity } from '../../../Entity';
+import { Projectile } from '../../../Projectile';
+
+const SACRED_ORB_COLOR = COLORS.GOLDEN;
 const SACRED_ORB_SPAWN_DURATION = 1.8;
 const SACRED_ORB_SPAWN_RISE_OFFSET = -1;
 const SACRED_ORB_COLLIDER_SIZE = 0.2;
@@ -98,11 +100,7 @@ export class SacredOrb extends Projectile {
     if (this._strikeCollisionUnsubscribe !== null) this._strikeCollisionUnsubscribe();
   }
 
-  private _strikeCollisionHandler = (
-    _thisBody: RigidBody,
-    _otherBody: RigidBody,
-    started: boolean
-  ) => {
+  private _strikeCollisionHandler: RigidBodyCollisionCallback = ({ started }) => {
     if (!started) return;
 
     if (this._strikeCollisionUnsubscribe !== null) {

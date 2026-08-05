@@ -4,9 +4,9 @@ import { AIAttack } from '../../../types';
 import { EntityAI } from '../../gameObjects/EntityAI';
 import { getBestAttack } from './utils/getBestAttack';
 import { getTargetEnemy } from './utils/getTargetEnemy';
-import { State, StateWithHealthEvents, AIIdleState, AIChasingState } from '..';
+import { State, HurtState, AIIdleState, AIChasingState } from '..';
 
-export class AIAttackState extends StateWithHealthEvents {
+export class AIAttackState extends State {
   private _isAttacking: boolean = false;
 
   public static checkCondition(entity: EntityAI, attack: AIAttack): boolean {
@@ -58,8 +58,8 @@ export class AIAttackState extends StateWithHealthEvents {
     return this;
   }
 
-  protected override recreateInstance(): AIAttackState {
-    return new AIAttackState(this.entity);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new AIAttackState(this.entity));
   }
 
   private _performAttack(bestAttack: AIAttack): void {

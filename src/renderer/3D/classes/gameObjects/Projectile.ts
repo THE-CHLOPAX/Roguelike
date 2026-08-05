@@ -57,7 +57,7 @@ export class Projectile extends GameObject {
 
     const collisionListenerId = `projectile-on-collision-listener-${this.name || this.id}`;
 
-    this.rigidBody.addCollisionListener(collisionListenerId, (_thisBody, otherBody, started) => {
+    this.rigidBody.addCollisionListener(collisionListenerId, ({ otherBody, started }) => {
       if (!started) return;
       this.rigidBody.removeCollisionListener(collisionListenerId);
       onCollision(otherBody.gameObject);

@@ -1,11 +1,11 @@
 import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
+import { State, DeadState } from '.';
 import { Entity } from '../gameObjects/Entity';
 import { AnimationClipNamesShared } from '../../types';
-import { State, DeadState, StateNoHealthEvents } from '.';
 import { FMOD_EVENTS, FMODAudio, FMODEventInstance } from '../../../FMOD';
 
-export class HurtState extends StateNoHealthEvents {
+export class HurtState extends State {
   private _flashEnded: boolean = false;
   private _animationEnded: boolean = false;
   private _eventInstance: FMODEventInstance | null = null;
@@ -15,6 +15,14 @@ export class HurtState extends StateNoHealthEvents {
     public nextState: State
   ) {
     super(entity);
+  }
+
+  protected override get isDamageImmune(): boolean {
+    return true;
+  }
+
+  protected override onDamageTaken(): State | null {
+    return null;
   }
 
   public onEnter(): void {

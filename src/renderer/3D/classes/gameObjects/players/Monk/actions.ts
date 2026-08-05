@@ -1,11 +1,14 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
 
-import { IdleState } from 'renderer/3D/classes/states';
+import { RunningState, SprintingState } from 'renderer/3D/classes/states';
 
 import { Entity } from '../../Entity';
-import { SacredOrb } from './SacredOrb';
 import { FMOD_EVENTS } from '../../../../../FMOD';
+import { SacredOrb } from './childObjects/SacredOrb';
+import { DashStateMonk } from './states/DashStateMonk';
+import { ArcaneCircle } from './childObjects/ArcaneCircle';
+import { FocusState } from '../../../states/Player/FocusState';
 import { ActionWithSound, SequenceSkill, PlayerActionType } from '../../../../types';
 
 export const kick: ActionWithSound = {
@@ -58,6 +61,8 @@ export const summonOrbs: SequenceSkill = {
     PlayerActionType.ACTION_DOWN,
     PlayerActionType.ACTION_LEFT,
   ],
+  availableIn: [FocusState],
+  cooldownMs: 3000,
   callback: (entity) => {
     return new Promise((resolve) => {
       const sacredOrbGroup = new THREE.Group();
@@ -98,20 +103,25 @@ export const healingAura: SequenceSkill = {
     PlayerActionType.ACTION_LEFT,
     PlayerActionType.ACTION_RIGHT,
   ],
-  getState: (entity) => new IdleState(entity),
-  callback: (_entity) => {
+  availableIn: [FocusState],
+  cooldownMs: 8000,
+  callback: (entity) => {
     return new Promise((resolve) => {
+      const arcaneCircle = new ArcaneCircle(entity.scene, {
+        diameter: 4,
+        healAmount: 10,
+        durationMs: 5000,
+        healIntervalMs: 1000,
+      });
+      entity.add(arcaneCircle);
       resolve();
     });
   },
 };
 
-export const roll: SequenceSkill = {
-  sequence: [PlayerActionType.ACTION_UP, PlayerActionType.ACTION_UP],
-  getState: (entity) => new IdleState(entity),
-  callback: (_entity) => {
-    return new Promise((resolve) => {
-      resolve();
-    });
-  },
+export const dash: SequenceSkill = {
+  sequence: [PlayerActionType.ACTION_RIGHT, PlayerActionType.ACTION_RIGHT],
+  availableIn: [RunningState, SprintingState],
+  getState: (entity) => new DashStateMonk(entity, { speed: 12, durationMs: 150 }),
+  cooldownMs: 1000,
 };

@@ -10,6 +10,7 @@ export const FLOOR_OBJECT_MESH_NAME = 'test-floor-plane-mesh';
 export const CHECKERBOARD_TEXTURE = 'checkerboard-texture';
 
 export const EXPLOSION_SPRITESHEET_TEXTURE = 'explosion-spritesheet-texture';
+export const ARCANE_CIRCLE_TEXTURE = 'arcane-circle-texture';
 export const MAIN_CROWD_ID = 'main-crowd';
 
 // NavMesh configuration

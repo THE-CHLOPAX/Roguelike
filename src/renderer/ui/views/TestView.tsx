@@ -6,8 +6,8 @@ import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
-import { EXPLOSION_SPRITESHEET_TEXTURE, MODELS } from '../../3D/constants';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
+import { EXPLOSION_SPRITESHEET_TEXTURE, ARCANE_CIRCLE_TEXTURE, MODELS } from '../../3D/constants';
 
 export function TestView() {
   const { loadTexture, loadModelGLTF } = useAssetStore();
@@ -17,6 +17,7 @@ export function TestView() {
     asyncPreloadOperations: [
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
       loadTexture(EXPLOSION_SPRITESHEET_TEXTURE, './assets/explosion.png', THREE.SRGBColorSpace),
+      loadTexture(ARCANE_CIRCLE_TEXTURE, './assets/arcane-circle.png'),
       loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, {
         nameExtractor: MODELS.MONK.nameExtractor,
         centerOrigin: true,

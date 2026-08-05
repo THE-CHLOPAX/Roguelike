@@ -1,9 +1,11 @@
+import * as THREE from 'three';
+
 import { PlayerActionType } from '3D/types';
 import { MODELS, DEFAULT_RIGID_BODY_OPTIONS } from '3D/constants';
 
-import { kick, summonOrbs } from './actions';
 import { Player, PlayerOptions } from '../Player';
 import { FocusState } from '../../../states/Player/FocusState';
+import { kick, summonOrbs, healingAura, dash } from './actions';
 import { AttackState, RunningState, SprintingState } from '../../../states';
 
 enum MonkAnimationClipNames {
@@ -21,7 +23,7 @@ export const config: PlayerOptions = {
     sprintSpeed: 4,
     walkSpeed: 1,
   },
-  rigidBodyOptions: { ...DEFAULT_RIGID_BODY_OPTIONS },
+  rigidBodyOptions: { ...DEFAULT_RIGID_BODY_OPTIONS, colliderSize: new THREE.Vector3(1, 2, 1) },
   animationControllerOptions: {
     playbackRates: {
       spawn: 2.5,
@@ -34,6 +36,8 @@ export const config: PlayerOptions = {
   healthOptions: {
     initialHealthPoints: 10,
   },
+  sequenceSkills: [summonOrbs, healingAura, dash],
+  sequenceTimeoutMs: 500,
   actions: {
     [PlayerActionType.ACTION_UP]: (entity: Player) => {
       return new AttackState(entity, kick);
@@ -43,8 +47,6 @@ export const config: PlayerOptions = {
         clips: {
           enter: MonkAnimationClipNames.FOCUS_START,
         },
-        skills: [summonOrbs],
-        timeoutMs: 500,
       });
     },
     [PlayerActionType.RUN]: (entity: Player) => {

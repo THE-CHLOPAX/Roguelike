@@ -52,7 +52,7 @@ export class DamageHitbox extends GameObject {
 
   protected override onAwake(): void {
     super.onAwake();
-    this.rigidBody.addCollisionListener(`damage-hitbox-${this.id}`, (_, otherBody, started) => {
+    this.rigidBody.addCollisionListener(`damage-hitbox-${this.id}`, ({ otherBody, started }) => {
       const otherObject = otherBody.gameObject;
       if (otherObject === undefined || otherObject === this._attacker) return;
       if (started) {

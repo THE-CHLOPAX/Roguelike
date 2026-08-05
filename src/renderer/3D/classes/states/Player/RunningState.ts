@@ -3,10 +3,11 @@ import { Input, InputState, logger } from '@tgdf';
 
 import { AnimationClipNamesShared } from '../../../types';
 import { Player } from '../../gameObjects/players/Player';
+import { State, HurtState, SprintingState, IdleState } from '..';
+import { handleSequenceInput } from './utils/handleSequenceInput';
 import { mapInputToControls } from '../../../utils/mapInputToControls';
-import { State, StateWithHealthEvents, SprintingState, IdleState } from '..';
 
-export class RunningState extends StateWithHealthEvents {
+export class RunningState extends State {
   constructor(public entity: Player) {
     super(entity);
   }
@@ -18,6 +19,9 @@ export class RunningState extends StateWithHealthEvents {
   public override onExit(): void {}
 
   public override onInput(inputState: InputState): State {
+    const sequenceState = handleSequenceInput(this, this.entity, inputState);
+    if (sequenceState) return sequenceState;
+
     const controlsStates = mapInputToControls(inputState);
 
     if (controlsStates.some((controlState) => controlState.type === 'sprint')) {
@@ -70,7 +74,7 @@ export class RunningState extends StateWithHealthEvents {
     this.entity.movementController.move(rotatedMove);
   }
 
-  protected override recreateInstance(): RunningState {
-    return new RunningState(this.entity);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new RunningState(this.entity));
   }
 }
