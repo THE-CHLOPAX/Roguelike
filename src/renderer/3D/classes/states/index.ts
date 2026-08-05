@@ -15,3 +15,4 @@ export { IdleState } from './Player/IdleState';
 export { RunningState } from './Player/RunningState';
 export { SprintingState } from './Player/SprintingState';
 export { AttackState } from './Player/AttackState';
+export { DashState, type DashOptions } from './DashState';

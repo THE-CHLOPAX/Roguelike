@@ -2,10 +2,12 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 import { RigidBodyCollisionCallback } from '@tgdf';
 
+import { COLORS } from 'renderer/constants';
+
 import { Entity } from '../../../Entity';
 import { Projectile } from '../../../Projectile';
 
-const SACRED_ORB_COLOR = 0xfffd88;
+const SACRED_ORB_COLOR = COLORS.GOLDEN;
 const SACRED_ORB_SPAWN_DURATION = 1.8;
 const SACRED_ORB_SPAWN_RISE_OFFSET = -1;
 const SACRED_ORB_COLLIDER_SIZE = 0.2;

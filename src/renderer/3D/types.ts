@@ -66,6 +66,7 @@ export type StateConstructor = abstract new (...args: never[]) => State;
 export type SequenceSkill = {
   sequence: SequenceInputType[];
   availableIn: StateConstructor[];
+  cooldownMs: number;
   getState?: (entity: Player, currentState: State) => State;
   callback?: AsyncAction;
 };

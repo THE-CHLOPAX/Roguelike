@@ -22,8 +22,10 @@ export function handleSequenceInput(
 
   if (!isSequenceInputType(lastInput.type)) return null;
 
-  const eligibleSkills = entity.sequenceSkills.filter((skill) =>
-    skill.availableIn.some((stateConstructor) => state instanceof stateConstructor)
+  const eligibleSkills = entity.sequenceSkills.filter(
+    (skill) =>
+      skill.availableIn.some((stateConstructor) => state instanceof stateConstructor) &&
+      !entity.isSkillOnCooldown(skill)
   );
 
   const matchedSkill = entity.sequenceTracker.push(
@@ -34,6 +36,7 @@ export function handleSequenceInput(
 
   if (matchedSkill === null) return null;
 
+  entity.startSkillCooldown(matchedSkill);
   matchedSkill.callback?.(entity);
   return matchedSkill.getState?.(entity, state) ?? null;
 }

@@ -9,6 +9,7 @@ import {
   Scene,
 } from '@tgdf';
 
+import { COLORS } from 'renderer/constants';
 import { ARCANE_CIRCLE_TEXTURE } from '3D/constants';
 import { isPlayer } from 'renderer/3D/utils/isPlayer';
 import { pixelateTexture } from '3D/utils/pixelateTexture';
@@ -21,7 +22,7 @@ export type ArcaneCircleOptions = {
 };
 
 const ROTATION_DURATION = 10; // seconds per full turn
-const ARCANE_CIRCLE_COLOR = 0xfffd88;
+const ARCANE_CIRCLE_COLOR = COLORS.GOLDEN;
 const FADE_DURATION = 1; // seconds for fade in/out
 
 export class ArcaneCircle extends GameObject {
