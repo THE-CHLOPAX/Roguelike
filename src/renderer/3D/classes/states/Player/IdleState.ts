@@ -3,6 +3,7 @@ import { InputState } from '@tgdf';
 import { State, HurtState } from '..';
 import { Player } from '../../gameObjects/players/Player';
 import { AnimationClipNamesShared } from '../../../types';
+import { handleSequenceInput } from './utils/handleSequenceInput';
 import { mapInputToControls } from '../../../utils/mapInputToControls';
 
 export class IdleState extends State {
@@ -17,6 +18,9 @@ export class IdleState extends State {
   public override onExit(): void {}
 
   public override onInput(inputState: InputState): State {
+    const sequenceState = handleSequenceInput(this, this.entity, inputState);
+    if (sequenceState) return sequenceState;
+
     const controlsStates = mapInputToControls(inputState);
 
     for (const controlState of controlsStates) {

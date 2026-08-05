@@ -1,12 +1,13 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
 
-import { IdleState } from 'renderer/3D/classes/states';
+import { IdleState, RunningState, SprintingState } from 'renderer/3D/classes/states';
 
 import { Entity } from '../../Entity';
 import { FMOD_EVENTS } from '../../../../../FMOD';
 import { SacredOrb } from './childObjects/SacredOrb';
 import { ArcaneCircle } from './childObjects/ArcaneCircle';
+import { FocusState } from '../../../states/Player/FocusState';
 import { ActionWithSound, SequenceSkill, PlayerActionType } from '../../../../types';
 
 export const kick: ActionWithSound = {
@@ -59,6 +60,7 @@ export const summonOrbs: SequenceSkill = {
     PlayerActionType.ACTION_DOWN,
     PlayerActionType.ACTION_LEFT,
   ],
+  availableIn: [FocusState],
   callback: (entity) => {
     return new Promise((resolve) => {
       const sacredOrbGroup = new THREE.Group();
@@ -99,6 +101,7 @@ export const healingAura: SequenceSkill = {
     PlayerActionType.ACTION_LEFT,
     PlayerActionType.ACTION_RIGHT,
   ],
+  availableIn: [FocusState],
   callback: (entity) => {
     return new Promise((resolve) => {
       const arcaneCircle = new ArcaneCircle(entity.scene, {
@@ -115,6 +118,7 @@ export const healingAura: SequenceSkill = {
 
 export const roll: SequenceSkill = {
   sequence: [PlayerActionType.ACTION_UP, PlayerActionType.ACTION_UP],
+  availableIn: [RunningState, SprintingState],
   getState: (entity) => new IdleState(entity),
   callback: (_entity) => {
     return new Promise((resolve) => {

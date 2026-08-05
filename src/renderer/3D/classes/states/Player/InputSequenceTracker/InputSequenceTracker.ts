@@ -10,12 +10,13 @@ export type InputSequenceItem = {
 export class InputSequenceTracker {
   private _inputBuffer: InputSequenceItem[] = [];
 
-  constructor(
-    private _skills: SequenceSkill[],
-    private _timeOutMs: number
-  ) {}
+  constructor(private _timeOutMs: number) {}
 
-  public push(input: SequenceInputType, now: number): SequenceSkill | null {
+  public push(
+    input: SequenceInputType,
+    now: number,
+    skills: SequenceSkill[]
+  ): SequenceSkill | null {
     const lastInput = this._inputBuffer[this._inputBuffer.length - 1];
 
     // Player hit the sequence key too late - reset buffer and return null.
@@ -27,7 +28,7 @@ export class InputSequenceTracker {
     this._inputBuffer.push({ input, timestamp: now });
 
     const currentSequence = this._inputBuffer.map((item) => item.input);
-    const matchingSkill = this._skills.find((skill) =>
+    const matchingSkill = skills.find((skill) =>
       arraysShallowCompare(currentSequence, skill.sequence)
     );
 

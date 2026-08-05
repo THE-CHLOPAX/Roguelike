@@ -61,14 +61,15 @@ export type SequenceInputType =
   | PlayerActionType.ACTION_DOWN
   | PlayerActionType.ACTION_LEFT;
 
+export type StateConstructor = abstract new (...args: never[]) => State;
+
 export type SequenceSkill = {
   sequence: SequenceInputType[];
-  getState?: (entity: Player) => State;
+  availableIn: StateConstructor[];
+  getState?: (entity: Player, currentState: State) => State;
   callback?: AsyncAction;
 };
 
 export type FocusOptions = {
   clips: { enter: string; progress?: string; exit?: string };
-  skills: SequenceSkill[];
-  timeoutMs: number;
 };

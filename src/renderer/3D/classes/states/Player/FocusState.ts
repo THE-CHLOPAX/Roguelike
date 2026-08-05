@@ -1,28 +1,28 @@
 import { Input, InputState } from '@tgdf';
 
+import { PlayerActionType, FocusOptions } from '3D/types';
 import { mapInputToControls } from '3D/utils/mapInputToControls';
-import { PlayerActionType, FocusOptions, SequenceInputType } from '3D/types';
 
 import { IdleState, State, HurtState } from '../';
 import { Player } from '../../gameObjects/players/Player';
-import { InputSequenceTracker } from './InputSequenceTracker/InputSequenceTracker';
+import { handleSequenceInput } from './utils/handleSequenceInput';
 
 export class FocusState extends State {
   private _focusInProgress: boolean = false;
   private _exitingFocus: boolean = false;
   private _exitFocusAnimationEnded: boolean = false;
-  private _inputSequenceTracker: InputSequenceTracker;
 
   constructor(
     public entity: Player,
     public options: FocusOptions
   ) {
     super(entity);
-
-    this._inputSequenceTracker = new InputSequenceTracker(options.skills, options.timeoutMs);
   }
 
   public override onEnter(): void {
+    // Discard sequence inputs buffered before entering focus
+    this.entity.sequenceTracker.reset();
+
     this.entity.animationController.playAnimation(this.options.clips.enter, {
       clampWhenFinished: true,
       onComplete: () => {
@@ -75,20 +75,7 @@ export class FocusState extends State {
   public override onInput(inputState: InputState): State {
     if (!this._focusInProgress) return this;
 
-    const controlsState = mapInputToControls(inputState);
-    const lastInput = controlsState[0];
-
-    if (isSequenceInputType(lastInput.type)) {
-      const sequenceResult = this._inputSequenceTracker.push(lastInput.type, performance.now());
-
-      // Skill sequence complete
-      if (sequenceResult !== null) {
-        sequenceResult.callback?.(this.entity);
-        return sequenceResult.getState?.(this.entity) ?? this;
-      }
-    }
-
-    return this;
+    return handleSequenceInput(this, this.entity, inputState) ?? this;
   }
 
   protected override onDamageTaken(): State {
@@ -96,13 +83,4 @@ export class FocusState extends State {
   }
 
   public override onExit(): void {}
-}
-
-function isSequenceInputType(type: string): type is SequenceInputType {
-  return (
-    type === PlayerActionType.ACTION_UP ||
-    type === PlayerActionType.ACTION_DOWN ||
-    type === PlayerActionType.ACTION_RIGHT ||
-    type === PlayerActionType.ACTION_LEFT
-  );
 }
