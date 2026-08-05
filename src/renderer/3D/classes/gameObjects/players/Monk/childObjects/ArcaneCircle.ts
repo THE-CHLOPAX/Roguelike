@@ -58,8 +58,6 @@ export class ArcaneCircle extends GameObject {
         sensor: true,
       })
     );
-
-    this._rigidBody.toggleDebug(true);
   }
 
   protected override onAwake(): void {

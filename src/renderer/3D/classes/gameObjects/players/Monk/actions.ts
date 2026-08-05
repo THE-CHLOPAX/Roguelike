@@ -4,9 +4,9 @@ import * as THREE from 'three';
 import { IdleState } from 'renderer/3D/classes/states';
 
 import { Entity } from '../../Entity';
-import { SacredOrb } from './SacredOrb';
-import { ArcaneCircle } from './ArcaneCircle';
 import { FMOD_EVENTS } from '../../../../../FMOD';
+import { SacredOrb } from './childObjects/SacredOrb';
+import { ArcaneCircle } from './childObjects/ArcaneCircle';
 import { ActionWithSound, SequenceSkill, PlayerActionType } from '../../../../types';
 
 export const kick: ActionWithSound = {

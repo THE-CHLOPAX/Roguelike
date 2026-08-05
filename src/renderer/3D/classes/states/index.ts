@@ -1,7 +1,5 @@
 // Shared
 export { State } from './State';
-export { StateNoHealthEvents } from './StateNoHealthEvents';
-export { StateWithHealthEvents } from './StateWithHealthEvents';
 export { HurtState } from './HurtState';
 export { DeadState } from './DeadState';
 export { SpawnState } from './SpawnState';

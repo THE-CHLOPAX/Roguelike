@@ -12,6 +12,10 @@ export class DeadState extends State {
     super(entity);
   }
 
+  protected override onDamageTaken(): State | null {
+    return null;
+  }
+
   public onEnter(): void {
     this._eventInstance = FMODAudio.playEventInSoundChannel({
       eventPath: FMOD_EVENTS.HURT,

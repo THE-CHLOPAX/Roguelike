@@ -3,11 +3,11 @@ import { Input, InputState } from '@tgdf';
 import { mapInputToControls } from '3D/utils/mapInputToControls';
 import { PlayerActionType, FocusOptions, SequenceInputType } from '3D/types';
 
+import { IdleState, State, HurtState } from '../';
 import { Player } from '../../gameObjects/players/Player';
-import { IdleState, State, StateWithHealthEvents } from '../';
 import { InputSequenceTracker } from './InputSequenceTracker/InputSequenceTracker';
 
-export class FocusState extends StateWithHealthEvents {
+export class FocusState extends State {
   private _focusInProgress: boolean = false;
   private _exitingFocus: boolean = false;
   private _exitFocusAnimationEnded: boolean = false;
@@ -91,8 +91,8 @@ export class FocusState extends StateWithHealthEvents {
     return this;
   }
 
-  protected override recreateInstance(): FocusState {
-    return new FocusState(this.entity, this.options);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new FocusState(this.entity, this.options));
   }
 
   public override onExit(): void {}

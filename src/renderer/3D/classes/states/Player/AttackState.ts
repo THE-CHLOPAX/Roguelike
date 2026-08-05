@@ -2,11 +2,11 @@ import { InputState, MAIN_SOUND_CHANNEL } from '@tgdf';
 
 import { ActionWithSound } from '../../../types';
 import { Player } from '../../gameObjects/players/Player';
+import { State, HurtState, IdleState, RunningState } from '..';
 import { FMODAudio, FMODEventInstance } from '../../../../FMOD';
-import { State, StateWithHealthEvents, IdleState, RunningState } from '..';
 import { ControlsState, mapInputToControls } from '../../../utils/mapInputToControls';
 
-export class AttackState extends StateWithHealthEvents {
+export class AttackState extends State {
   private _attackInProgress = false;
   private _controlsStates: ControlsState[] = [];
   private _eventInstance: FMODEventInstance | null = null;
@@ -60,7 +60,7 @@ export class AttackState extends StateWithHealthEvents {
     return this;
   }
 
-  protected override recreateInstance(): AttackState {
-    return new AttackState(this.entity, this._attackAction);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new AttackState(this.entity, this._attackAction));
   }
 }

@@ -1,11 +1,11 @@
 import { InputState } from '@tgdf';
 
-import { State, StateWithHealthEvents } from '..';
+import { State, HurtState } from '..';
 import { Player } from '../../gameObjects/players/Player';
 import { AnimationClipNamesShared } from '../../../types';
 import { mapInputToControls } from '../../../utils/mapInputToControls';
 
-export class IdleState extends StateWithHealthEvents {
+export class IdleState extends State {
   constructor(public entity: Player) {
     super(entity);
   }
@@ -32,7 +32,7 @@ export class IdleState extends StateWithHealthEvents {
     return this;
   }
 
-  protected override recreateInstance(): IdleState {
-    return new IdleState(this.entity);
+  protected override onDamageTaken(): State {
+    return new HurtState(this.entity, new IdleState(this.entity));
   }
 }
