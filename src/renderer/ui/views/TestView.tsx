@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { InternalLoader, useAssetStore, useGraphicsStore } from '@tgdf';
 
-import { MODELS } from '../../3D/constants';
 import { CHECKERBOARD_TEXTURE } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
+import { ARCANE_CIRCLE_TEXTURE, MODELS } from '../../3D/constants';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 
 export function TestView() {
@@ -15,6 +15,7 @@ export function TestView() {
     sceneClass: TestScene,
     asyncPreloadOperations: [
       loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
+      loadTexture(ARCANE_CIRCLE_TEXTURE, './assets/arcane-circle.png'),
       loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, {
         nameExtractor: MODELS.MONK.nameExtractor,
         centerOrigin: true,

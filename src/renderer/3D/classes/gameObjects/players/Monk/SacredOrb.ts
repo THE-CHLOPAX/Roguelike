@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
-import { RigidBody } from '@tgdf';
+import { RigidBodyCollisionCallback } from '@tgdf';
 
 import { Entity } from '../../Entity';
 import { Projectile } from '../../Projectile';
@@ -98,11 +98,7 @@ export class SacredOrb extends Projectile {
     if (this._strikeCollisionUnsubscribe !== null) this._strikeCollisionUnsubscribe();
   }
 
-  private _strikeCollisionHandler = (
-    _thisBody: RigidBody,
-    _otherBody: RigidBody,
-    started: boolean
-  ) => {
+  private _strikeCollisionHandler: RigidBodyCollisionCallback = ({ started }) => {
     if (!started) return;
 
     if (this._strikeCollisionUnsubscribe !== null) {

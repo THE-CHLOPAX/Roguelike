@@ -26,11 +26,13 @@ export type RigidBodyOptions = {
   enableCollisionDetection?: boolean;
 };
 
-export type RigidBodyCollisionCallback = (
-  thisBody: RigidBody,
-  otherBody: RigidBody,
-  started: boolean
-) => void;
+export type RigidBodyCollisionParams = {
+  thisBody: RigidBody;
+  otherBody: RigidBody;
+  started: boolean;
+};
+
+export type RigidBodyCollisionCallback = (params: RigidBodyCollisionParams) => void;
 
 export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   public static BodyType = RAPIER.RigidBodyType;
@@ -187,7 +189,7 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       const otherBody = physics.getBodyFromHandle(otherHandle);
 
       if (thisBody && otherBody) {
-        callback(thisBody, otherBody, started);
+        callback({ thisBody, otherBody, started });
       }
     };
 

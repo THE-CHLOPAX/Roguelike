@@ -12,6 +12,8 @@ export type PlayerOptions = EntityOptions & {
 };
 
 export class Player extends Entity {
+  public isPlayer = true;
+
   constructor(
     scene: Scene,
     public options: PlayerOptions

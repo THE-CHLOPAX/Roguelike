@@ -279,6 +279,55 @@ describe('GameObject', () => {
     });
   });
 
+  describe('toggleInput', () => {
+    it('has input enabled by default', () => {
+      const gameObject = new TestGameObject({ scene });
+
+      expect(gameObject.inputEnabled).toBe(true);
+    });
+
+    it('disables input handling when toggled off', () => {
+      const gameObject = new TestGameObject({ scene });
+      const inputHandler = vi.fn();
+      gameObject.events.on('input', inputHandler);
+      const inputState = Input.getState();
+
+      gameObject.toggleInput(false);
+      gameObject.onInputNotify(inputState);
+
+      expect(gameObject.inputEnabled).toBe(false);
+      expect(gameObject.onInputSpy).not.toHaveBeenCalled();
+      expect(inputHandler).not.toHaveBeenCalled();
+    });
+
+    it('re-enables input handling when toggled back on', () => {
+      const gameObject = new TestGameObject({ scene });
+      const inputHandler = vi.fn();
+      gameObject.events.on('input', inputHandler);
+      const inputState = Input.getState();
+
+      gameObject.toggleInput(false);
+      gameObject.toggleInput(true);
+      gameObject.onInputNotify(inputState);
+
+      expect(gameObject.inputEnabled).toBe(true);
+      expect(gameObject.onInputSpy).toHaveBeenCalledWith(inputState);
+      expect(inputHandler).toHaveBeenCalledWith({ inputState });
+    });
+
+    it('does not forward input to components when input is disabled on the game object', () => {
+      const gameObject = new TestGameObject({ scene });
+      const component = new TestComponent(gameObject);
+      gameObject.addComponent('TestComponent', component);
+      const inputState = Input.getState();
+
+      gameObject.toggleInput(false);
+      gameObject.onInputNotify(inputState);
+
+      expect(component.onInputSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('resource tracking', () => {
     it('disposes tracked resources when a child is removed', () => {
       const gameObject = new TestGameObject({ scene });

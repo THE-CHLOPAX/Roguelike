@@ -5,6 +5,7 @@ import { IdleState } from 'renderer/3D/classes/states';
 
 import { Entity } from '../../Entity';
 import { SacredOrb } from './SacredOrb';
+import { ArcaneCircle } from './ArcaneCircle';
 import { FMOD_EVENTS } from '../../../../../FMOD';
 import { ActionWithSound, SequenceSkill, PlayerActionType } from '../../../../types';
 
@@ -98,9 +99,15 @@ export const healingAura: SequenceSkill = {
     PlayerActionType.ACTION_LEFT,
     PlayerActionType.ACTION_RIGHT,
   ],
-  getState: (entity) => new IdleState(entity),
-  callback: (_entity) => {
+  callback: (entity) => {
     return new Promise((resolve) => {
+      const arcaneCircle = new ArcaneCircle(entity.scene, {
+        diameter: 4,
+        healAmount: 10,
+        durationMs: 5000,
+        healIntervalMs: 1000,
+      });
+      entity.add(arcaneCircle);
       resolve();
     });
   },
