@@ -1,19 +1,41 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
-import { GameObject, PhysicsManager, RigidBody, Scene } from '@tgdf';
 import { assert, describe, it, expect, vi, beforeAll } from 'vitest';
+import { GameObject, PhysicsManager, RigidBody, RigidBodyCollisionParams } from '@tgdf';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
-import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
+import { Mock } from 'moq.ts';
 
+import { Entity } from './Entity';
+import { GameScene } from '../scenes/GameScene';
 import { Projectile, ProjectileOptions } from './Projectile';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 
-class MockScene extends Scene {
-  camera = new MockCamera();
+class MockScene extends GameScene {
+  constructor() {
+    super(new THREE.Mesh(new THREE.PlaneGeometry(10, 10)));
+  }
+}
+
+/**
+ * Exposes Projectile's overridable onCollision/onMaxRangeReached hooks as spies,
+ * mirroring how a real subclass (e.g. SacredOrb) would implement them.
+ */
+class TestProjectile extends Projectile {
+  public onCollisionSpy = vi.fn<(gameObject: GameObject) => void>();
+  public onMaxRangeReachedSpy = vi.fn<() => void>();
+
+  protected override onCollision({ otherBody }: RigidBodyCollisionParams): boolean {
+    this.onCollisionSpy(otherBody.gameObject);
+    return true;
+  }
+
+  protected override onMaxRangeReached(): void {
+    this.onMaxRangeReachedSpy();
+  }
 }
 
 function createModel(): THREE.Object3D {
@@ -26,8 +48,11 @@ async function createProjectile(
   scene: MockScene,
   overrides: Partial<Omit<ProjectileOptions, 'model'>> = {},
   model: THREE.Object3D = createModel()
-): Promise<Projectile> {
-  const projectile = new Projectile(scene, {
+): Promise<TestProjectile> {
+  const mockEntity = new Mock<Entity>().object();
+
+  const projectile = new TestProjectile(scene, {
+    sender: mockEntity,
     model,
     speed: 10,
     maxRange: 5,
@@ -48,14 +73,18 @@ function getRigidBody(projectile: Projectile): RigidBody {
   return rigidBody;
 }
 
-async function setupCollisionScene(maxRange?: number): Promise<{
-  projectile: Projectile;
+async function setupCollisionScene(
+  options: {
+    maxRange?: number;
+    senderIsOther?: boolean;
+  } = {}
+): Promise<{
+  projectile: TestProjectile;
   otherRigidBody: RigidBody;
   physics: PhysicsManager;
 }> {
   const scene = new MockScene();
   await scene.initializePhysicsWorld(new THREE.Vector3(0, 0, 0));
-  const projectile = await createProjectile(scene, { maxRange });
 
   const otherGameObject = new GameObject({ scene });
   otherGameObject.add(
@@ -67,6 +96,11 @@ async function setupCollisionScene(maxRange?: number): Promise<{
     new RigidBody(otherGameObject, { enableCollisionDetection: true })
   );
   otherGameObject.update(0);
+
+  const projectile = await createProjectile(scene, {
+    ...(options.maxRange !== undefined && { maxRange: options.maxRange }),
+    ...(options.senderIsOther && { sender: otherGameObject as unknown as Entity }),
+  });
 
   const physics = scene.physics;
   assert(physics !== undefined, 'Physics manager is undefined');
@@ -104,7 +138,7 @@ describe('Projectile', () => {
     await scene.initializePhysicsWorld(new THREE.Vector3(0, 0, 0));
     const projectile = await createProjectile(scene, { speed: 10 });
 
-    projectile.sendTowards(new THREE.Vector3(3, 0, 4), vi.fn(), vi.fn());
+    projectile.sendTowards(new THREE.Vector3(3, 0, 4));
     projectile.update(1);
 
     // normalize(3, 0, 4) === (0.6, 0, 0.8); scaled by speed(10) and deltaTime(1) === (6, 0, 8)
@@ -119,19 +153,17 @@ describe('Projectile', () => {
     const projectile = await createProjectile(scene, { maxRange: 5 });
 
     projectile.position.set(10, 0, 0);
-
-    const onMaxRangeReached = vi.fn();
-    projectile.sendTowards(new THREE.Vector3(1, 0, 0), vi.fn(), onMaxRangeReached);
+    projectile.sendTowards(new THREE.Vector3(1, 0, 0));
 
     // still within maxRange of the repositioned launch origin (10, 0, 0)
     projectile.position.set(12, 0, 0);
     projectile.update(0);
-    expect(onMaxRangeReached).not.toHaveBeenCalled();
+    expect(projectile.onMaxRangeReachedSpy).not.toHaveBeenCalled();
 
     // now exceeds maxRange measured from the repositioned launch origin
     projectile.position.set(16, 0, 0);
     projectile.update(0);
-    expect(onMaxRangeReached).toHaveBeenCalledOnce();
+    expect(projectile.onMaxRangeReachedSpy).toHaveBeenCalledOnce();
   });
 
   it('calls onCollision when it collides with another rigidbody', async () => {
@@ -143,8 +175,7 @@ describe('Projectile', () => {
       return () => {};
     });
 
-    const onCollision = vi.fn();
-    projectile.sendTowards(new THREE.Vector3(1, 0, 0), onCollision, vi.fn());
+    projectile.sendTowards(new THREE.Vector3(1, 0, 0));
 
     const projectileHandle = getRigidBody(projectile).getHandle();
     const otherHandle = otherRigidBody.getHandle();
@@ -154,7 +185,7 @@ describe('Projectile', () => {
 
     physicsCallback(projectileHandle, otherHandle, true);
 
-    expect(onCollision).toHaveBeenCalledWith(otherGameObject);
+    expect(projectile.onCollisionSpy).toHaveBeenCalledWith(otherGameObject);
   });
 
   it('calls onMaxRangeReached when its distance from the launch position exceeds maxRange', async () => {
@@ -162,21 +193,20 @@ describe('Projectile', () => {
     await scene.initializePhysicsWorld(new THREE.Vector3(0, 0, 0));
     const projectile = await createProjectile(scene, { maxRange: 5 });
 
-    const onMaxRangeReached = vi.fn();
-    projectile.sendTowards(new THREE.Vector3(1, 0, 0), vi.fn(), onMaxRangeReached);
+    projectile.sendTowards(new THREE.Vector3(1, 0, 0));
 
     projectile.position.set(3, 0, 0);
     projectile.update(0);
-    expect(onMaxRangeReached).not.toHaveBeenCalled();
+    expect(projectile.onMaxRangeReachedSpy).not.toHaveBeenCalled();
 
     projectile.position.set(6, 0, 0);
     projectile.update(0);
-    expect(onMaxRangeReached).toHaveBeenCalledOnce();
+    expect(projectile.onMaxRangeReachedSpy).toHaveBeenCalledOnce();
   });
 
   it('calls onMaxRangeReached after calling onCollision', async () => {
     const maxRange = 5;
-    const { projectile, otherRigidBody, physics } = await setupCollisionScene(maxRange);
+    const { projectile, otherRigidBody, physics } = await setupCollisionScene({ maxRange });
 
     let physicsCallback: (h1: number, h2: number, started: boolean) => void = () => {};
     vi.spyOn(physics, 'onCollision').mockImplementation((cb) => {
@@ -184,9 +214,7 @@ describe('Projectile', () => {
       return () => {};
     });
 
-    const onMaxRangeReached = vi.fn();
-    const onCollision = vi.fn();
-    projectile.sendTowards(new THREE.Vector3(1, 0, 0), onCollision, onMaxRangeReached);
+    projectile.sendTowards(new THREE.Vector3(1, 0, 0));
 
     const projectileHandle = getRigidBody(projectile).getHandle();
     const otherHandle = otherRigidBody.getHandle();
@@ -196,11 +224,11 @@ describe('Projectile', () => {
 
     physicsCallback(projectileHandle, otherHandle, true);
 
-    expect(onCollision).toHaveBeenCalledWith(otherGameObject);
+    expect(projectile.onCollisionSpy).toHaveBeenCalledWith(otherGameObject);
 
     projectile.position.set(6, 0, 0);
     projectile.update(0);
 
-    expect(onMaxRangeReached).toHaveBeenCalledOnce();
+    expect(projectile.onMaxRangeReachedSpy).toHaveBeenCalledOnce();
   });
 });

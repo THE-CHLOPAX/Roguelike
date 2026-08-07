@@ -1,6 +1,8 @@
 import * as THREE from 'three';
-import { GameObject, MovementController, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { MovementController, RigidBody, RigidBodyOptions } from '@tgdf';
 
+import { GameScene } from '../scenes/GameScene';
+import { GameSceneObject } from './GameSceneObject';
 import { StateController } from '../gameObjectComponents/StateController';
 import { DamageHitboxController } from '../gameObjectComponents/DamageHitboxController';
 import {
@@ -30,7 +32,7 @@ export type EntityOptions = {
   movementOptions?: EntityMovementOptions;
 };
 
-export class Entity extends GameObject {
+export class Entity extends GameSceneObject {
   public isEntity = true;
 
   public rigidBody: RigidBody;
@@ -47,7 +49,7 @@ export class Entity extends GameObject {
   private _spawnPosition: THREE.Vector3 = new THREE.Vector3();
 
   constructor(
-    scene: Scene,
+    scene: GameScene,
     public options: EntityOptions
   ) {
     super({ scene });

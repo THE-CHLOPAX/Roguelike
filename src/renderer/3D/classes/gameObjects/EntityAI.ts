@@ -1,6 +1,7 @@
-import { NavMeshAgent, Scene } from '@tgdf';
+import { NavMeshAgent } from '@tgdf';
 import { NavMesh, Crowd } from '@recast-navigation/core';
 
+import { GameScene } from '../scenes/GameScene';
 import { Entity, EntityOptions } from './Entity';
 import { AIAttackOptions, AIRoamingOptions } from '../../types';
 
@@ -23,7 +24,7 @@ export class EntityAI extends Entity {
   private _despawnTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    scene: Scene,
+    scene: GameScene,
     public navMesh: NavMesh,
     public crowd: Crowd,
     public options: EntityAIOptions

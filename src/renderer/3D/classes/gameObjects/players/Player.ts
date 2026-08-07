@@ -1,7 +1,6 @@
-import { Scene } from '@tgdf';
-
 import { IdleState, State } from '../../states';
 import { Entity, EntityOptions } from '../Entity';
+import { GameScene } from '../../scenes/GameScene';
 import { PlayerActionType, SequenceSkill } from '../../../../../renderer/3D/types';
 import { InputSequenceTracker } from './InputSequenceTracker/InputSequenceTracker';
 
@@ -21,7 +20,7 @@ export class Player extends Entity {
   private _skillCooldownEndsAt = new Map<SequenceSkill, number>();
 
   constructor(
-    scene: Scene,
+    scene: GameScene,
     public options: PlayerOptions
   ) {
     super(scene, options);

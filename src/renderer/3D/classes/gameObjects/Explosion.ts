@@ -1,7 +1,7 @@
 import gsap from 'gsap';
 import * as THREE from 'three';
-import { RigidBody } from '@tgdf';
 import { clamp, useAssetStore } from '@tgdf';
+import { RigidBody, RigidBodyCollisionParams } from '@tgdf';
 
 import { isEntity } from 'renderer/3D/utils/isEntity';
 import { EXPLOSION_SPRITESHEET_TEXTURE } from 'renderer/3D/constants';
@@ -111,7 +111,7 @@ export class Explosion extends GameSceneObject {
   }
 
   // On collision, deal damage to entities and apply knockback force.
-  private _onCollision = (_thisBody: RigidBody, otherBody: RigidBody, started: boolean) => {
+  private _onCollision = ({ otherBody, started }: RigidBodyCollisionParams) => {
     if (!started) return;
 
     if (isEntity(otherBody.gameObject)) {

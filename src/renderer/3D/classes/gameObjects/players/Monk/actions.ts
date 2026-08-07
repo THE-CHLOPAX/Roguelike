@@ -68,7 +68,17 @@ export const summonOrbs: SequenceSkill = {
       const sacredOrbGroup = new THREE.Group();
 
       for (let i = 0; i < SACRED_ORB_COUNT; i++) {
-        const sacredOrb = new SacredOrb(entity);
+        const sacredOrb = new SacredOrb(entity, {
+          speed: 15,
+          maxRange: 15,
+          explosionOptions: {
+            colliderRadius: 3,
+            damageAmount: 10,
+            knockbackAmount: 0.8,
+            shakeIntensity: 1,
+            size: new THREE.Vector2(3, 3),
+          },
+        });
         const angle = i * SACRED_ORB_ANGLE_STEP;
 
         sacredOrb.position.set(
