@@ -104,7 +104,7 @@ export default defineConfig([
             'unknown',
           ],
 
-          internalPattern: ['^renderer/.+', '^3D/.+'],
+          internalPattern: ['^renderer/.+', '^3D/.+', '^UI'],
         },
       ],
     },

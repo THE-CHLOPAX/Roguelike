@@ -14,6 +14,7 @@ export default defineConfig({
       '@tgdf': path.resolve(__dirname, './src/lib'),
       renderer: path.resolve(__dirname, './src/renderer'),
       '3D': path.resolve(__dirname, './src/renderer/3D'),
+      UI: path.resolve(__dirname, './src/renderer/ui'),
     },
   },
 });
