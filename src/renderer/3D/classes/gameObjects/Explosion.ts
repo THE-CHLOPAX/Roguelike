@@ -46,7 +46,7 @@ export class Explosion extends GameSceneObject {
         columns: 4,
         rows: 2,
         frameCount: 8,
-        frameDuration: 0.075,
+        frameDuration: 0.07,
         texture,
         size: options.size,
         onComplete: () => {

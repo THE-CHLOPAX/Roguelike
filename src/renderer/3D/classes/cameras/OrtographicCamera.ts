@@ -7,6 +7,7 @@ import { CAMERA_POSITION_OFFSET } from '../../constants';
 
 const DEFAULT_CAMERA_LERP = 0.025;
 const SHAKE_DAMPING_FACTOR = 0.97;
+const FRAMERATE_DAMPING_FACTOR = 160; // 0.97 / 0.006s @144Hz
 const SHAKE_FREQUENCY = 10;
 
 export type OrtographicCameraOptions = {
@@ -168,7 +169,15 @@ export class OrtographicCamera extends THREE.OrthographicCamera implements Scene
 
     this._shakeOffset.set(nx * shake, ny * shake, 0);
 
+    const framerateAdjustedShakeDampingFactor = Math.min(
+      SHAKE_DAMPING_FACTOR / (deltaTime * FRAMERATE_DAMPING_FACTOR),
+      1
+    );
+
     // Dampen the shake intensity over time
-    this._shakeIntensity = filterBelow(this._shakeIntensity * SHAKE_DAMPING_FACTOR, 0.01);
+    this._shakeIntensity = filterBelow(
+      this._shakeIntensity * framerateAdjustedShakeDampingFactor,
+      0.01
+    );
   }
 }
