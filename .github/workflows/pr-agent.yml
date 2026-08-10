@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr_agent:
+    name: PR Agent
+    runs-on: ubuntu-latest
+    if: >-
+      ${{
+        github.event_name == 'pull_request' ||
+        (github.event.issue.pull_request && startsWith(github.event.comment.body, '/'))
+      }}
+
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.PR_AGENT_APP_ID }}
+          private-key: ${{ secrets.PR_AGENT_APP_PRIVATE_KEY }}
+
+      - name: PR Agent
+        uses: the-pr-agent/pr-agent@v0.42.0
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+          google_ai_studio__gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+
+          config__model: gemini/gemini-3.5-flash
+          config__fallback_models: gemini/gemini-3.5-flash-lite
+
+          github_action_config__auto_review: 'true'
+          github_action_config__auto_describe: 'false'
+          github_action_config__auto_improve: 'true'
