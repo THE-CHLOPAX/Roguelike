@@ -26,6 +26,11 @@ export function getRigidBodyColliderDescription(
       colliderDesc = RAPIER.ColliderDesc.cylinder(height / 2, radius);
       break;
     }
+    case 'sphere': {
+      const radius = Math.max(size.x, size.y, size.z) / 2;
+      colliderDesc = RAPIER.ColliderDesc.ball(radius);
+      break;
+    }
     default:
       throw new Error(`Unsupported collider shape: ${type}`);
   }

@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { Mock, It, Times, IMock } from 'moq.ts';
-import { Emitter, GameObjectEventMap, Scene } from '@tgdf';
+import { Emitter, GameObjectEventMap } from '@tgdf';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { Entity } from '../gameObjects/Entity';
+import { GameScene } from '../scenes/GameScene';
 import { ModelRenderer } from './ModelRenderer/ModelRenderer';
 import { DamageHitboxController } from './DamageHitboxController';
 import { HealthPointsController, HealthPointsControllerEvents } from './HealthPointsController';
@@ -12,8 +13,10 @@ vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
-class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+class TestScene extends GameScene {
+  constructor() {
+    super(new THREE.Mesh(new THREE.PlaneGeometry(10, 10)));
+  }
 }
 
 const SIZE = new THREE.Vector3(1, 1, 1);

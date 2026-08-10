@@ -12,7 +12,7 @@ export type AssetState = {
   modelCacheJSON: Map<string, THREE.Object3D>;
   modelCacheGLTF: Map<string, THREE.Object3D>;
   loadImage: (id: string, url: string) => Promise<HTMLImageElement>;
-  loadTexture: (id: string, url: string) => Promise<THREE.Texture>;
+  loadTexture: (id: string, url: string, colorSpace?: THREE.ColorSpace) => Promise<THREE.Texture>;
   loadAudio: (id: string, url: string, volume?: number) => Promise<HTMLAudioElement>;
   loadFont: (id: string, url: string) => Promise<FontFace>;
   loadModelJSON: (id: string, url: string, nameExtractor?: string) => Promise<THREE.Object3D>;
@@ -64,7 +64,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
     });
   },
 
-  loadTexture: (id: string, url: string): Promise<THREE.Texture> => {
+  loadTexture: (id: string, url: string, colorSpace?: THREE.ColorSpace): Promise<THREE.Texture> => {
     // Check cache first
     const cached = get().textureCache.get(id);
     if (cached) {
@@ -75,6 +75,10 @@ export const useAssetStore = create<AssetState>((set, get) => ({
       textureLoader.load(
         url,
         (texture) => {
+          if (colorSpace) {
+            texture.colorSpace = colorSpace;
+          }
+
           set((state) => ({
             textureCache: new Map(state.textureCache).set(id, texture),
           }));

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
+import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
 import { assert, describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import {
   GameObject,
@@ -19,7 +20,7 @@ vi.mock('electron', () => ({
 import { ArcaneCircle, ArcaneCircleOptions } from './ArcaneCircle';
 
 class MockScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 class FakePlayer extends GameObject {

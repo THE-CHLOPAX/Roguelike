@@ -1,9 +1,13 @@
 import * as THREE from 'three';
-import { GameObject, RigidBody, RigidBodyOptions, Scene } from '@tgdf';
+import { assert, RigidBody, RigidBodyCollisionParams, RigidBodyOptions } from '@tgdf';
 
+import { Entity } from './Entity';
+import { GameScene } from '../scenes/GameScene';
+import { GameSceneObject } from './GameSceneObject';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 
 export type ProjectileOptions = {
+  sender: Entity;
   model: THREE.Object3D;
   speed: number;
   maxRange: number;
@@ -23,17 +27,18 @@ const DEFAULT_RIGID_OPTIONS: RigidBodyOptions = {
   lockRotation: true,
 };
 
-export class Projectile extends GameObject {
+export class Projectile extends GameSceneObject {
   public rigidBody: RigidBody;
+
+  protected sender: Entity;
 
   private _speed: number;
   private _maxRange: number;
-
   private _sentFromPosition: THREE.Vector3 | null = null;
   private _direction: THREE.Vector3 | null = null;
-  private _onMaxRangeCallback: (() => void) | null = null;
+  private _collisionListenerId: string | null = null;
 
-  constructor(scene: Scene, options: ProjectileOptions) {
+  constructor(scene: GameScene, options: ProjectileOptions) {
     super({ scene });
 
     this._speed = options.speed;
@@ -44,26 +49,22 @@ export class Projectile extends GameObject {
       'RigidBody',
       new RigidBody(this, { ...DEFAULT_RIGID_OPTIONS, ...options.rigidBodyOptions })
     );
+
+    this.sender = options.sender;
   }
 
-  public sendTowards(
-    direction: THREE.Vector3,
-    onCollision: (collidedObject: THREE.Object3D) => void,
-    onMaxRangeReached: () => void
-  ) {
+  public sendTowards(direction: THREE.Vector3) {
     this._sentFromPosition = this.getWorldPosition(new THREE.Vector3());
 
     this._direction = direction.normalize();
 
-    const collisionListenerId = `projectile-on-collision-listener-${this.name || this.id}`;
-
-    this.rigidBody.addCollisionListener(collisionListenerId, ({ otherBody, started }) => {
-      if (!started) return;
-      this.rigidBody.removeCollisionListener(collisionListenerId);
-      onCollision(otherBody.gameObject);
+    this._collisionListenerId = `projectile-on-collision-listener-${this.name || this.id}`;
+    this.rigidBody.addCollisionListener(this._collisionListenerId, (params) => {
+      if (this.onCollision(params)) {
+        assert(this._collisionListenerId !== null);
+        this.rigidBody.removeCollisionListener(this._collisionListenerId);
+      }
     });
-
-    this._onMaxRangeCallback = onMaxRangeReached;
   }
 
   protected override onUpdate(deltaTime: number): void {
@@ -75,10 +76,24 @@ export class Projectile extends GameObject {
 
     if (
       this._sentFromPosition !== null &&
-      this._onMaxRangeCallback !== null &&
+      this._collisionListenerId !== null &&
       this.position.distanceTo(this._sentFromPosition) > this._maxRange
     ) {
-      this._onMaxRangeCallback?.();
+      this.rigidBody.removeCollisionListener(this._collisionListenerId);
+      this._collisionListenerId = null;
+      this.onMaxRangeReached();
     }
   }
+
+  /**
+   * On collision overridable callback.
+   * Should return true only if collision terminates the projectile lifecycle.
+   * @param _params
+   * @returns
+   */
+  protected onCollision(_params: RigidBodyCollisionParams): boolean {
+    return true;
+  }
+
+  protected onMaxRangeReached(): void {}
 }

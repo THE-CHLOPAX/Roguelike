@@ -4,13 +4,13 @@ import { logger, ResourceTracker } from '@tgdf';
 
 import { Emitter } from '../Emitter';
 import { SCENE_MESSAGES } from './constants';
-import { SceneEventsMap } from '../types/scene';
 import { GameObject } from '../GameObject/GameObject';
+import { SceneCamera, SceneEventsMap } from '../types/scene';
 import { PhysicsManager } from '../PhysicsManager/PhysicsManager';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {
-  public abstract camera: THREE.Camera;
+  public abstract camera: SceneCamera;
 
   private _emitter = new Emitter<SceneEventsMap>();
   private _renderer: THREE.WebGLRenderer | null = null;
@@ -44,15 +44,21 @@ export abstract class Scene extends THREE.Scene {
     this._renderer = renderer;
 
     // Update camera
-    if ('update' in this.camera) {
-      (this.camera as { update: () => void }).update();
-    }
+    this.camera.update(deltaTime);
 
-    // Update GameObjects first so kinematic visuals are current before physics
+    // Update GameObjects first so kinematic visuals are current before physics.
+    // Collect into a snapshot before updating: THREE.Object3D.traverse() reads
+    // children live, so a GameObject that adds/removes scene children from its own
+    // update (e.g. removing itself once an animation finishes) would otherwise
+    // corrupt the in-progress traversal.
+    const gameObjectsToUpdate: GameObject[] = [];
     this.traverse((child) => {
       if (child instanceof GameObject) {
-        child.update(deltaTime);
+        gameObjectsToUpdate.push(child);
       }
+    });
+    gameObjectsToUpdate.forEach((gameObject) => {
+      gameObject.update(deltaTime);
     });
 
     // Step physics after kinematic bodies have synced their colliders

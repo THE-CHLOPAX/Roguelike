@@ -18,8 +18,6 @@ export class DamageHitboxController extends GameObjectComponent {
     if (this._attackHitbox || !this.scene) return;
     this._attackHitbox = new DamageHitbox(this.scene, size, this.gameObject, damage);
 
-    this._attackHitbox.rigidBody.toggleDebug(true);
-
     this.entity.modelRenderer.addAttachment({
       object: this._attackHitbox,
       parentName: parentName,

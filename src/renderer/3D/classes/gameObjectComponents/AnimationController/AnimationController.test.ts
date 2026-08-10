@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GameObject, getModelFromStore, Scene } from '@tgdf';
+import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AnimationController } from './AnimationController';
@@ -18,7 +19,7 @@ vi.mock('@tgdf', async (importOriginal) => {
 });
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 function createClip(name: string, duration = 1): THREE.AnimationClip {

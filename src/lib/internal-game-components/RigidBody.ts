@@ -10,7 +10,7 @@ import { PhysicsCollisionCallback } from '../internal-3d/types/physics';
 import { getRigidBodyColliderDescription } from './utils/getRigidBodyColliderDescription';
 import { getRigidBodyDescriptionForObject } from './utils/getRigidBodyDescriptionForObject';
 
-export type RigidBodyShape = 'box' | 'cylinder';
+export type RigidBodyShape = 'box' | 'cylinder' | 'sphere';
 export type RigidBodyType = 'dynamic' | 'static' | 'kinematic';
 export type RigidBodyOptions = {
   type?: RigidBodyType;
@@ -48,10 +48,10 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
   constructor(gameObject: GameObject, options: RigidBodyOptions = {}) {
     super(gameObject, options);
 
-    // Override options with defaults
+    // Add defaults
     this.options = {
       type: 'dynamic',
-      mass: 10,
+      mass: 1,
       friction: 0,
       restitution: 0.3,
       linearDamping: 0.5,

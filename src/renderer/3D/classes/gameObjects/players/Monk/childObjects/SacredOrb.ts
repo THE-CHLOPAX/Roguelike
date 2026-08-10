@@ -1,22 +1,32 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
-import { RigidBodyCollisionCallback } from '@tgdf';
+import { GameObject, RigidBodyCollisionCallback, RigidBodyCollisionParams } from '@tgdf';
 
 import { COLORS } from 'renderer/constants';
 
 import { Entity } from '../../../Entity';
 import { Projectile } from '../../../Projectile';
+import { Explosion, ExplosionOptions } from '../../../Explosion';
 
 const SACRED_ORB_COLOR = COLORS.GOLDEN;
 const SACRED_ORB_SPAWN_DURATION = 1.8;
 const SACRED_ORB_SPAWN_RISE_OFFSET = -1;
-const SACRED_ORB_COLLIDER_SIZE = 0.2;
+const SACRED_ORB_COLLIDER_SIZE = 0.8;
+
+export type SacredOrbOptions = {
+  speed: number;
+  maxRange: number;
+  explosionOptions: Omit<ExplosionOptions, 'position'>;
+};
 
 export class SacredOrb extends Projectile {
   private _strikeCollisionUnsubscribe: (() => void) | null = null;
   private _material: THREE.Material;
 
-  constructor(private _caller: Entity) {
+  constructor(
+    private _caller: Entity,
+    public options: SacredOrbOptions
+  ) {
     const geometry = new THREE.SphereGeometry(0.2, 8, 8);
     const material = new THREE.MeshStandardMaterial({
       color: SACRED_ORB_COLOR,
@@ -31,11 +41,12 @@ export class SacredOrb extends Projectile {
     model.add(pointLight);
 
     super(_caller.scene, {
+      sender: _caller,
       speed: 15,
       maxRange: 15,
       model,
       rigidBodyOptions: {
-        colliderShape: 'box',
+        colliderShape: 'sphere',
         colliderSize: new THREE.Vector3(
           SACRED_ORB_COLLIDER_SIZE,
           SACRED_ORB_COLLIDER_SIZE,
@@ -100,6 +111,19 @@ export class SacredOrb extends Projectile {
     if (this._strikeCollisionUnsubscribe !== null) this._strikeCollisionUnsubscribe();
   }
 
+  protected override onCollision({ otherBody, started }: RigidBodyCollisionParams): boolean {
+    if (
+      !started ||
+      this._collidedWithSender(otherBody.gameObject) ||
+      this._collidedWithOtherOrb(otherBody.gameObject)
+    )
+      return false;
+    this._explodeOrb();
+    return true;
+  }
+
+  protected override onMaxRangeReached(): void {}
+
   private _strikeCollisionHandler: RigidBodyCollisionCallback = ({ started }) => {
     if (!started) return;
 
@@ -113,10 +137,28 @@ export class SacredOrb extends Projectile {
     const directionVector = new THREE.Vector3();
     this._caller.getWorldDirection(directionVector);
 
-    this.sendTowards(directionVector, this._onCollision, this._onMaxRangeReached);
+    this.sendTowards(directionVector);
   };
 
-  private _onCollision = () => {};
+  private _explodeOrb = () => {
+    const position = this.position.clone();
+    this.scene.remove(this);
 
-  private _onMaxRangeReached = () => {};
+    const explosion = new Explosion(this.scene, {
+      position,
+      ...this.options.explosionOptions,
+    });
+
+    this.scene.add(explosion);
+  };
+
+  private _collidedWithSender(otherGameObject: GameObject): boolean {
+    return (
+      otherGameObject === this.sender || this.sender.getObjectById(otherGameObject.id) !== undefined
+    );
+  }
+
+  private _collidedWithOtherOrb(otherGameObject: GameObject): boolean {
+    return otherGameObject instanceof SacredOrb || otherGameObject.parent instanceof SacredOrb;
+  }
 }

@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { Scene } from './Scene';
 import { NavMeshManager } from '../NavMeshManager';
+import { MockCamera } from '../testUtils/MockCamera';
 import { GameObject } from '../GameObject/GameObject';
 
 vi.mock('electron', () => ({
@@ -12,13 +13,8 @@ vi.mock('electron', () => ({
 }));
 
 class TestScene extends Scene {
-  public camera: THREE.Camera & { update: ReturnType<typeof vi.fn> };
+  public camera = new MockCamera();
   public onUpdateSpy = vi.fn();
-
-  constructor() {
-    super();
-    this.camera = { update: vi.fn() } as THREE.Camera & { update: ReturnType<typeof vi.fn> };
-  }
 
   protected override onUpdate(deltaTime: number): void {
     this.onUpdateSpy(deltaTime);

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { Scene } from '../Scene/Scene';
 import { GameObject } from './GameObject';
+import { MockCamera } from '../testUtils/MockCamera';
 import { Input as InputClass } from '../../internal-input/Input';
 
 vi.mock('electron', () => ({
@@ -11,7 +12,7 @@ vi.mock('electron', () => ({
 }));
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 class TestGameObject extends GameObject {

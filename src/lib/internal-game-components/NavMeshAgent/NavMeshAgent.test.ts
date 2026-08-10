@@ -9,10 +9,11 @@ vi.mock('electron', () => ({
 
 import { NavMeshAgent } from './NavMeshAgent';
 import { Scene } from '../../internal-3d/Scene/Scene';
+import { MockCamera } from '../../internal-3d/testUtils/MockCamera';
 import { GameObject } from '../../internal-3d/GameObject/GameObject';
 
 class TestScene extends Scene {
-  camera = new THREE.PerspectiveCamera();
+  camera = new MockCamera();
 }
 
 // A floor spanning x/z: [-10, 10], with its walkable top surface at y = 0.
