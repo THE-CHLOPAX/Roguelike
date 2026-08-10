@@ -30,4 +30,4 @@ jobs:
 
           github_action_config__auto_review: 'true'
           github_action_config__auto_describe: 'false'
-          github_action_config__auto_improve: 'false'
+          github_action_config__auto_improve: 'true'
