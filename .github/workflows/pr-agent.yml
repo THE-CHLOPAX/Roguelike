@@ -16,7 +16,11 @@ jobs:
   pr_agent:
     name: PR Agent
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' || github.event.issue.pull_request }}
+    if: >-
+      ${{
+        github.event_name == 'pull_request' ||
+        (github.event.issue.pull_request && startsWith(github.event.comment.body, '/'))
+      }}
 
     steps:
       - name: Generate app token
