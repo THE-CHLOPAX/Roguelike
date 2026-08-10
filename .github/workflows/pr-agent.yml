@@ -29,4 +29,5 @@ jobs:
           config__fallback_models: gemini/gemini-3.5-flash-lite
 
           github_action_config__auto_review: 'true'
-          github_action_config__auto_describe: 'true'
+          github_action_config__auto_describe: 'false'
+          github_action_config__auto_improve: 'false'
