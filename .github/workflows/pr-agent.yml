@@ -16,6 +16,7 @@ jobs:
   pr_agent:
     name: PR Agent
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.event.issue.pull_request }}
 
     steps:
       - name: PR Agent
