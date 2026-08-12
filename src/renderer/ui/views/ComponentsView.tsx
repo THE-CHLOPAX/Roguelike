@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import { InternalFlex, InternalText } from '@tgdf';
 
-import { Button, Text } from 'UI';
+import { Button, Text, Dropdown } from 'UI';
 
 import { COLORS } from '../../constants';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
+import { PanelScalable } from '../components/PanelScalable/PanelScalable';
 
 const TEXT_SIZES = ['sm', 'md', 'lg', 'xl', 'xxl'] as const;
+const DROPDOWN_OPTIONS = [
+  { label: 'Option 1', value: 'option-1' },
+  { label: 'Option 2', value: 'option-2' },
+  { label: 'Option 3', value: 'option-3' },
+];
 const TEXT_COLOR_SAMPLES = [
   { name: 'Font color primary', value: COLORS.FONT_COLOR_PRIMARY },
   { name: 'Font color highlight', value: COLORS.FONT_COLOR_HIGHLIGHT },
@@ -48,6 +55,8 @@ function ComponentSection({ title, children }: ComponentSectionProps) {
 }
 
 export function ComponentsView() {
+  const [dropdownValue, setDropdownValue] = useState<string | undefined>(undefined);
+
   return (
     <BackToViewLayout backToView="MenuView">
       <InternalFlex
@@ -70,6 +79,41 @@ export function ComponentsView() {
           <InternalFlex gap={20} align="center">
             <Button label="Button" onClick={() => {}} />
             <Button label="Disabled" onClick={() => {}} disabled />
+          </InternalFlex>
+        </ComponentSection>
+
+        <ComponentSection title="Dropdown">
+          <InternalFlex gap={20} align="start">
+            <Dropdown
+              options={DROPDOWN_OPTIONS}
+              value={dropdownValue}
+              onChange={setDropdownValue}
+              placeholder="Select..."
+            />
+            <Dropdown options={DROPDOWN_OPTIONS} placeholder="Disabled" disabled />
+          </InternalFlex>
+        </ComponentSection>
+
+        <ComponentSection title="Panel">
+          <InternalFlex gap={20} align="start" wrap="wrap">
+            <PanelScalable>
+              <Text nowrap>Short</Text>
+            </PanelScalable>
+
+            <PanelScalable>
+              <Text>A somewhat longer piece of panel content</Text>
+            </PanelScalable>
+
+            <PanelScalable style={{ width: '300px' }}>
+              <Text>
+                This panel has an explicit width, so its content wraps across multiple lines while
+                the border segments stretch to match.
+              </Text>
+            </PanelScalable>
+
+            <PanelScalable>
+              <Button label="Button" />
+            </PanelScalable>
           </InternalFlex>
         </ComponentSection>
 
