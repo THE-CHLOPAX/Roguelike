@@ -19,6 +19,7 @@ type TextProps = {
   size?: TextSize;
   color?: string;
   className?: string;
+  nowrap?: boolean;
   style?: CSSProperties;
 };
 
@@ -26,17 +27,19 @@ export const Text = ({
   children,
   size = 'md',
   color = COLORS.FONT_COLOR_PRIMARY,
+  nowrap = false,
   className,
   style,
 }: TextProps) => (
-  <StyledText $size={size} $color={color} className={className} style={style}>
+  <StyledText $size={size} $color={color} $nowrap={nowrap} className={className} style={style}>
     {children}
   </StyledText>
 );
 
-const StyledText = styled.span<{ $size: TextSize; $color: string }>`
+const StyledText = styled.span<{ $size: TextSize; $color: string; $nowrap: boolean }>`
   font-family: 'Alagard', monospace;
   font-size: ${({ $size }) => FONT_SIZES[$size]}px;
+  line-height: 0.8;
   color: ${({ $color }) => $color};
-  white-space: nowrap;
+  white-space: ${({ $nowrap }) => ($nowrap ? 'nowrap' : 'initial')};
 `;
