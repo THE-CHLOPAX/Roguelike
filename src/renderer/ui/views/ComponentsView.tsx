@@ -1,8 +1,8 @@
 import { InternalFlex, InternalText } from '@tgdf';
 
+import { Button, Text } from 'UI';
+
 import { COLORS } from '../../constants';
-import { Text } from '../components/Text/Text';
-import { Button } from '../components/Button/Button';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 
 const TEXT_SIZES = ['sm', 'md', 'lg', 'xl', 'xxl'] as const;
