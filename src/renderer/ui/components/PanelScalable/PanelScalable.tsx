@@ -21,6 +21,9 @@ const CORNER_HEIGHT_TOP = 17;
 const CORNER_HEIGHT_BOTTOM = 13;
 const EDGE_THICKNESS = 1;
 
+const MIN_WIDTH = 20;
+const MIN_HEIGHT = 20;
+
 export type PanelScalableProps = {
   children: ReactNode;
   className?: string;
@@ -46,6 +49,8 @@ export const PanelScalable = ({ children, className, style }: PanelScalableProps
 const Wrapper = styled.div`
   position: relative;
   display: inline-grid;
+  min-width: ${MIN_WIDTH * SCALE}px;
+  min-height: ${MIN_HEIGHT * SCALE}px;
 `;
 
 const Content = styled.div`
@@ -53,6 +58,8 @@ const Content = styled.div`
   box-sizing: border-box;
   background: ${COLORS.BG_COLOR};
   padding: ${6 * SCALE}px;
+  min-width: 100%;
+  min-height: 100%;
   width: fit-content;
   height: fit-content;
   clip-path: inset(${1 * SCALE}px);

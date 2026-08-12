@@ -96,6 +96,8 @@ export function ComponentsView() {
 
         <ComponentSection title="Panel">
           <InternalFlex gap={20} align="start" wrap="wrap">
+            <PanelScalable>{''}</PanelScalable>
+
             <PanelScalable>
               <Text nowrap>Short</Text>
             </PanelScalable>
