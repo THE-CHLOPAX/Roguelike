@@ -1,7 +1,7 @@
 {
-  "name": "roguelike",
-  "version": "0.1.116",
-  "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
+  "name": "unshackled",
+  "version": "0.2.2",
+  "description": "A roguelike game where you have to fight your way through a hostile world to defeat the final boss.",
   "main": "main.js",
   "homepage": "./",
   "scripts": {
@@ -30,8 +30,8 @@
     "test": "npx vitest run"
   },
   "build": {
-    "appId": "com.roguelike.app",
-    "productName": "Roguelike",
+    "appId": "com.unshackled.app",
+    "productName": "Unshackled",
     "directories": {
       "output": "release/packages",
       "buildResources": "assets"
