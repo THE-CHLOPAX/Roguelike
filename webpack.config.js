@@ -38,8 +38,27 @@ module.exports = {
         use: ['style-loader', 'css-loader'],
       },
       {
-        test: /\.(png|jpg|jpeg|gif|svg)$/i,
+        test: /\.(png|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
+      },
+      {
+        test: /\.svg$/i,
+        resourceQuery: /url/, // import x from './file.svg?url' -> asset URL
+        type: 'asset/resource',
+      },
+      {
+        test: /\.svg$/i,
+        issuer: /\.[jt]sx?$/,
+        resourceQuery: { not: [/url/] },
+        use: [
+          {
+            loader: '@svgr/webpack',
+            // SVGO's default `removeViewBox` strips viewBox when width/height
+            // are present, which breaks scaling these components via width/
+            // height props (content stops scaling with the box). Keep it off.
+            options: { svgo: false },
+          },
+        ],
       },
     ],
   },
@@ -67,6 +86,7 @@ module.exports = {
       '@tgdf/*': path.resolve(__dirname, 'src/lib/*'),
       renderer: path.resolve(__dirname, 'src/renderer'),
       '3D': path.resolve(__dirname, 'src/renderer/3D'),
+      'UI': path.resolve(__dirname, 'src/renderer/ui')
     },
   },
   devServer: {

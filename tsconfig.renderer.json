@@ -10,9 +10,10 @@
       "@tgdf": ["src/lib/index.ts"],
       "@tgdf/*": ["src/lib/*"],
       "renderer/*": ["src/renderer/*"],
-      "3D/*": ["src/renderer/3D/*"]
+      "3D/*": ["src/renderer/3D/*"],
+      "UI": ["src/renderer/ui/index.ts"]
     }
   },
-  "include": ["src/renderer/**/*"],
+  "include": ["src/renderer/**/*", "src/global.d.ts"],
   "exclude": ["src/main/**/*", "node_modules"]
 }

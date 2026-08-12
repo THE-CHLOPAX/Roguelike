@@ -34,7 +34,7 @@ textarea,
 button,
 input[type='button'],
 input[type='checkbox'] {
-  cursor: pointer !important;
+  cursor: pointer;
 }
 
 #root {

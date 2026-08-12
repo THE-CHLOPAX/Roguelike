@@ -7,6 +7,7 @@ import {
   InternalCheckbox,
 } from '@tgdf';
 
+import { COLORS } from '../../constants';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 import { ActivePlayerState, useActivePlayersStore } from '../../store/useActivePlayersStore';
 
@@ -63,7 +64,7 @@ export function PlayersView() {
         direction="column"
         justify="center"
         align="center"
-        style={{ height: '100vh', color: '#fff' }}
+        style={{ height: '100vh', color: COLORS.FONT_COLOR_PRIMARY }}
       >
         <InternalText size="xl" weight="bold">
           Players View
@@ -75,7 +76,11 @@ export function PlayersView() {
             direction="row"
             justify="between"
             gap={'1rem'}
-            style={{ marginTop: '1rem', border: '1px solid #fff', padding: '5px' }}
+            style={{
+              marginTop: '1rem',
+              border: `1px solid ${COLORS.FONT_COLOR_DIMMED}`,
+              padding: '5px',
+            }}
           >
             <InternalText size="lg">{player.id}</InternalText>
             <InternalText size="lg">{player.name}</InternalText>
