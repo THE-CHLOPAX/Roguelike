@@ -1,6 +1,6 @@
 {
   "name": "roguelike",
-  "version": "0.1.114",
+  "version": "0.1.115",
   "description": "A lightweight library to bootstrap games/apps that run in Electron using React for UI and three.js for 3D rendering.",
   "main": "main.js",
   "homepage": "./",
@@ -127,6 +127,7 @@
     "@babel/preset-react": "^7.28.5",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.38.0",
+    "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/electron": "^1.6.12",

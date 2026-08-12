@@ -6,6 +6,7 @@ import { Theme } from '@radix-ui/themes';
 import { InternalFlex, InternalText, useGamepadStore, ViewManager } from '@tgdf';
 
 import * as views from './ui/views';
+import { COLORS } from './constants';
 import { useFMODAudioInitialization } from './FMOD';
 import { useActivePlayersStore } from './store/useActivePlayersStore';
 
@@ -26,7 +27,7 @@ const App: React.FC = () => {
         <ViewManager views={views} />
       ) : (
         <StyledInternalFlex justify="center" align="center">
-          <InternalText color="white">Loading...</InternalText>
+          <InternalText color={COLORS.FONT_COLOR_PRIMARY}>Loading...</InternalText>
         </StyledInternalFlex>
       )}
     </Theme>
@@ -36,7 +37,7 @@ const App: React.FC = () => {
 const StyledInternalFlex = styled(InternalFlex)`
   width: 100vw;
   height: 100vh;
-  background-color: #000;
+  background-color: ${COLORS.BG_COLOR};
 `;
 
 export default App;

@@ -13,6 +13,7 @@ import {
   setChannelMuted,
 } from '@tgdf';
 
+import { COLORS } from '../../constants';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 
 export function SettingsView() {
@@ -29,15 +30,15 @@ export function SettingsView() {
         direction="column"
         align="center"
         justify="center"
-        style={{ gap: '20px', background: '#000', height: '100vh' }}
+        style={{ gap: '20px', background: COLORS.BG_COLOR, height: '100vh' }}
       >
-        <InternalText size="xl" weight="bold" color="white">
+        <InternalText size="xl" weight="bold" color={COLORS.FONT_COLOR_PRIMARY}>
           Settings
         </InternalText>
 
         {/* Resolution Selector */}
         <InternalFlex direction="row" justify="between" gap={10} align="center">
-          <InternalText size="lg" color="white">
+          <InternalText size="lg" color={COLORS.FONT_COLOR_PRIMARY}>
             Resolution:
           </InternalText>
           <InternalSelect
@@ -54,7 +55,7 @@ export function SettingsView() {
 
         {/* Fullscreen Toggle */}
         <InternalFlex direction="row" justify="between" gap={10} align="center">
-          <InternalText size="lg" color="white">
+          <InternalText size="lg" color={COLORS.FONT_COLOR_PRIMARY}>
             Fullscreen:
           </InternalText>
           <InternalCheckbox checked={fullscreen} onChange={() => setFullscreen(!fullscreen)} />
@@ -62,7 +63,7 @@ export function SettingsView() {
 
         {/* Antialiasing Toggle */}
         <InternalFlex direction="row" justify="between" gap={10} align="center">
-          <InternalText size="lg" color="white">
+          <InternalText size="lg" color={COLORS.FONT_COLOR_PRIMARY}>
             Antialiasing:
           </InternalText>
           <InternalCheckbox
@@ -73,7 +74,7 @@ export function SettingsView() {
 
         {/* Main volume slider */}
         <InternalFlex direction="column" align="center" justify="center" style={{ width: '150px' }}>
-          <InternalText size="lg" color="white">
+          <InternalText size="lg" color={COLORS.FONT_COLOR_PRIMARY}>
             Main Volume: {mainVolumeChannel?.volume}
           </InternalText>
           <InternalSlider
