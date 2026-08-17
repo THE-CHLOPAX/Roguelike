@@ -34,6 +34,7 @@ export { AppInput as Input };
 // Internal 3D
 export * from './internal-3d/Emitter';
 export * from './internal-3d/GameObject/GameObject';
+export * from './internal-3d/PointLightPool/PointLightPool';
 export * from './internal-3d/PhysicsManager/PhysicsManager';
 export * from './internal-3d/Scene';
 export * from './internal-ui/ThreeDViewer/ThreeDViewer';

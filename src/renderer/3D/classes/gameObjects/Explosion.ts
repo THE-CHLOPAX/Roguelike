@@ -69,9 +69,6 @@ export class Explosion extends GameSceneObject {
       );
     }
 
-    this._explosionFlash = new THREE.PointLight(0xffaa33, 0, 10);
-    this._explosionFlash.position.set(0, 0, 0);
-    this.add(this._explosionFlash);
   }
 
   protected override onAwake(): void {
@@ -84,9 +81,17 @@ export class Explosion extends GameSceneObject {
       );
     }
 
-    this._flashTimeline = gsap.timeline();
-    this._flashTimeline.to(this._explosionFlash, { intensity: 2, duration: 0.25 });
-    this._flashTimeline.to(this._explosionFlash, { intensity: 0, duration: 0.4 });
+    this._explosionFlash = this.scene.lightPool.acquire(this);
+    if (this._explosionFlash) {
+      this._explosionFlash.color.set(0xffaa33);
+      this._explosionFlash.intensity = 0;
+      this._explosionFlash.distance = 10;
+      this._explosionFlash.decay = 2;
+
+      this._flashTimeline = gsap.timeline();
+      this._flashTimeline.to(this._explosionFlash, { intensity: 2, duration: 0.25 });
+      this._flashTimeline.to(this._explosionFlash, { intensity: 0, duration: 0.4 });
+    }
 
     if (this.options.shakeIntensity) {
       const camera = this.scene.camera;
@@ -108,6 +113,9 @@ export class Explosion extends GameSceneObject {
       this._flashTimeline.kill();
       this._flashTimeline = null;
     }
+
+    this.scene.lightPool.release(this._explosionFlash);
+    this._explosionFlash = null;
   }
 
   // On collision, deal damage to entities and apply knockback force.

@@ -138,12 +138,12 @@ describe('Scene', () => {
 
       scene.add(gameObject);
 
-      expect(scene.children).toHaveLength(1);
+      expect(scene.children).toEqual([scene.lightPool.root, gameObject]);
 
       scene.remove(gameObject);
 
       expect(destroySpy).toHaveBeenCalledOnce();
-      expect(scene.children).toHaveLength(0);
+      expect(scene.children).toEqual([scene.lightPool.root]);
     });
 
     it('destroys nested GameObject instances when they are removed from the scene', () => {
@@ -159,7 +159,7 @@ describe('Scene', () => {
       scene.remove(gameObject);
 
       expect(destroySpy).toHaveBeenCalledOnce();
-      expect(scene.children).toHaveLength(0);
+      expect(scene.children).toEqual([scene.lightPool.root]);
     });
   });
 
@@ -181,7 +181,7 @@ describe('Scene', () => {
 
       scene.add(mesh, gameObject);
 
-      expect(scene.children).toHaveLength(2);
+      expect(scene.children).toEqual([scene.lightPool.root, mesh, gameObject]);
 
       scene.dispose();
 

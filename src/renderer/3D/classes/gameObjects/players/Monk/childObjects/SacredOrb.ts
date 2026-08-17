@@ -22,6 +22,7 @@ export type SacredOrbOptions = {
 export class SacredOrb extends Projectile {
   private _strikeCollisionUnsubscribe: (() => void) | null = null;
   private _material: THREE.Material;
+  private _light: THREE.PointLight | null = null;
 
   constructor(
     private _caller: Entity,
@@ -36,9 +37,6 @@ export class SacredOrb extends Projectile {
       roughness: 0.2,
     });
     const model = new THREE.Mesh(geometry, material);
-
-    const pointLight = new THREE.PointLight(SACRED_ORB_COLOR, 1.2, 1.2, 2);
-    model.add(pointLight);
 
     super(_caller.scene, {
       sender: _caller,
@@ -79,6 +77,15 @@ export class SacredOrb extends Projectile {
   protected override onAwake(): void {
     super.onAwake();
     this.rigidBody.setEnabled(false);
+
+    this._light = this.scene.lightPool.acquire(this);
+    if (this._light) {
+      this._light.color.set(SACRED_ORB_COLOR);
+      this._light.intensity = 1.2;
+      this._light.distance = 1.2;
+      this._light.decay = 2;
+    }
+
     this._playSpawnAnimation();
   }
 
@@ -109,6 +116,9 @@ export class SacredOrb extends Projectile {
   protected override onDestroyed(): void {
     super.onDestroyed();
     if (this._strikeCollisionUnsubscribe !== null) this._strikeCollisionUnsubscribe();
+
+    this.scene.lightPool.release(this._light);
+    this._light = null;
   }
 
   protected override onCollision({ otherBody, started }: RigidBodyCollisionParams): boolean {
@@ -122,7 +132,9 @@ export class SacredOrb extends Projectile {
     return true;
   }
 
-  protected override onMaxRangeReached(): void {}
+  protected override onMaxRangeReached(): void {
+    this._explodeOrb();
+  }
 
   private _strikeCollisionHandler: RigidBodyCollisionCallback = ({ started }) => {
     if (!started) return;
