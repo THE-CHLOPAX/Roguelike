@@ -28,6 +28,7 @@ export const ScrollableWrapper = ({
   style,
 }: ScrollableWrapperProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const innerContentRef = useRef<HTMLDivElement>(null);
   const [verticalState, setVerticalState] = useState<ScrollState>(IDLE_SCROLL_STATE);
   const [horizontalState, setHorizontalState] = useState<ScrollState>(IDLE_SCROLL_STATE);
 
@@ -57,13 +58,14 @@ export const ScrollableWrapper = ({
 
   useEffect(() => {
     const el = contentRef.current;
-    if (!el) return;
+    const innerContent = innerContentRef.current;
+    if (!el || !innerContent) return;
 
     updateFromScroll();
 
     const observer = new ResizeObserver(updateFromScroll);
     observer.observe(el);
-    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    observer.observe(innerContent);
 
     return () => observer.disconnect();
   }, [updateFromScroll]);
@@ -92,11 +94,14 @@ export const ScrollableWrapper = ({
     <Wrapper className={className} style={style}>
       <Content
         ref={contentRef}
+        data-testid="scrollable-content"
         onScroll={updateFromScroll}
         $overflowY={showVertical ? 'auto' : 'hidden'}
         $overflowX={showHorizontal ? 'auto' : 'hidden'}
       >
-        {children}
+        <InnerContent ref={innerContentRef} $fitContent={showHorizontal}>
+          {children}
+        </InnerContent>
       </Content>
 
       {showVertical && verticalState.thumbRatio < 1 && (
@@ -147,6 +152,10 @@ const Content = styled.div<{ $overflowY: 'auto' | 'hidden'; $overflowX: 'auto' |
   &::-webkit-scrollbar {
     display: none;
   }
+`;
+
+const InnerContent = styled.div<{ $fitContent: boolean }>`
+  width: ${({ $fitContent }) => ($fitContent ? 'max-content' : '100%')};
 `;
 
 const VerticalSlot = styled.div`
