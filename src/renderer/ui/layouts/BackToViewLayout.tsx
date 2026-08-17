@@ -20,7 +20,7 @@ export function BackToViewLayout({ backToView, children }: BackToViewLayoutProps
       <InternalButton
         label="Back"
         onClick={() => setView(backToView)}
-        style={{ position: 'absolute', top: '10px', left: '10px' }}
+        style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 1 }}
       />
       {children}
     </>
