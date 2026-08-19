@@ -1,20 +1,14 @@
 import * as THREE from 'three';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
-import { MATERIALS } from '../../constants';
+import { MATERIALS } from '../../../constants';
 import { ShadersManager } from './ShadersManager';
+import { createSkinnedMesh } from './createSkinnedMesh';
 
-// ShadersManager pulls in `logger` from @tgdf, whose barrel also touches
-// electron-only modules (ipcRenderer) at import time — irrelevant here, but
-// needs a browser-safe stand-in for the module graph to resolve at all.
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
-// Real WebGL context per test — jsdom has none, which is exactly why this
-// suite runs in an actual browser (see vitest.browser.config.ts) instead of
-// the default jsdom suite. Disposed in afterEach: browsers cap concurrent
-// WebGL contexts, and each test creates a fresh renderer.
 const renderersToDispose: THREE.WebGLRenderer[] = [];
 
 function createRenderer(): THREE.WebGLRenderer {
@@ -32,20 +26,10 @@ function createCamera(): THREE.PerspectiveCamera {
   return camera;
 }
 
-// renderer.info.programs is typed as nullable but always populated once a
-// renderer exists — three.js only leaves it null before the first internal
-// setup, which has already happened by the time these tests touch it.
 function programCount(renderer: THREE.WebGLRenderer): number {
   return renderer.info.programs?.length ?? 0;
 }
 
-/**
- * Mirrors what the app's EffectComposer does: draws the scene into an
- * intermediate render target instead of straight to the screen. This is the
- * exact condition that exposed the original bug — three.js hard-codes
- * outputColorSpace to LinearSRGBColorSpace for any non-null, non-XR render
- * target, which changes a material's program cache key.
- */
 function renderIntoIntermediateTarget(
   renderer: THREE.WebGLRenderer,
   scene: THREE.Object3D,
@@ -67,11 +51,22 @@ afterEach(() => {
 });
 
 describe('ShadersManager', () => {
-  it('adds an invisible warmup group covering every MATERIALS variant', () => {
+  it('adds an invisible warmup group covering every MATERIALS variant, plain and skinned', () => {
     const shadersManager = new ShadersManager();
 
     expect(shadersManager.warmupGroup.visible).toBe(false);
-    expect(shadersManager.warmupGroup.children).toHaveLength(Object.keys(MATERIALS).length);
+
+    // `skinning` is a per-OBJECT cache-key input (object.isSkinnedMesh), not
+    // a material property, so a MeshStandardMaterial variant needs both a
+    // plain and a skinned warmup instance to cover both usages. Sprites are
+    // the one exception — THREE.Sprite has no skinning code path at all.
+    const meshVariantCount = Object.keys(MATERIALS).length - 1; // all but SPRITE_WITH_ALPHA
+    expect(shadersManager.warmupGroup.children).toHaveLength(meshVariantCount * 2 + 1);
+
+    const skinnedMeshes = shadersManager.warmupGroup.children.filter(
+      (child) => (child as THREE.SkinnedMesh).isSkinnedMesh
+    );
+    expect(skinnedMeshes).toHaveLength(meshVariantCount);
   });
 
   it('shares compiled programs with real objects that reuse MATERIALS, even through an intermediate render target', async () => {
@@ -106,6 +101,44 @@ describe('ShadersManager', () => {
     expect(shadersManager.checkForLateCompiles(renderer)).toBeNull();
   });
 
+  it('shares compiled programs with a SkinnedMesh that reuses MATERIALS (e.g. dash ghosts)', async () => {
+    const renderer = createRenderer();
+    const scene = new THREE.Scene();
+    const camera = createCamera();
+
+    const shadersManager = new ShadersManager();
+    scene.add(shadersManager.warmupGroup);
+
+    await shadersManager.warmup(renderer, scene, camera);
+    const baselineProgramCount = programCount(renderer);
+
+    const ghostMesh = createSkinnedMesh(
+      MATERIALS.STANDARD_EMISSIVE({ color: 0xf5c518, opacity: 0.45 })
+    );
+    scene.add(ghostMesh);
+
+    renderIntoIntermediateTarget(renderer, scene, camera);
+
+    expect(programCount(renderer)).toBe(baselineProgramCount);
+    expect(shadersManager.checkForLateCompiles(renderer)).toBeNull();
+  });
+
+  it('would recompile a SkinnedMesh without a skinned warmup instance — proving that fix is load-bearing too', () => {
+    const renderer = createRenderer();
+    const scene = new THREE.Scene();
+    const camera = createCamera();
+
+    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(0.01, 0.01), MATERIALS.STANDARD_EMISSIVE()));
+    renderer.compile(scene, camera);
+    const baselineProgramCount = programCount(renderer);
+
+    const ghostMesh = createSkinnedMesh(MATERIALS.STANDARD_EMISSIVE({ color: 0xf5c518 }));
+    scene.add(ghostMesh);
+    renderIntoIntermediateTarget(renderer, scene, camera);
+
+    expect(programCount(renderer)).toBeGreaterThan(baselineProgramCount);
+  });
+
   it('reports a material variant that genuinely was not warmed up', async () => {
     const renderer = createRenderer();
     const scene = new THREE.Scene();
@@ -116,9 +149,6 @@ describe('ShadersManager', () => {
 
     await shadersManager.warmup(renderer, scene, camera);
 
-    // A structurally different variant no MATERIALS factory produces
-    // (normalMap isn't covered by any of them) — this MUST still recompile;
-    // otherwise checkForLateCompiles would never catch a real gap.
     const normalMap = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1);
     normalMap.needsUpdate = true;
     const unwarmedMesh = new THREE.Mesh(
@@ -137,9 +167,6 @@ describe('ShadersManager', () => {
     const scene = new THREE.Scene();
     const camera = createCamera();
 
-    // Same warmup material MATERIALS.STANDARD_EMISSIVE produces, but
-    // compiled the naive way (no render target set) instead of through
-    // ShadersManager.warmup().
     scene.add(new THREE.Mesh(new THREE.PlaneGeometry(0.01, 0.01), MATERIALS.STANDARD_EMISSIVE()));
     renderer.compile(scene, camera);
     const baselineProgramCount = programCount(renderer);

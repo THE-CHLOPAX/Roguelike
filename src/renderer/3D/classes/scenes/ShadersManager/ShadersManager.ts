@@ -3,6 +3,8 @@ import { logger, assertNever } from '@tgdf';
 
 import { MATERIALS } from 'renderer/3D/constants';
 
+import { createSkinnedMesh } from './createSkinnedMesh';
+
 /**
  * Precompiles every MATERIALS variant during scene entry, and (dev-only)
  * watches for any shader program compiled afterwards — each one stalled the
@@ -20,24 +22,6 @@ export class ShadersManager {
     this.warmupGroup = this._createShaderWarmupGroup();
   }
 
-  /**
-   * Compiles every material in warmupGroup against `scene`/`camera`.
-   *
-   * The app renders through an EffectComposer (pixelation + output passes),
-   * drawing the scene into an intermediate render target rather than
-   * straight to the screen. Three.js hard-codes outputColorSpace to
-   * LinearSRGBColorSpace for ANY non-null, non-XR render target — a program
-   * compiled against the renderer's default (null) target gets a DIFFERENT
-   * cache key than the one real rendering needs, so it silently recompiles
-   * on first real use despite "successful" warmup. Compiling against a
-   * throwaway render target instead matches what composite rendering will
-   * actually request.
-   *
-   * Returns a promise resolving once warmup finishes — GameScene fires this
-   * off without awaiting it (rendering doesn't need to wait), but tests can
-   * await it to know when checkForLateCompiles has a baseline to compare
-   * against.
-   */
   public warmup(
     renderer: THREE.WebGLRenderer | null,
     scene: THREE.Object3D,
@@ -131,21 +115,23 @@ export class ShadersManager {
     const placeholderTexture = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
     placeholderTexture.needsUpdate = true;
 
+    const addWithSkinnedVariant = (material: THREE.MeshStandardMaterial): void => {
+      // Normal geometry
+      group.add(new THREE.Mesh(geometry, material));
+      // Skinned geometry - a separate material program which needs to be pre-compiled
+      group.add(createSkinnedMesh(material));
+    };
+
     (Object.keys(MATERIALS) as (keyof typeof MATERIALS)[]).forEach((key) => {
       switch (key) {
         case 'STANDARD_EMISSIVE':
-          group.add(new THREE.Mesh(geometry, MATERIALS.STANDARD_EMISSIVE()));
+          addWithSkinnedVariant(MATERIALS.STANDARD_EMISSIVE());
           break;
         case 'SPRITE_WITH_ALPHA':
           group.add(new THREE.Sprite(MATERIALS.SPRITE_WITH_ALPHA({ map: placeholderTexture })));
           break;
         case 'STANDARD_EMISSIVE_WITH_MAP':
-          group.add(
-            new THREE.Mesh(
-              geometry,
-              MATERIALS.STANDARD_EMISSIVE_WITH_MAP({ map: placeholderTexture })
-            )
-          );
+          addWithSkinnedVariant(MATERIALS.STANDARD_EMISSIVE_WITH_MAP({ map: placeholderTexture }));
           break;
         default:
           assertNever(key, `[ShadersManager] No warmup case for MATERIALS.${key}`);

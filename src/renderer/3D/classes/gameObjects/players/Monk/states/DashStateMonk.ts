@@ -1,9 +1,10 @@
 import gsap from 'gsap';
-import { Scene } from '@tgdf';
 import * as THREE from 'three';
+import { isMesh } from '@tgdf';
 import { clone as cloneWithSkeleton } from 'three/examples/jsm/utils/SkeletonUtils';
 
 import { COLORS } from 'renderer/constants';
+import { MATERIALS } from 'renderer/3D/constants';
 import { DashOptions, DashState } from 'renderer/3D/classes/states';
 
 import { Player } from '../../Player';
@@ -122,22 +123,17 @@ export class DashStateMonk extends DashState {
     if (!model) return;
 
     const ghost = cloneWithSkeleton(model);
-    Scene.skipResourceTracking(ghost);
-    const ghostMaterials: THREE.Material[] = [];
+    const ghostMaterial = MATERIALS.STANDARD_EMISSIVE({
+      opacity: GHOST_INITIAL_OPACITY,
+      color: DASH_FLASH_COLOR,
+      emissive: DASH_FLASH_COLOR,
+      emissiveIntensity: GHOST_EMISSIVE_INTENSITY,
+      depthWrite: false,
+    });
 
     ghost.traverse((child) => {
-      if (!(child as THREE.Mesh).isMesh) return;
-      const mesh = child as THREE.Mesh;
-
-      mesh.material = Array.isArray(mesh.material)
-        ? mesh.material.map((material) => material.clone())
-        : mesh.material.clone();
-
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      materials.forEach((material) => {
-        this._tintGhostMaterial(material);
-        ghostMaterials.push(material);
-      });
+      if (!isMesh(child)) return;
+      child.material = ghostMaterial;
     });
 
     this.entity.getWorldPosition(ghost.position);
@@ -146,29 +142,12 @@ export class DashStateMonk extends DashState {
 
     this.entity.scene.add(ghost);
 
-    gsap.to(ghostMaterials, {
+    gsap.to(ghostMaterial, {
       opacity: 0,
       duration: GHOST_FADE_DURATION,
       onComplete: () => {
         this.entity.scene.remove(ghost);
-        // Manually disposing instead of relying on RT, so that the RT doesn't
-        // dispose Monk's original materials, forcing the program to re-upload them again.
-        ghostMaterials.forEach((material) => material.dispose());
       },
     });
-  }
-
-  private _tintGhostMaterial(material: THREE.Material): void {
-    if (isFlashableMaterial(material)) {
-      material.color.copy(DASH_FLASH_COLOR);
-      material.emissive.copy(DASH_FLASH_COLOR);
-      material.emissiveIntensity = GHOST_EMISSIVE_INTENSITY;
-    } else if ('color' in material && material.color instanceof THREE.Color) {
-      material.color.copy(DASH_FLASH_COLOR);
-    }
-
-    material.transparent = true;
-    material.opacity = GHOST_INITIAL_OPACITY;
-    material.depthWrite = false;
   }
 }

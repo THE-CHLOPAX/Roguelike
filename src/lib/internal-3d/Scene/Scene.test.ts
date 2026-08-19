@@ -112,17 +112,6 @@ describe('Scene', () => {
       expect(ResourceTracker.trackObject).toHaveBeenCalledWith(mesh);
       expect(ResourceTracker.resourcesForObjects.has(mesh.uuid)).toBe(true);
     });
-
-    it('skips resource tracking for objects marked with skipResourceTracking', () => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
-      Scene.skipResourceTracking(mesh);
-
-      scene.add(mesh);
-
-      expect(scene.children).toContain(mesh);
-      expect(ResourceTracker.trackObject).not.toHaveBeenCalledWith(mesh);
-      expect(ResourceTracker.resourcesForObjects.has(mesh.uuid)).toBe(false);
-    });
   });
 
   describe('remove', () => {
@@ -141,36 +130,6 @@ describe('Scene', () => {
       expect(geometryDisposeSpy).toHaveBeenCalledOnce();
       expect(materialDisposeSpy).toHaveBeenCalledOnce();
       expect(ResourceTracker.resourcesForObjects.has(mesh.uuid)).toBe(false);
-    });
-
-    it('does not dispose resources of objects marked with skipResourceTracking', () => {
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshBasicMaterial();
-      const mesh = new THREE.Mesh(geometry, material);
-      const geometryDisposeSpy = vi.spyOn(geometry, 'dispose');
-      const materialDisposeSpy = vi.spyOn(material, 'dispose');
-      Scene.skipResourceTracking(mesh);
-
-      scene.add(mesh);
-      scene.remove(mesh);
-
-      expect(scene.children).not.toContain(mesh);
-      expect(ResourceTracker.disposeObjectResources).not.toHaveBeenCalledWith(mesh);
-      expect(geometryDisposeSpy).not.toHaveBeenCalled();
-      expect(materialDisposeSpy).not.toHaveBeenCalled();
-    });
-
-    it('still destroys GameObject children of objects marked with skipResourceTracking', () => {
-      const wrapper = new THREE.Group();
-      const gameObject = new TestGameObject({ scene });
-      const destroySpy = vi.spyOn(gameObject, 'destroy');
-      wrapper.add(gameObject);
-      Scene.skipResourceTracking(wrapper);
-
-      scene.add(wrapper);
-      scene.remove(wrapper);
-
-      expect(destroySpy).toHaveBeenCalledOnce();
     });
 
     it('destroys GameObject instances when they are removed from the scene', () => {

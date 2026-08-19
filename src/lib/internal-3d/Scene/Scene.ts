@@ -99,11 +99,6 @@ export abstract class Scene extends THREE.Scene {
 
   public override add(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
-      if (Scene.isResourceTrackingSkipped(object)) {
-        super.add(object);
-        return;
-      }
-
       logger({
         message: SCENE_MESSAGES.ADDING_OBJECT(object),
         type: 'info',
@@ -118,15 +113,6 @@ export abstract class Scene extends THREE.Scene {
 
   public override remove(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
-      const skipTracking = Scene.isResourceTrackingSkipped(object);
-
-      if (!skipTracking) {
-        logger({
-          message: SCENE_MESSAGES.REMOVING_OBJECT(object),
-          type: 'info',
-        });
-      }
-
       object.traverse((child) => {
         if (child instanceof GameObject) {
           child.destroy();
@@ -135,30 +121,11 @@ export abstract class Scene extends THREE.Scene {
 
       super.remove(object);
 
-      if (!skipTracking) {
-        ResourceTracker.disposeObjectResources(object);
-        ResourceTracker.untrackObject(object);
-      }
+      ResourceTracker.disposeObjectResources(object);
+      ResourceTracker.untrackObject(object);
     });
 
     return this;
-  }
-
-  /**
-   * Marks an object so add/remove skip ResourceTracker registration, disposal,
-   * and add/remove logging for it. For short-lived visual effects that SHARE
-   * resources with live objects (e.g. dash ghosts reusing the player model's
-   * geometry and textures): the tracker disposes everything reachable from a
-   * removed object, which would destroy those shared resources and force GPU
-   * re-uploads on the live owner. Callers own disposal of any resources the
-   * object does NOT share (e.g. cloned materials).
-   */
-  public static skipResourceTracking(object: THREE.Object3D): void {
-    object.userData.skipResourceTracking = true;
-  }
-
-  public static isResourceTrackingSkipped(object: THREE.Object3D): boolean {
-    return object.userData.skipResourceTracking === true;
   }
 
   public async initializeNavMeshManager(

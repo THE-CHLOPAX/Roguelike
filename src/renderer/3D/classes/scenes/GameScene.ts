@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { logger, PhysicsManager, Scene } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
-import { ShadersManager } from './ShadersManager';
+import { ShadersManager } from './ShadersManager/ShadersManager';
 import { OrtographicCamera } from '../cameras/OrtographicCamera';
 import { RigidFloorObject } from '../gameObjects/RigidFloorObject';
 
