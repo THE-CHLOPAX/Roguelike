@@ -60,6 +60,7 @@ export * from './internal-math/utils/randFromRange';
 // Internal Utils
 export { executeAsyncOperationsWithProgress } from './internal-utils/executeAsyncOperationsWithProgress';
 export { assert } from './internal-utils/assert';
+export { assertNever } from './internal-utils/assertNever';
 export { throttle } from './internal-utils/throttle';
 export { throttleWithLastValue } from './internal-utils/throttleWithLastValue';
 export { arraysShallowCompare } from './internal-utils/arraysShallowCompare';

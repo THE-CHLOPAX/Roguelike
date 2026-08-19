@@ -1,4 +1,5 @@
 import gsap from 'gsap';
+import { Scene } from '@tgdf';
 import * as THREE from 'three';
 import { clone as cloneWithSkeleton } from 'three/examples/jsm/utils/SkeletonUtils';
 
@@ -121,13 +122,13 @@ export class DashStateMonk extends DashState {
     if (!model) return;
 
     const ghost = cloneWithSkeleton(model);
+    Scene.skipResourceTracking(ghost);
     const ghostMaterials: THREE.Material[] = [];
 
     ghost.traverse((child) => {
       if (!(child as THREE.Mesh).isMesh) return;
       const mesh = child as THREE.Mesh;
 
-      mesh.geometry = mesh.geometry.clone();
       mesh.material = Array.isArray(mesh.material)
         ? mesh.material.map((material) => material.clone())
         : mesh.material.clone();
@@ -150,6 +151,9 @@ export class DashStateMonk extends DashState {
       duration: GHOST_FADE_DURATION,
       onComplete: () => {
         this.entity.scene.remove(ghost);
+        // Manually disposing instead of relying on RT, so that the RT doesn't
+        // dispose Monk's original materials, forcing the program to re-upload them again.
+        ghostMaterials.forEach((material) => material.dispose());
       },
     });
   }

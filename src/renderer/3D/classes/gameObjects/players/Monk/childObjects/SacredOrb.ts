@@ -2,6 +2,7 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 import { GameObject, RigidBodyCollisionCallback, RigidBodyCollisionParams } from '@tgdf';
 
+import { MATERIALS } from '3D/constants';
 import { COLORS } from 'renderer/constants';
 
 import { Entity } from '../../../Entity';
@@ -29,7 +30,7 @@ export class SacredOrb extends Projectile {
     public options: SacredOrbOptions
   ) {
     const geometry = new THREE.SphereGeometry(0.2, 8, 8);
-    const material = new THREE.MeshStandardMaterial({
+    const material = MATERIALS.STANDARD_EMISSIVE({
       color: SACRED_ORB_COLOR,
       emissive: SACRED_ORB_COLOR,
       emissiveIntensity: 4,
@@ -60,6 +61,7 @@ export class SacredOrb extends Projectile {
    * After that, they have to be externally activated to be ready to launch.
    */
   public activate(): void {
+    if (!this.rigidBody) return;
     this.rigidBody.setEnabled(true);
 
     const strikeCollisionId = `orb-${this.id}-strike-collision-listener`;
@@ -92,7 +94,6 @@ export class SacredOrb extends Projectile {
   private _playSpawnAnimation(): void {
     const targetY = this.position.y;
 
-    this._material.transparent = true;
     this._material.opacity = 0;
 
     gsap.fromTo(

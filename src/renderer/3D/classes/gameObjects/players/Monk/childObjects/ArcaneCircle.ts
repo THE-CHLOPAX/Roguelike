@@ -10,9 +10,9 @@ import {
 } from '@tgdf';
 
 import { COLORS } from 'renderer/constants';
-import { ARCANE_CIRCLE_TEXTURE } from '3D/constants';
 import { isPlayer } from 'renderer/3D/utils/isPlayer';
 import { pixelateTexture } from '3D/utils/pixelateTexture';
+import { MATERIALS, ARCANE_CIRCLE_TEXTURE } from '3D/constants';
 
 export type ArcaneCircleOptions = {
   diameter: number;
@@ -72,11 +72,9 @@ export class ArcaneCircle extends GameObject {
       ease: 'none',
     });
 
-    const material = new THREE.MeshStandardMaterial({
+    const material = MATERIALS.STANDARD_EMISSIVE_WITH_MAP({
       map: this._texture,
-      transparent: true,
       opacity: 0,
-      emissiveMap: this._texture,
       emissive: ARCANE_CIRCLE_COLOR,
       emissiveIntensity: 1,
       roughness: 1,
