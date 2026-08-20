@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { InternalFlex, InternalText } from '@tgdf';
 
-import { Button, Text, Dropdown, ScrollableWrapper } from 'UI';
+import { Button, Text, Dropdown, BarSimple, BarOrnament, ScrollableWrapper } from 'UI';
 
 import { COLORS } from '../../constants';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
@@ -114,6 +114,20 @@ export function ComponentsView() {
               <PanelScalable>
                 <Button label="Button" />
               </PanelScalable>
+            </InternalFlex>
+          </ComponentSection>
+
+          <ComponentSection title="Bars">
+            <InternalFlex direction="column" align="start" gap={12}>
+              <BarSimple progress={1} fillColor={COLORS.SOFT_FAWN} />
+              <BarSimple progress={0.6} fillColor="#c0392b" />
+              <BarSimple progress={0.2} fillColor="#3498db" />
+            </InternalFlex>
+
+            <InternalFlex direction="column" align="start" gap={12}>
+              <BarOrnament progress={1} fillColor={COLORS.SOFT_FAWN} />
+              <BarOrnament progress={0.6} fillColor="#c0392b" />
+              <BarOrnament progress={0.2} fillColor="#3498db" />
             </InternalFlex>
           </ComponentSection>
 
