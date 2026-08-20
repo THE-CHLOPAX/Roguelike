@@ -9,6 +9,7 @@ export type ResourceType =
   | THREE.BufferGeometry
   | THREE.Material
   | THREE.Texture
+  | THREE.Skeleton
   | (THREE.Object3D | THREE.Material | THREE.Texture)[]
   | null
   | undefined;
@@ -41,6 +42,9 @@ export class ResourceTracker {
 
       objectResources.add(child.geometry);
       this._trackMaterial(objectResources, child.material);
+
+      const skinnedMesh = child as THREE.SkinnedMesh;
+      if (skinnedMesh.isSkinnedMesh) objectResources.add(skinnedMesh.skeleton);
     });
 
     this.resourcesForObjects.set(object.uuid, objectResources);

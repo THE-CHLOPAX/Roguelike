@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GameObject, GameObjectComponent } from '@tgdf';
 
+import { MATERIALS } from '3D/constants';
 import { pixelateTexture } from '3D/utils/pixelateTexture';
 
 export type SpriteFlipbookRendererOptions = {
@@ -63,7 +64,7 @@ export class SpriteFlipbookRenderer extends GameObjectComponent {
     this._vInset = image?.height ? 0.5 / image.height : 0;
     texture.repeat.set(1 / this._columns - 2 * this._uInset, 1 / this._rows - 2 * this._vInset);
 
-    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.5 });
+    const material = MATERIALS.SPRITE_WITH_ALPHA({ map: texture });
     const sprite = new THREE.Sprite(material);
     sprite.scale.set(this._size.x, this._size.y, 1);
 

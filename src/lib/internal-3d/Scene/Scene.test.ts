@@ -138,12 +138,12 @@ describe('Scene', () => {
 
       scene.add(gameObject);
 
-      expect(scene.children).toHaveLength(1);
+      expect(scene.children).toEqual([scene.lightPool.root, gameObject]);
 
       scene.remove(gameObject);
 
       expect(destroySpy).toHaveBeenCalledOnce();
-      expect(scene.children).toHaveLength(0);
+      expect(scene.children).toEqual([scene.lightPool.root]);
     });
 
     it('destroys nested GameObject instances when they are removed from the scene', () => {
@@ -159,7 +159,7 @@ describe('Scene', () => {
       scene.remove(gameObject);
 
       expect(destroySpy).toHaveBeenCalledOnce();
-      expect(scene.children).toHaveLength(0);
+      expect(scene.children).toEqual([scene.lightPool.root]);
     });
   });
 
@@ -181,7 +181,7 @@ describe('Scene', () => {
 
       scene.add(mesh, gameObject);
 
-      expect(scene.children).toHaveLength(2);
+      expect(scene.children).toEqual([scene.lightPool.root, mesh, gameObject]);
 
       scene.dispose();
 
@@ -199,6 +199,19 @@ describe('Scene', () => {
       scene.dispose();
 
       expect(mockPhysicsManager.dispose).toHaveBeenCalledOnce();
+    });
+
+    it('disposes the nav mesh manager when it is initialized', () => {
+      const mockNavMeshManager = new Mock<NavMeshManager>()
+        .setup((m) => m.dispose)
+        .returns(vi.fn())
+        .object();
+
+      scene['_navMeshManager'] = mockNavMeshManager;
+
+      scene.dispose();
+
+      expect(mockNavMeshManager.dispose).toHaveBeenCalledOnce();
     });
 
     it('disposes and untracks tracked resources in ResourceTracker', () => {

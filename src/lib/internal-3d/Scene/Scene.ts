@@ -7,10 +7,17 @@ import { SCENE_MESSAGES } from './constants';
 import { GameObject } from '../GameObject/GameObject';
 import { SceneCamera, SceneEventsMap } from '../types/scene';
 import { PhysicsManager } from '../PhysicsManager/PhysicsManager';
+import { PointLightPool } from '../PointLightPool/PointLightPool';
 import { NavMeshManager, NavMeshManagerOptions } from '../NavMeshManager';
 
 export abstract class Scene extends THREE.Scene {
   public abstract camera: SceneCamera;
+
+  /** Shared pool for transient PointLights (projectiles, explosions, auras).
+   * Borrow from this instead of adding/removing lights — a changing light
+   * count forces a synchronous shader recompile of every lit material.
+   **/
+  public readonly lightPool = new PointLightPool();
 
   private _emitter = new Emitter<SceneEventsMap>();
   private _renderer: THREE.WebGLRenderer | null = null;
@@ -20,6 +27,7 @@ export abstract class Scene extends THREE.Scene {
 
   constructor() {
     super();
+    this.add(this.lightPool.root);
   }
 
   public get events(): Emitter<SceneEventsMap> {
@@ -87,6 +95,7 @@ export abstract class Scene extends THREE.Scene {
     });
 
     this._physicsManager?.dispose();
+    this._navMeshManager?.dispose();
   }
 
   public override add(...objects: THREE.Object3D[]): this {
@@ -105,11 +114,6 @@ export abstract class Scene extends THREE.Scene {
 
   public override remove(...objects: THREE.Object3D[]): this {
     objects.forEach((object) => {
-      logger({
-        message: SCENE_MESSAGES.REMOVING_OBJECT(object),
-        type: 'info',
-      });
-
       object.traverse((child) => {
         if (child instanceof GameObject) {
           child.destroy();

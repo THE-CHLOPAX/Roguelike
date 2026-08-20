@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // Real-browser tests (needing an actual WebGL context — jsdom has none)
+    // live in vitest.browser.config.ts instead; run via `npm run test:browser`.
+    exclude: ['**/node_modules/**', '**/*.browser.test.ts'],
   },
   resolve: {
     alias: {

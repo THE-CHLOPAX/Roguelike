@@ -10,9 +10,9 @@ import {
 } from '@tgdf';
 
 import { COLORS } from 'renderer/constants';
-import { ARCANE_CIRCLE_TEXTURE } from '3D/constants';
 import { isPlayer } from 'renderer/3D/utils/isPlayer';
 import { pixelateTexture } from '3D/utils/pixelateTexture';
+import { MATERIALS, ARCANE_CIRCLE_TEXTURE } from '3D/constants';
 
 export type ArcaneCircleOptions = {
   diameter: number;
@@ -31,6 +31,7 @@ export class ArcaneCircle extends GameObject {
   private _fadeTimeout: NodeJS.Timeout | null = null;
   private _fadeInTween: gsap.core.Tween | null = null;
   private _rigidBody: RigidBody | null = null;
+  private _light: THREE.PointLight | null = null;
   private _collisionUnsubscribe: (() => void) | null = null;
   private _healIntervalsMap: Map<string, NodeJS.Timeout> = new Map();
 
@@ -71,11 +72,9 @@ export class ArcaneCircle extends GameObject {
       ease: 'none',
     });
 
-    const material = new THREE.MeshStandardMaterial({
+    const material = MATERIALS.STANDARD_EMISSIVE_WITH_MAP({
       map: this._texture,
-      transparent: true,
       opacity: 0,
-      emissiveMap: this._texture,
       emissive: ARCANE_CIRCLE_COLOR,
       emissiveIntensity: 1,
       roughness: 1,
@@ -108,9 +107,14 @@ export class ArcaneCircle extends GameObject {
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.y = this.parent.position.y + yOffset;
 
-    const light = new THREE.PointLight(ARCANE_CIRCLE_COLOR, 0.5, 10);
-    light.position.set(0, parentHeight, 0);
-    this.add(light);
+    this._light = this.scene.lightPool.acquire(this);
+    if (this._light) {
+      this._light.color.set(ARCANE_CIRCLE_COLOR);
+      this._light.intensity = 0.5;
+      this._light.distance = 10;
+      this._light.decay = 2;
+      this._light.position.set(0, parentHeight, 0);
+    }
 
     this._fadeTimeout = setTimeout(() => {
       gsap.to(material, {
@@ -154,6 +158,9 @@ export class ArcaneCircle extends GameObject {
     this._healIntervalsMap.forEach((interval) => {
       clearInterval(interval);
     });
+
+    this.scene.lightPool.release(this._light);
+    this._light = null;
   }
 
   private _onCollision = ({ otherBody, started }: RigidBodyCollisionParams) => {

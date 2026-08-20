@@ -1,12 +1,13 @@
 {
   "name": "unshackled",
-  "version": "0.2.6",
+  "version": "0.2.11",
   "description": "A roguelike game where you have to fight your way through a hostile world to defeat the final boss.",
   "main": "main.js",
   "homepage": "./",
   "scripts": {
     "dev": "concurrently --kill-others --names \"WEBPACK,ELECTRON\" --prefix-colors \"blue,green\" \"npm run webpack-dev\" \"wait-on http://localhost:3000 && npm run electron\"",
     "webpack-dev": "cross-env NODE_ENV=development webpack serve --mode=development",
+    "dev-web": "cross-env NODE_ENV=development webpack serve --config webpack.web.config.js --mode=development",
     "electron": "cross-env NODE_ENV=development electron .",
     "build": "webpack --mode=production",
     "build-web": "webpack --config webpack.web.config.js --mode=production && npm run copy-assets-web",
@@ -27,7 +28,8 @@
     "lint:fix": "npm run format && eslint . --ext .ts,.tsx --fix && node scripts/lint-success.js",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
-    "test": "npx vitest run"
+    "test": "npx vitest run",
+    "test:browser": "npx vitest run --config vitest.browser.config.ts"
   },
   "build": {
     "appId": "com.unshackled.app",
@@ -137,6 +139,8 @@
     "@types/three": "^0.181.0",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
+    "@vitest/browser": "^4.0.11",
+    "@vitest/browser-playwright": "^4.0.11",
     "@vitest/ui": "^4.0.11",
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.1",
@@ -149,6 +153,7 @@
     "eslint-plugin-perfectionist": "^4.15.1",
     "html-webpack-plugin": "^5.6.4",
     "jsdom": "^27.2.0",
+    "playwright": "^1.62.1",
     "prettier": "^3.8.0",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.4",

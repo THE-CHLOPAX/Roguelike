@@ -26,4 +26,15 @@ module.exports = {
       crypto: false,
     },
   },
+  devServer: {
+    port: 3001,
+    hot: true,
+    static: {
+      directory: path.join(__dirname, 'src/renderer/assets'),
+      publicPath: '/assets',
+    },
+    devMiddleware: {
+      publicPath: '/',
+    },
+  },
 };
