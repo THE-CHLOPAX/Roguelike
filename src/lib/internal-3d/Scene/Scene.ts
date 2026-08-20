@@ -95,6 +95,7 @@ export abstract class Scene extends THREE.Scene {
     });
 
     this._physicsManager?.dispose();
+    this._navMeshManager?.dispose();
   }
 
   public override add(...objects: THREE.Object3D[]): this {

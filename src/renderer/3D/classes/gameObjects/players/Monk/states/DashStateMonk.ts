@@ -134,6 +134,7 @@ export class DashStateMonk extends DashState {
     ghost.traverse((child) => {
       if (!isMesh(child)) return;
       child.material = ghostMaterial;
+      child.geometry = child.geometry.clone();
     });
 
     this.entity.getWorldPosition(ghost.position);

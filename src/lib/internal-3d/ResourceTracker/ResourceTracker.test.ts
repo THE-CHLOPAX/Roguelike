@@ -6,7 +6,7 @@ import { ResourceTracker } from './ResourceTracker';
 function getTrackedResources(tracker: ResourceTracker, object: THREE.Object3D) {
   const resources = tracker.resourcesForObjects.get(object.uuid);
   expect(resources).toBeDefined();
-  return resources as Set<THREE.BufferGeometry | THREE.Material | THREE.Texture>;
+  return resources as Set<THREE.BufferGeometry | THREE.Material | THREE.Texture | THREE.Skeleton>;
 }
 
 describe('ResourceTracker', () => {
@@ -89,6 +89,20 @@ describe('ResourceTracker', () => {
       expect(resources.has(materials[1])).toBe(true);
       expect(resources.has(geometry)).toBe(true);
     });
+
+    it('stores the skeleton of a SkinnedMesh', () => {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const bone = new THREE.Bone();
+      const skeleton = new THREE.Skeleton([bone]);
+      const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshStandardMaterial());
+      mesh.add(bone);
+      mesh.bind(skeleton);
+
+      tracker.trackObject(mesh);
+
+      const resources = getTrackedResources(tracker, mesh);
+      expect(resources.has(mesh.skeleton)).toBe(true);
+    });
   });
 
   describe('disposeObjectResources', () => {
@@ -150,6 +164,24 @@ describe('ResourceTracker', () => {
 
       expect(() => tracker.disposeObjectResources(mesh)).not.toThrow();
       expect(tracker.resourcesForObjects.has(mesh.uuid)).toBe(false);
+    });
+
+    it('disposes the skeleton of a SkinnedMesh, freeing its bone-matrix texture', () => {
+      const bone = new THREE.Bone();
+      const skeleton = new THREE.Skeleton([bone]);
+      const mesh = new THREE.SkinnedMesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial()
+      );
+      mesh.add(bone);
+      mesh.bind(skeleton);
+
+      const skeletonDisposeSpy = vi.spyOn(mesh.skeleton, 'dispose');
+
+      tracker.trackObject(mesh);
+      tracker.disposeObjectResources(mesh);
+
+      expect(skeletonDisposeSpy).toHaveBeenCalledOnce();
     });
   });
 });

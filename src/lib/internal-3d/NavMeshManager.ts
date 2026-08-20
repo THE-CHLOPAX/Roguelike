@@ -62,6 +62,29 @@ export class NavMeshManager {
     return this._navMesh;
   }
 
+  /**
+   * NavMesh, TileCache and Crowd are backed by the Recast/Detour WASM module —
+   * native heap allocations that outlive normal JS garbage collection unless
+   * explicitly destroyed.
+   */
+  public dispose(): void {
+    this._events.removeAll();
+
+    this._crowdMap.forEach((crowd) => crowd.destroy());
+    this._crowdMap.clear();
+    this._crowdHelperMap.clear();
+
+    this._tileCache?.destroy();
+    this._tileCache = null;
+
+    this._navMesh?.destroy();
+    this._navMesh = null;
+
+    this._obstacleMap.clear();
+    this._debugNavMesh = null;
+    this._debugTileCache = null;
+  }
+
   public update(deltaTime: number): void {
     this._crowdMap.forEach((crowd) => {
       crowd.update(deltaTime);

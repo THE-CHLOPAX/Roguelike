@@ -201,6 +201,19 @@ describe('Scene', () => {
       expect(mockPhysicsManager.dispose).toHaveBeenCalledOnce();
     });
 
+    it('disposes the nav mesh manager when it is initialized', () => {
+      const mockNavMeshManager = new Mock<NavMeshManager>()
+        .setup((m) => m.dispose)
+        .returns(vi.fn())
+        .object();
+
+      scene['_navMeshManager'] = mockNavMeshManager;
+
+      scene.dispose();
+
+      expect(mockNavMeshManager.dispose).toHaveBeenCalledOnce();
+    });
+
     it('disposes and untracks tracked resources in ResourceTracker', () => {
       const meshA = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
       const meshB = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial());

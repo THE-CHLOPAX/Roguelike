@@ -9,6 +9,9 @@ export type RendererState = {
   sceneObjects?: number;
   drawCalls?: number;
   triangles?: number;
+  geometries?: number;
+  textures?: number;
+  programsCount?: number;
 };
 
 export type ThreeDViewerDebugInfoProps = {
@@ -40,6 +43,9 @@ export function ThreeDViewerDebugInfo({
         antialiasing: renderer.getContext().getContextAttributes()?.antialias || false,
         drawCalls: renderer.info.render.calls,
         triangles: renderer.info.render.triangles,
+        geometries: renderer.info.memory.geometries,
+        textures: renderer.info.memory.textures,
+        programsCount: renderer.info.programs?.length ?? 0,
       });
     };
 
@@ -74,10 +80,16 @@ export function ThreeDViewerDebugInfo({
         fontSize: '10px',
       }}
     >
+      <br />
       {debugState &&
-        Object.entries(debugState).map(([key, value]) => (
-          <pre key={key} style={{ margin: 0 }}>{`${key}: ${value}`}</pre>
-        ))}
+        Object.entries(debugState)
+          .slice(0, 2)
+          .map(([key, value]) => <pre key={key} style={{ margin: 0 }}>{`${key}: ${value}`}</pre>)}
+      <br />
+      {debugState &&
+        Object.entries(debugState)
+          .slice(3)
+          .map(([key, value]) => <pre key={key} style={{ margin: 0 }}>{`${key}: ${value}`}</pre>)}
     </div>
   );
 }
