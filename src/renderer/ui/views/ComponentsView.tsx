@@ -121,15 +121,15 @@ export function ComponentsView() {
             <Text>Bar Simple</Text>
             <InternalFlex direction="column" align="start" gap={12}>
               <BarSimple progress={1} fillColor={COLORS.SOFT_FAWN} />
-              <BarSimple progress={0.6} fillColor="#c0392b" />
-              <BarSimple progress={0.2} fillColor="#3498db" />
+              <BarSimple progress={0.6} fillColor="#c0392b" scale={2} />
+              <BarSimple progress={0.2} fillColor="#3498db" scale={1.5} />
             </InternalFlex>
             <br />
             <Text>Bar Ornament</Text>
             <InternalFlex direction="column" align="start" gap={12}>
               <BarOrnament progress={1} fillColor={COLORS.SOFT_FAWN} />
-              <BarOrnament progress={0.6} fillColor="#c0392b" />
-              <BarOrnament progress={0.2} fillColor="#3498db" />
+              <BarOrnament progress={0.6} fillColor="#c0392b" scale={2} />
+              <BarOrnament progress={0.2} fillColor="#3498db" scale={1.5} />
             </InternalFlex>
           </ComponentSection>
 

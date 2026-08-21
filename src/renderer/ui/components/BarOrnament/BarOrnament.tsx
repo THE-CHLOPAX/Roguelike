@@ -1,8 +1,10 @@
 import styled from 'styled-components';
 
+import { COLORS } from 'renderer/constants';
+
 import barOrnamentFrame from '../../../assets/svg/bar-ornament.svg?url';
 
-const SCALE = 3;
+const DEFAULT_SCALE = 3;
 
 const NATIVE_WIDTH = 189;
 const NATIVE_HEIGHT = 16;
@@ -20,34 +22,48 @@ export type BarOrnamentProps = {
   progress: number;
   fillColor: string;
   className?: string;
+  scale?: number;
 };
 
-export const BarOrnament = ({ progress, fillColor, className }: BarOrnamentProps) => {
+export const BarOrnament = ({
+  progress,
+  fillColor,
+  className,
+  scale = DEFAULT_SCALE,
+}: BarOrnamentProps) => {
   const clampedProgress = clamp(progress, 0, 1);
 
   return (
-    <Wrapper className={className}>
-      <Fill $progress={clampedProgress} $color={fillColor} />
+    <Wrapper className={className} $scale={scale}>
+      <FillBg $scale={scale} />
+      <Fill $progress={clampedProgress} $color={fillColor} $scale={scale} />
       <Frame />
     </Wrapper>
   );
 };
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<{ $scale: number }>`
   position: relative;
-  width: ${NATIVE_WIDTH * SCALE}px;
-  height: ${NATIVE_HEIGHT * SCALE}px;
+  width: ${({ $scale }) => NATIVE_WIDTH * $scale}px;
+  height: ${({ $scale }) => NATIVE_HEIGHT * $scale}px;
 `;
 
-const Fill = styled.div<{ $progress: number; $color: string }>`
+const FillBg = styled.div<{ $scale: number }>`
+  width: 100%;
+  height: 100%;
+  background: ${COLORS.BG_COLOR};
+  clip-path: inset(${({ $scale }) => 5 * $scale}px);
+`;
+
+const Fill = styled.div<{ $progress: number; $color: string; $scale: number }>`
   position: absolute;
-  left: ${FILL_NATIVE_LEFT * SCALE}px;
-  top: ${FILL_NATIVE_TOP * SCALE}px;
-  width: ${({ $progress }) => FILL_NATIVE_WIDTH * SCALE * $progress}px;
-  height: ${FILL_NATIVE_HEIGHT * SCALE}px;
+  left: ${({ $scale }) => FILL_NATIVE_LEFT * $scale}px;
+  top: ${({ $scale }) => FILL_NATIVE_TOP * $scale}px;
+  width: ${({ $progress, $scale }) => FILL_NATIVE_WIDTH * $scale * $progress}px;
+  height: ${({ $scale }) => FILL_NATIVE_HEIGHT * $scale}px;
   background: ${({ $color }) => $color};
-  border-top: ${SCALE}px solid rgba(255, 255, 255, 0.3);
-  border-bottom: ${SCALE}px solid rgba(0, 0, 0, 0.15);
+  border-top: ${({ $scale }) => $scale}px solid rgba(255, 255, 255, 0.3);
+  border-bottom: ${({ $scale }) => $scale}px solid rgba(0, 0, 0, 0.15);
 `;
 
 const Frame = styled.div`

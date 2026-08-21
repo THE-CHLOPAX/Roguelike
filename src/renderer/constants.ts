@@ -4,6 +4,7 @@ export const COLORS = {
   DARK_KHAKI: '#393424',
   SOFT_FAWN: '#deba6f',
   BLACK: '#000',
+  RED: '#a91212',
   // Semantic
   BG_COLOR: '#191611',
   BG_COLOR_HIGHLIGHTED_HALF: '#211a0e',
@@ -19,3 +20,6 @@ export const GRADIENTS = {
     `radial-gradient(ellipse at center, ${COLORS.BG_COLOR_HIGHLIGHTED_HALF} 0%, ` +
     `${COLORS.BG_COLOR} 100%)`,
 } as const;
+
+// DOM id of the billboard overlay container rendered by BillboardOverlay.
+export const BILLBOARD_OVERLAY_ELEMENT_ID = 'billboard-overlay';
