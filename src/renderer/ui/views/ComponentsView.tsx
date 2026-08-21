@@ -4,7 +4,7 @@ import { InternalFlex, InternalText } from '@tgdf';
 
 import { Button, Text, Dropdown, BarSimple, BarOrnament, ScrollableWrapper } from 'UI';
 
-import { COLORS } from '../../constants';
+import { COLORS, GRADIENTS } from '../../constants';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 import { PanelScalable } from '../components/PanelScalable/PanelScalable';
 
@@ -67,7 +67,7 @@ export function ComponentsView() {
           gap={40}
           style={{
             padding: '80px 20px',
-            backgroundColor: COLORS.BG_COLOR,
+            background: GRADIENTS.BACKGROUND,
           }}
         >
           <Text size="xl" color={COLORS.FONT_COLOR_PRIMARY}>
@@ -118,12 +118,14 @@ export function ComponentsView() {
           </ComponentSection>
 
           <ComponentSection title="Bars">
+            <Text>Bar Simple</Text>
             <InternalFlex direction="column" align="start" gap={12}>
               <BarSimple progress={1} fillColor={COLORS.SOFT_FAWN} />
               <BarSimple progress={0.6} fillColor="#c0392b" />
               <BarSimple progress={0.2} fillColor="#3498db" />
             </InternalFlex>
-
+            <br />
+            <Text>Bar Ornament</Text>
             <InternalFlex direction="column" align="start" gap={12}>
               <BarOrnament progress={1} fillColor={COLORS.SOFT_FAWN} />
               <BarOrnament progress={0.6} fillColor="#c0392b" />
