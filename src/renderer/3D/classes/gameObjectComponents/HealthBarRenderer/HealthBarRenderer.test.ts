@@ -21,10 +21,7 @@ class TestScene extends Scene {
 
 function createHealthBarRenderer(initialHealthPoints = 100) {
   const scene = new TestScene();
-  // HealthBarRenderer/HealthPointsController only need the plain GameObject surface
-  // (uuid, events, scene, isAwake) that this file exercises, so a real GameObject cast to
-  // Entity keeps the test lightweight without needing a fully constructed Entity (models,
-  // rigid bodies, etc.).
+
   const gameObject = new GameObject({ scene }) as unknown as Entity;
   scene.add(gameObject);
 
@@ -33,7 +30,7 @@ function createHealthBarRenderer(initialHealthPoints = 100) {
 
   gameObject.addComponent('HealthPointsController', healthPointsController);
   gameObject.addComponent('HealthBarRenderer', healthBarRenderer);
-  // Fires 'awake', which is what wires HealthBarRenderer's damagetaken/heal subscriptions.
+
   gameObject.update(0);
 
   const barId = `health-bar-${gameObject.uuid}`;
@@ -46,7 +43,10 @@ describe('HealthBarRenderer', () => {
     vi.useFakeTimers();
     useOverlayStore.setState({ entries: new Map() });
     overlayElementRefs.clear();
-    vi.spyOn(gsap, 'to').mockReturnValue({ kill: vi.fn() } as unknown as gsap.core.Tween);
+    vi.spyOn(gsap, 'to').mockReturnValue({
+      kill: vi.fn(),
+      revert: vi.fn(),
+    } as unknown as gsap.core.Tween);
   });
 
   afterEach(() => {
@@ -160,5 +160,43 @@ describe('HealthBarRenderer', () => {
     const { healthBarRenderer } = createHealthBarRenderer(100);
 
     expect(() => healthBarRenderer.destroy()).not.toThrow();
+  });
+
+  it('kills and reverts the progressing fade tween when there is an incoming update', () => {
+    const { healthPointsController, barId, healthBarRenderer } = createHealthBarRenderer(100);
+
+    healthPointsController.inflictDamage(10);
+
+    overlayElementRefs.set(barId, document.createElement('div'));
+
+    // Fade tween still in progress
+    vi.advanceTimersByTime(HEALTH_BAR_VISIBLE_DURATION_MS);
+    vi.advanceTimersByTime((HEALTH_BAR_FADE_DURATION_S * 1000) / 2);
+
+    const activeTween = healthBarRenderer['_healthBarTween'];
+
+    // An update should kill the tween so that it doesn't fade
+    healthPointsController.inflictDamage(10);
+    expect(activeTween?.revert).toHaveBeenCalledOnce();
+    expect(activeTween?.kill).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime((HEALTH_BAR_FADE_DURATION_S * 1000) / 2);
+    expect(useOverlayStore.getState().entries.has(barId)).toBe(true);
+  });
+
+  it('doesnt discard subsequent rapid update - calls update with new value correctly', () => {
+    const { healthPointsController, healthBarRenderer, barId } = createHealthBarRenderer(100);
+    const addSpy = vi.spyOn(healthBarRenderer, 'addElement');
+    const updateSpy = vi.spyOn(healthBarRenderer, 'updateElement');
+
+    healthPointsController.inflictDamage(10);
+    expect(addSpy).toHaveBeenCalledTimes(1);
+
+    healthPointsController.inflictDamage(10);
+    expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+
+    const entry = useOverlayStore.getState().entries.get(barId);
+    expect(entry?.props).toEqual({ progress: 0.8 });
   });
 });

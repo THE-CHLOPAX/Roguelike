@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from 'react';
  * Useful for debouncing values which update frequently in short intervals, when we want to
  * exactly track each individual updated value in the update sequence.
  *
- *
  * @param value - The value to debounce
  * @param delay - The delay in milliseconds (default: 500ms)
  * @returns The debounced value
@@ -29,6 +28,7 @@ export function useDebounceWithQueueing<T>(value: T, delay: number = 500): T {
       flushSync(() => {
         setDebouncedValue(value);
       });
+      timeoutIdsRef.current = timeoutIdsRef.current.filter((id) => id !== timeoutId);
     }, delay);
 
     // Push it to ids ref array

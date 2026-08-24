@@ -20,6 +20,7 @@ export class HealthBarRenderer extends BillboardRenderer {
   private _healthBarId: string;
   private _healthBarTimeout: NodeJS.Timeout | null = null;
   private _healthBarTween: GSAPTween | null = null;
+  private _hasElement: boolean = false;
 
   constructor(
     gameObject: Entity,
@@ -49,12 +50,19 @@ export class HealthBarRenderer extends BillboardRenderer {
     const progress =
       this.healthPointsController.healthPoints / this.healthPointsController.initialHealthPoints;
 
-    const healthBarElement = this.getElement(this._healthBarId);
-    if (healthBarElement) {
+    if (this._hasElement) {
+      // Reset and kill fade tween if active
+      if (this._healthBarTween) {
+        this._healthBarTween.revert();
+        this._healthBarTween.kill();
+        this._healthBarTween = null;
+      }
+
       this.updateElement(this._healthBarId, {
         progress,
       } satisfies HealthBarProps);
     } else {
+      this._hasElement = true;
       this.addElement(this._healthBarId, HealthBar, { progress }, { offset: this.options.offset });
     }
 
@@ -88,6 +96,7 @@ export class HealthBarRenderer extends BillboardRenderer {
     const healthBarElement = this.getElement(this._healthBarId);
     if (healthBarElement) {
       this.removeElement(this._healthBarId);
+      this._hasElement = false;
     }
   }
 }
