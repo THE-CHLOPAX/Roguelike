@@ -1,14 +1,14 @@
 import { assert } from '@tgdf';
 
-import { vec2toIndex } from './vec2ToIndex';
-import { indexToVec2 } from './indexToVec2';
-import { getNeighbourCellIndexes } from './getNeighbourCellIndexes';
+import { vec2toIndex } from './utils/vec2ToIndex';
+import { indexToVec2 } from './utils/indexToVec2';
+import { getNeighbourCellIndexes } from './utils/getNeighbourCellIndexes';
 import {
   SceneBuilderData,
   WorldGeneratorCellType,
   WorldGeneratorOutput,
   WorldGeneratorVec2,
-} from '../types';
+} from './types';
 
 type TypedCellWithNeighbours = {
   type: WorldGeneratorCellType;

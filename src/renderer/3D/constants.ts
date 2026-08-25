@@ -32,10 +32,6 @@ type StructuralMaterialParameter =
   | 'displacementMap';
 
 /**
- * The reusable material variants gameplay objects are allowed to use.
- * Options only carry uniform-level values (colors, intensities, opacity,
- * which texture) — those never create a new program.
- *
  * Adding a new variant? Warm it in ShadersManager's
  * _createShaderWarmupGroup too, or it'll compile mid-gameplay on first use
  * instead of at load — that switch is exhaustive over keyof MATERIALS, so

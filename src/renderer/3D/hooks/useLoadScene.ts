@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
-import { executeAsyncOperationsWithProgress, Scene } from '@tgdf';
+import { executeAsyncOperationsWithProgress, useAssetStore, Scene } from '@tgdf';
 
-export type UseLoadSceneProps = {
+import { ModelRecord } from '../types';
+import { WorldGenerator, WorldGeneratorOutput } from '../classes/worldGenerator/types';
+
+export type UseLoadSceneProps<TSceneData> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sceneClass: new (options?: any) => Scene;
-  asyncPreloadOperations?: Array<Promise<unknown>>;
+  sceneClass: new (sceneData?: any) => Scene;
+  worldGenerator?: WorldGenerator;
+  sceneBuilder?: (worldGenOutput: WorldGeneratorOutput) => Promise<TSceneData>;
+  characterModels?: ModelRecord[];
 };
 
 export type UseLoadSceneResult = {
@@ -13,21 +18,53 @@ export type UseLoadSceneResult = {
   loading: boolean;
 };
 
-export function useLoadScene({
+export function useLoadScene<TSceneData = undefined>({
   sceneClass,
-  asyncPreloadOperations = [],
-}: UseLoadSceneProps): UseLoadSceneResult {
+  worldGenerator,
+  sceneBuilder,
+  characterModels = [],
+}: UseLoadSceneProps<TSceneData>): UseLoadSceneResult {
   const [scene, setScene] = useState<Scene | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Complete async preload operations and track progress
   useEffect(() => {
-    if (asyncPreloadOperations.length === 0) {
-      setLoadingProgress(1);
-      return;
-    }
-    executeAsyncOperationsWithProgress(asyncPreloadOperations, setLoadingProgress);
+    let cancelled = false;
+    const { loadModelGLTF } = useAssetStore.getState();
+
+    const worldGenPromise: Promise<WorldGeneratorOutput | undefined> = worldGenerator
+      ? worldGenerator()
+      : Promise.resolve(undefined);
+
+    const sceneBuilderPromise: Promise<TSceneData | undefined> = sceneBuilder
+      ? worldGenPromise.then((worldGenOutput) =>
+          sceneBuilder(worldGenOutput as WorldGeneratorOutput)
+        )
+      : Promise.resolve(undefined);
+
+    const characterModelOperations = characterModels.map((model) =>
+      loadModelGLTF(model.id, model.path, {
+        nameExtractor: model.nameExtractor,
+        centerOrigin: true,
+      })
+    );
+
+    const trackedOperations: Array<Promise<unknown>> = [
+      ...(worldGenerator ? [worldGenPromise] : []),
+      ...(sceneBuilder ? [sceneBuilderPromise] : []),
+      ...characterModelOperations,
+    ];
+
+    executeAsyncOperationsWithProgress(trackedOperations, setLoadingProgress).then(async () => {
+      if (cancelled) return;
+      const sceneData = await sceneBuilderPromise;
+      setScene(new sceneClass(sceneData));
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Scene cleanup on unmount
@@ -36,15 +73,6 @@ export function useLoadScene({
       scene?.dispose();
     };
   }, [scene]);
-
-  // Instantiate scene once assets are loaded
-  useEffect(() => {
-    if (loadingProgress === 1 && loading) {
-      const newScene = new sceneClass();
-      setScene(newScene);
-      setLoading(false);
-    }
-  }, [loadingProgress, loading, sceneClass]);
 
   return { scene, loadingProgress, loading };
 }

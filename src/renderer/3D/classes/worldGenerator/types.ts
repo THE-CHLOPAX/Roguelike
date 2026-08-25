@@ -25,3 +25,5 @@ export type WorldGeneratorVec2 = {
 };
 
 export type SceneBuilderData = Array<SceneBuilderCell>;
+
+export type WorldGenerator = () => Promise<WorldGeneratorOutput>;

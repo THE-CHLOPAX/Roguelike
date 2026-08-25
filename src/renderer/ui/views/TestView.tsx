@@ -11,23 +11,18 @@ import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 import { EXPLOSION_SPRITESHEET_TEXTURE, ARCANE_CIRCLE_TEXTURE, MODELS } from '../../3D/constants';
 
 export function TestView() {
-  const { loadTexture, loadModelGLTF } = useAssetStore();
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
     sceneClass: TestScene,
-    asyncPreloadOperations: [
-      loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
-      loadTexture(EXPLOSION_SPRITESHEET_TEXTURE, './assets/explosion.png', THREE.SRGBColorSpace),
-      loadTexture(ARCANE_CIRCLE_TEXTURE, './assets/arcane-circle.png'),
-      loadModelGLTF(MODELS.MONK.id, MODELS.MONK.path, {
-        nameExtractor: MODELS.MONK.nameExtractor,
-        centerOrigin: true,
-      }),
-      loadModelGLTF(MODELS.SKELETON.id, MODELS.SKELETON.path, {
-        nameExtractor: MODELS.SKELETON.nameExtractor,
-        centerOrigin: true,
-      }),
-    ],
+    sceneBuilder: async () => {
+      const { loadTexture } = useAssetStore.getState();
+      await Promise.all([
+        loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png'),
+        loadTexture(EXPLOSION_SPRITESHEET_TEXTURE, './assets/explosion.png', THREE.SRGBColorSpace),
+        loadTexture(ARCANE_CIRCLE_TEXTURE, './assets/arcane-circle.png'),
+      ]);
+    },
+    characterModels: [MODELS.MONK, MODELS.SKELETON],
   });
 
   const [loadingFinished, setLoadingFinished] = useState(false);

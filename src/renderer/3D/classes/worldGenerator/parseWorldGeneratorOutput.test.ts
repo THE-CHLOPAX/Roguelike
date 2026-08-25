@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { parseWorldGeneratorOutput } from './parseWorldGeneratorOutput';
-import { WorldGeneratorCellType, WorldGeneratorOutput, SceneBuilderCell } from '../types';
+import { WorldGeneratorCellType, WorldGeneratorOutput, SceneBuilderCell } from './types';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
@@ -13,9 +13,7 @@ const { EMPTY: E, CORRIDOR: C, FIGHT_AREA: F, SPAWN_AREA: S } = WorldGeneratorCe
 // them sorted, so tests can compare against the exact set of source cells regardless of
 // tileVectors ordering.
 function absoluteTiles(cell: SceneBuilderCell): string[] {
-  return cell.tileVectors
-    .map((tv) => `${tv.x + cell.center.x},${tv.z + cell.center.z}`)
-    .sort();
+  return cell.tileVectors.map((tv) => `${tv.x + cell.center.x},${tv.z + cell.center.z}`).sort();
 }
 
 describe('parseWorldGeneratorOutput', () => {
@@ -24,12 +22,7 @@ describe('parseWorldGeneratorOutput', () => {
       const output: WorldGeneratorOutput = {
         width: 4,
         height: 4,
-        data: [
-          C, E, E, E,
-          E, C, E, E,
-          E, E, E, E,
-          E, E, E, E,
-        ],
+        data: [C, E, E, E, E, C, E, E, E, E, E, E, E, E, E, E],
       };
 
       const result = parseWorldGeneratorOutput(output);
@@ -71,11 +64,7 @@ describe('parseWorldGeneratorOutput', () => {
       const output: WorldGeneratorOutput = {
         width: 3,
         height: 3,
-        data: [
-          E, E, E,
-          E, S, E,
-          E, E, E,
-        ],
+        data: [E, E, E, E, S, E, E, E, E],
       };
 
       const result = parseWorldGeneratorOutput(output);
@@ -116,21 +105,13 @@ describe('parseWorldGeneratorOutput', () => {
       const output: WorldGeneratorOutput = {
         width: 5,
         height: 5,
-        data: [
-          E, E, E, E, E,
-          E, C, C, E, E,
-          E, C, C, E, E,
-          E, C, C, E, E,
-          E, E, E, E, E,
-        ],
+        data: [E, E, E, E, E, E, C, C, E, E, E, C, C, E, E, E, C, C, E, E, E, E, E, E, E],
       };
 
       const [result] = parseWorldGeneratorOutput(output);
 
       expect(result.center).toEqual({ x: 2, z: 2.5 });
-      expect(absoluteTiles(result)).toEqual(
-        ['1,1', '1,2', '1,3', '2,1', '2,2', '2,3'].sort()
-      );
+      expect(absoluteTiles(result)).toEqual(['1,1', '1,2', '1,3', '2,1', '2,2', '2,3'].sort());
     });
   });
 
@@ -139,12 +120,7 @@ describe('parseWorldGeneratorOutput', () => {
       const output: WorldGeneratorOutput = {
         width: 4,
         height: 4,
-        data: [
-          F, F, E, E,
-          F, F, E, E,
-          E, E, E, E,
-          E, E, E, E,
-        ],
+        data: [F, F, E, E, F, F, E, E, E, E, E, E, E, E, E, E],
       };
 
       const [result] = parseWorldGeneratorOutput(output);
@@ -157,13 +133,7 @@ describe('parseWorldGeneratorOutput', () => {
       const output: WorldGeneratorOutput = {
         width: 5,
         height: 5,
-        data: [
-          C, C, E, E, E,
-          C, E, E, E, E,
-          C, E, E, E, E,
-          C, C, C, E, E,
-          E, E, E, E, E,
-        ],
+        data: [C, C, E, E, E, C, E, E, E, E, C, E, E, E, E, C, C, C, E, E, E, E, E, E, E],
       };
 
       const [result] = parseWorldGeneratorOutput(output);
