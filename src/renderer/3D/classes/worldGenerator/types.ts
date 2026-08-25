@@ -12,3 +12,16 @@ export type WorldGeneratorOutput = {
   height: number;
   data: Array<WorldGeneratorCellType>;
 };
+
+export type SceneBuilderCell = {
+  center: WorldGeneratorVec2;
+  tileVectors: Array<WorldGeneratorVec2>;
+  type: WorldGeneratorCellType;
+};
+
+export type WorldGeneratorVec2 = {
+  x: number;
+  z: number;
+};
+
+export type SceneBuilderData = Array<SceneBuilderCell>;
