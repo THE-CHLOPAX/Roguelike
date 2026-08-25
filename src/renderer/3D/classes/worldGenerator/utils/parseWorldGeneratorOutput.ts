@@ -23,7 +23,6 @@ type TypedCellArea = {
 };
 
 export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderData {
-  performance.mark('start');
   const { width, height: depth, data } = outputRaw;
 
   const typedNonEmptyCellsMap = getTypedCellIndexesWithNeighboursMap(width, depth, data);
@@ -80,12 +79,6 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
       type,
     };
   });
-
-  performance.mark('end');
-  const measurementId = 'measurement';
-  performance.measure(measurementId, 'start', 'end');
-  const [measure] = performance.getEntriesByName(measurementId);
-  console.log('Measure: ', measure.duration);
 
   return sceneBuilderData;
 }

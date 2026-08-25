@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 
 import { WorldGeneratorCellType, WorldGeneratorOutput } from '3D/classes/worldGenerator/types';
 import { WORLD_GEN_CELL_COLORS, MOCK_WORLD_GEN_OUTPUT } from '3D/classes/worldGenerator/const';
-import { parseWorldGeneratorOutput } from 'renderer/3D/classes/worldGenerator/utils/parseWorldGeneratorOutput';
 
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 
@@ -77,12 +76,6 @@ function WorldGenGrid({ output }: { output: WorldGeneratorOutput }) {
 }
 
 export function WorldGenTestView() {
-  // DEBUG
-  useEffect(() => {
-    const parsedOutput = parseWorldGeneratorOutput(MOCK_WORLD_GEN_OUTPUT);
-    console.log('PARSED OUTPUT: ', parsedOutput);
-  }, []);
-
   return (
     <BackToViewLayout backToView="MenuView">
       <StyledWrapper>
