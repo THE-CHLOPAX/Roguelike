@@ -23,6 +23,7 @@ type TypedCellArea = {
 };
 
 export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderData {
+  performance.mark('start');
   const { width, height: depth, data } = outputRaw;
 
   const typedNonEmptyCellsMap = getTypedCellIndexesWithNeighboursMap(width, depth, data);
@@ -33,13 +34,17 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
       .map((i) => indexToVec2(i, width))
       .filter((aT): aT is WorldGeneratorVec2 => aT !== null);
 
-    const xValues = areaTileVectors.map((atv) => atv.x);
-    const zValues = areaTileVectors.map((atv) => atv.z);
+    let startX = width;
+    let startZ = depth;
+    let endX = 0;
+    let endZ = 0;
 
-    const startX = xValues.reduce((startX, currentX) => Math.min(startX, currentX), width);
-    const startZ = zValues.reduce((startZ, currentZ) => Math.min(startZ, currentZ), depth);
-    const endX = xValues.reduce((endX, currentX) => Math.max(endX, currentX), 0);
-    const endZ = zValues.reduce((endZ, currentZ) => Math.max(endZ, currentZ), 0);
+    for (const { x, z } of areaTileVectors) {
+      if (x < startX) startX = x;
+      if (z < startZ) startZ = z;
+      if (x > endX) endX = x;
+      if (z > endZ) endZ = z;
+    }
 
     const start = {
       x: startX,
@@ -75,6 +80,12 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
       type,
     };
   });
+
+  performance.mark('end');
+  const measurementId = 'measurement';
+  performance.measure(measurementId, 'start', 'end');
+  const [measure] = performance.getEntriesByName(measurementId);
+  console.log('Measure: ', measure.duration);
 
   return sceneBuilderData;
 }
