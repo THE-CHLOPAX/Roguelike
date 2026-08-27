@@ -77,8 +77,9 @@ describe('RigidFloorObject', () => {
 
     const debugMesh = rigidFloorObject.getGameObjectComponentByType(RigidBody)?.getDebugMesh();
     assert(debugMesh !== null && debugMesh !== undefined, 'Debug mesh was not created');
-    expect(debugMesh.position.x).toBeCloseTo(100);
-    expect(debugMesh.position.z).toBeCloseTo(100);
+    const debugMeshWorldPosition = debugMesh.getWorldPosition(new THREE.Vector3());
+    expect(debugMeshWorldPosition.x).toBeCloseTo(100);
+    expect(debugMeshWorldPosition.z).toBeCloseTo(100);
   });
 
   it('stops a dynamic body dropped above the floor from falling through it', async () => {

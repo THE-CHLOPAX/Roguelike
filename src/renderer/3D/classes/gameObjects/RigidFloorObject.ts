@@ -12,7 +12,7 @@ export class RigidFloorObject extends GameObject {
 
     this.position.copy(options.position);
 
-    this.addComponent(
+    const rigidbody = this.addComponent(
       'RigidBodyComponent',
       new RigidBody(this, {
         type: 'static',
@@ -20,5 +20,7 @@ export class RigidFloorObject extends GameObject {
         colliderSize: options.size,
       })
     );
+
+    rigidbody.toggleDebug(true);
   }
 }
