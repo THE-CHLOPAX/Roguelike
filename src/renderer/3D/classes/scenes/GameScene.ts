@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { logger, PhysicsManager, Scene } from '@tgdf';
+import { isMesh, logger, PhysicsManager, Scene } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { ShadersManager } from './ShadersManager/ShadersManager';
@@ -20,19 +20,15 @@ export class GameScene extends Scene {
     const frustumSize = 9;
 
     this.camera = new OrtographicCamera({
-      options: {
-        left: (-frustumSize * aspectRatio) / 2,
-        right: (frustumSize * aspectRatio) / 2,
-        top: frustumSize / 2,
-        bottom: -frustumSize / 2,
-        near: 0.1,
-        far: 40,
-      },
+      left: (-frustumSize * aspectRatio) / 2,
+      right: (frustumSize * aspectRatio) / 2,
+      top: frustumSize / 2,
+      bottom: -frustumSize / 2,
+      near: 0.1,
+      far: 40,
     });
 
     this.camera.setZoom(1);
-    this.camera.position.set(6, 6, 6);
-    this.camera.lookAt(0, 0, 0);
 
     // Precompile gameplay-effect shader variants during scene entry so their
     // first-use compilation doesn't stall the frame mid-combat. The warmup
@@ -54,20 +50,32 @@ export class GameScene extends Scene {
     }
   }
 
+  protected onInit(_navMeshManager: NavMeshManager, _physicsManager: PhysicsManager): void {}
+
   private async _initialize(floorObject: THREE.Object3D): Promise<void> {
     await this.initializePhysicsWorld(GAME_GRAVITY);
 
-    const rigidFloorObject = new RigidFloorObject(this, floorObject);
-    this.add(rigidFloorObject);
-
-    await this.initializeNavMeshManager(rigidFloorObject);
+    await this.initializeNavMeshManager(floorObject);
 
     if (!this.navMeshManager || !this.physics) {
       throw new Error('Failed to initialize NavMeshManager or PhysicsManager');
     }
 
+    this._rigidizeCellularFloor(floorObject);
+
     this.onInit(this.navMeshManager, this.physics);
   }
 
-  protected onInit(_navMeshManager: NavMeshManager, _physicsManager: PhysicsManager): void {}
+  private _rigidizeCellularFloor(floorObject: THREE.Object3D): void {
+    // Generate rigid floor per cell.
+    const floorObjectCells: THREE.Mesh[] = [];
+    floorObject.traverse((child) => {
+      if (isMesh(child)) floorObjectCells.push(child);
+    });
+
+    floorObjectCells.forEach((cell) => {
+      const cellRigidFloorObject = new RigidFloorObject(this, cell);
+      this.add(cellRigidFloorObject);
+    });
+  }
 }

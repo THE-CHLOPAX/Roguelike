@@ -39,5 +39,10 @@ export function getMeshFromCollider(collider: RAPIER.Collider): THREE.Mesh {
 
   const mesh = new THREE.Mesh(geometry, material);
 
+  const translation = collider.translation();
+  const rotation = collider.rotation();
+  mesh.position.set(translation.x, translation.y, translation.z);
+  mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+
   return mesh;
 }

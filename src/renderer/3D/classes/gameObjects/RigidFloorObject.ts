@@ -9,11 +9,15 @@ export class RigidFloorObject extends GameObject {
 
     this.add(object);
 
+    const bbox = new THREE.Box3().setFromObject(object);
+    const floorSize = bbox.getSize(new THREE.Vector3());
+
     this.addComponent(
       'RigidBodyComponent',
       new RigidBody(this, {
         type: 'static',
         enableCollisionDetection: true,
+        colliderSize: new THREE.Vector3(floorSize.x, 0.1, floorSize.z),
       })
     );
   }

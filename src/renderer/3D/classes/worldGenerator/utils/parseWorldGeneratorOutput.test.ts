@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 
+import { CELL_SIZE_METERS } from '../const';
 import { parseWorldGeneratorOutput } from './parseWorldGeneratorOutput';
-import { WorldGeneratorCellType, WorldGeneratorOutput, SceneBuilderCell } from './types';
+import { WorldGeneratorCellType, WorldGeneratorOutput, SceneBuilderCell } from '../types';
 
 vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
@@ -9,11 +10,14 @@ vi.mock('electron', () => ({
 
 const { EMPTY: E, CORRIDOR: C, FIGHT_AREA: F, SPAWN_AREA: S } = WorldGeneratorCellType;
 
-// Reconstructs each tile's absolute (x, z) grid position from a parsed area and returns
-// them sorted, so tests can compare against the exact set of source cells regardless of
-// tileVectors ordering.
+// tileVectors hold absolute, CELL_SIZE_METERS-scaled world positions. This scales a raw
+// grid (x, z) the same way, so expectations can be written in raw grid coordinates.
+function scaled(x: number, z: number): string {
+  return `${x * CELL_SIZE_METERS},${z * CELL_SIZE_METERS}`;
+}
+
 function absoluteTiles(cell: SceneBuilderCell): string[] {
-  return cell.tileVectors.map((tv) => `${tv.x + cell.center.x},${tv.z + cell.center.z}`).sort();
+  return cell.tileVectors.map((tv) => `${tv.x},${tv.z}`).sort();
 }
 
 describe('parseWorldGeneratorOutput', () => {
@@ -86,7 +90,7 @@ describe('parseWorldGeneratorOutput', () => {
   });
 
   describe('area center', () => {
-    it('centers a single-tile area on that tile', () => {
+    it('centers a single-tile area on that tile, scaled by CELL_SIZE_METERS', () => {
       const output: WorldGeneratorOutput = {
         width: 6,
         height: 6,
@@ -96,11 +100,11 @@ describe('parseWorldGeneratorOutput', () => {
 
       const [result] = parseWorldGeneratorOutput(output);
 
-      expect(result.center).toEqual({ x: 2.5, z: 3.5 });
-      expect(result.tileVectors).toEqual([{ x: -0.5, z: -0.5 }]);
+      expect(result.center).toEqual({ x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS });
+      expect(result.tileVectors).toEqual([{ x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS }]);
     });
 
-    it('centers a rectangular area on its bounding box midpoint', () => {
+    it('centers a rectangular area on the midpoint between its first and last tile', () => {
       // 2 wide x 3 tall block starting at (1,1).
       const output: WorldGeneratorOutput = {
         width: 5,
@@ -110,8 +114,19 @@ describe('parseWorldGeneratorOutput', () => {
 
       const [result] = parseWorldGeneratorOutput(output);
 
-      expect(result.center).toEqual({ x: 2, z: 2.5 });
-      expect(absoluteTiles(result)).toEqual(['1,1', '1,2', '1,3', '2,1', '2,2', '2,3'].sort());
+      // Tile centers span x:[1,2] and z:[1,3], so the true midpoint is (1.5, 2) - not
+      // (2, 2.5), which would double-count half a cell of edge padding.
+      expect(result.center).toEqual({ x: 1.5 * CELL_SIZE_METERS, z: 2 * CELL_SIZE_METERS });
+      expect(absoluteTiles(result)).toEqual(
+        [
+          scaled(1, 1),
+          scaled(1, 2),
+          scaled(1, 3),
+          scaled(2, 1),
+          scaled(2, 2),
+          scaled(2, 3),
+        ].sort()
+      );
     });
   });
 
@@ -126,7 +141,9 @@ describe('parseWorldGeneratorOutput', () => {
       const [result] = parseWorldGeneratorOutput(output);
 
       expect(result.tileVectors).toHaveLength(4);
-      expect(absoluteTiles(result)).toEqual(['0,0', '0,1', '1,0', '1,1'].sort());
+      expect(absoluteTiles(result)).toEqual(
+        [scaled(0, 0), scaled(0, 1), scaled(1, 0), scaled(1, 1)].sort()
+      );
     });
 
     it('captures the exact footprint of an L-shaped area, with no extra tiles', () => {
@@ -137,7 +154,15 @@ describe('parseWorldGeneratorOutput', () => {
       };
 
       const [result] = parseWorldGeneratorOutput(output);
-      const expectedCells = ['0,0', '1,0', '0,1', '0,2', '0,3', '1,3', '2,3'].sort();
+      const expectedCells = [
+        scaled(0, 0),
+        scaled(1, 0),
+        scaled(0, 1),
+        scaled(0, 2),
+        scaled(0, 3),
+        scaled(1, 3),
+        scaled(2, 3),
+      ].sort();
 
       expect(result.tileVectors).toHaveLength(expectedCells.length);
       expect(absoluteTiles(result)).toEqual(expectedCells);

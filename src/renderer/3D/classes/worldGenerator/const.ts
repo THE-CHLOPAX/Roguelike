@@ -19,3 +19,5 @@ export const MOCK_WORLD_GEN_OUTPUT: WorldGeneratorOutput = {
   height: MOCK_WORLD_GEN_HEIGHT,
   data: buildMockWorldGenData(),
 };
+
+export const CELL_SIZE_METERS = 5;

@@ -3,7 +3,8 @@ import { RigidBodyOptions } from '@tgdf';
 
 import { ModelRecord } from './types';
 
-export const CAMERA_POSITION_OFFSET = new THREE.Vector3(0, 8, 11.5);
+// Default camera position relative to its pivot point, e.g. for an isometric-style view.
+export const CAMERA_POSITION_OFFSET = new THREE.Vector3(6, 6, 6);
 
 export const FLOOR_OBJECT_MESH_NAME = 'test-floor-plane-mesh';
 
@@ -108,5 +109,25 @@ export const MODELS: Record<string, ModelRecord> = {
     id: 'model-knight',
     path: './assets/models/knight.glb',
     nameExtractor: 'Knight',
+  },
+  DUNGEON_DOOR: {
+    id: 'model_dungeon_door',
+    path: './assets/models/model_dungeon_door.fbx',
+  },
+  DUNGEON_DOOR_FRAME: {
+    id: 'model_dungeon_door_frame',
+    path: './assets/models/model_dungeon_door_frame.fbx',
+  },
+  DUNGEON_PILLAR: {
+    id: 'model_dungeon_pillar',
+    path: './assets/models/model_dungeon_pillar.fbx',
+  },
+  DUNGEON_TORCH_WALL: {
+    id: 'model_dungeon_torch_wall',
+    path: './assets/models/model_dungeon_torch_wall.fbx',
+  },
+  DUNGEON_WALL_BRICK_TALL: {
+    id: 'model_dungeon_wall_brick_tall',
+    path: './assets/models/model_dungeon_wall_brick_tall.fbx',
   },
 };

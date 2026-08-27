@@ -1,14 +1,15 @@
 import { assert } from '@tgdf';
 
-import { vec2toIndex } from './utils/vec2ToIndex';
-import { indexToVec2 } from './utils/indexToVec2';
-import { getNeighbourCellIndexes } from './utils/getNeighbourCellIndexes';
+import { vec2toIndex } from './vec2ToIndex';
+import { indexToVec2 } from './indexToVec2';
+import { CELL_SIZE_METERS } from '../const';
+import { getNeighbourCellIndexes } from './getNeighbourCellIndexes';
 import {
   SceneBuilderData,
   WorldGeneratorCellType,
   WorldGeneratorOutput,
   WorldGeneratorVec2,
-} from './types';
+} from '../types';
 
 type TypedCellWithNeighbours = {
   type: WorldGeneratorCellType;
@@ -29,16 +30,27 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
   const areas = detectAreasFromNeighbours(typedNonEmptyCellsMap);
 
   const sceneBuilderData: SceneBuilderData = areas.map((area) => {
-    const areaTileVectors = area.indexes
-      .map((i) => indexToVec2(i, width))
+    const tileVectors = area.indexes
+      .map((i) => {
+        const tilePosition = indexToVec2(i, width);
+
+        assert(tilePosition !== null, 'Error while mapping tile vectors');
+
+        const { x, z } = tilePosition;
+
+        return {
+          x: x * CELL_SIZE_METERS,
+          z: z * CELL_SIZE_METERS,
+        };
+      })
       .filter((aT): aT is WorldGeneratorVec2 => aT !== null);
 
-    let startX = width;
-    let startZ = depth;
-    let endX = 0;
-    let endZ = 0;
+    let startX = Infinity;
+    let startZ = Infinity;
+    let endX = -Infinity;
+    let endZ = -Infinity;
 
-    for (const { x, z } of areaTileVectors) {
+    for (const { x, z } of tileVectors) {
       if (x < startX) startX = x;
       if (z < startZ) startZ = z;
       if (x > endX) endX = x;
@@ -56,26 +68,16 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
 
     const { type } = area;
 
-    // Since we're in XZ coordinates indexed from 0, we need to add 1 to
-    // vector subtraction results for actual dimensions.
-    const areaDepth = end.z - start.z + 1;
-    const areaWidth = end.x - start.x + 1;
-
+    // The center of the tile span is the midpoint between the first and last tile's
+    // centers - start.x + (end.x - start.x + 1) / 2 would be off by half a cell.
     const center: WorldGeneratorVec2 = {
-      x: start.x + areaWidth / 2,
-      z: start.z + areaDepth / 2,
+      x: (start.x + end.x) / 2,
+      z: (start.z + end.z) / 2,
     };
-
-    // Format area tile vectors to area-local coordinates by subtracting the
-    // area center position.
-    const tileVectorsLocal = areaTileVectors.map((atv) => ({
-      x: atv.x - center.x,
-      z: atv.z - center.z,
-    }));
 
     return {
       center,
-      tileVectors: tileVectorsLocal,
+      tileVectors,
       type,
     };
   });

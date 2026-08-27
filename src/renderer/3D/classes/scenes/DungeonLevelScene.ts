@@ -11,7 +11,7 @@ export class DungeonLevelScene extends GameScene {
   private _objects: THREE.Object3D[];
 
   constructor(sceneData: LevelSceneData) {
-    super(sceneData.floorMesh);
+    super(sceneData.floorGroup);
     this._objects = sceneData.objects;
   }
 
@@ -26,9 +26,14 @@ export class DungeonLevelScene extends GameScene {
     const navMesh = navMeshManager.navMesh;
     assert(navMesh, 'NavMesh is not initialized');
 
-    const monk = new Monk(this);
-    this.add(monk);
+    const spawner = this.getObjectByName('player-spawner');
 
-    this.camera.follow(monk);
+    if (spawner) {
+      const { x, z } = spawner.position;
+      const monk = new Monk(this);
+      monk.position.set(x, 1, z);
+      this.add(monk);
+      this.camera.follow(monk);
+    }
   }
 }

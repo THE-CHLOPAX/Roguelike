@@ -85,7 +85,7 @@ export type GameCamera = SceneCamera & {
 };
 
 export type LevelSceneData = {
-  floorMesh: THREE.Mesh; // Used for NavMesh calculation
+  floorGroup: THREE.Group; // Used for NavMesh calculation
   objects: THREE.Object3D[]; // All other scene objects
 };
 

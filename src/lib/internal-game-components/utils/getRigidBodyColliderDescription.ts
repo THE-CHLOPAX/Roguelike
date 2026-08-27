@@ -8,11 +8,16 @@ export function getRigidBodyColliderDescription(
   object: THREE.Object3D,
   options?: RigidBodyOptions
 ): RAPIER.ColliderDesc {
+  const bbox = new THREE.Box3().setFromObject(object);
+
   let size = options?.colliderSize;
   if (!size) {
-    const bbox = new THREE.Box3().setFromObject(object);
     size = bbox.getSize(new THREE.Vector3());
   }
+
+  const worldCenter = bbox.getCenter(new THREE.Vector3());
+  const objectWorldPosition = object.getWorldPosition(new THREE.Vector3());
+  const colliderOffset = worldCenter.sub(objectWorldPosition);
 
   let colliderDesc: RAPIER.ColliderDesc;
 
@@ -34,6 +39,8 @@ export function getRigidBodyColliderDescription(
     default:
       throw new Error(`Unsupported collider shape: ${type}`);
   }
+
+  colliderDesc.setTranslation(colliderOffset.x, colliderOffset.y, colliderOffset.z);
 
   // Set material properties
   if (options?.friction) colliderDesc.setFriction(options.friction);
