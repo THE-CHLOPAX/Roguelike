@@ -5,6 +5,7 @@ import { State } from './classes/states';
 import { Entity } from './classes/gameObjects/Entity';
 import { Player } from './classes/gameObjects/players/Player';
 import { WorldGeneratorOutput } from './classes/worldGenerator/types';
+import { RigidFloorObjectOptions } from './classes/gameObjects/RigidFloorObject';
 
 export enum AnimationClipNamesShared {
   SPAWN = 'spawn',
@@ -85,8 +86,9 @@ export type GameCamera = SceneCamera & {
 };
 
 export type LevelSceneData = {
-  floorGroup: THREE.Group; // Used for NavMesh calculation
-  objects: THREE.Object3D[]; // All other scene objects
+  floorGroup: THREE.Object3D;
+  floorTiles: RigidFloorObjectOptions[];
+  objects: THREE.Object3D[];
 };
 
 export type LevelSceneBuilder = (worldGenOutput: WorldGeneratorOutput) => Promise<LevelSceneData>;

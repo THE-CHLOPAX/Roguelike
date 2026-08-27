@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { isMesh, logger, PhysicsManager, Scene } from '@tgdf';
+import { logger, PhysicsManager, Scene } from '@tgdf';
 import { NavMeshManager } from '@tgdf/internal-3d/NavMeshManager';
 
 import { ShadersManager } from './ShadersManager/ShadersManager';
 import { OrtographicCamera } from '../cameras/OrtographicCamera';
-import { RigidFloorObject } from '../gameObjects/RigidFloorObject';
+import { RigidFloorObject, RigidFloorObjectOptions } from '../gameObjects/RigidFloorObject';
 
 const GAME_GRAVITY = new THREE.Vector3(0, -9.81, 0);
 
@@ -13,7 +13,7 @@ export class GameScene extends Scene {
 
   private _shadersManager = new ShadersManager();
 
-  constructor(floorObject: THREE.Object3D) {
+  constructor(floorObject: THREE.Object3D, floorTiles?: RigidFloorObjectOptions[]) {
     super();
 
     const aspectRatio = window.innerWidth / window.innerHeight;
@@ -30,15 +30,12 @@ export class GameScene extends Scene {
 
     this.camera.setZoom(1);
 
-    // Precompile gameplay-effect shader variants during scene entry so their
-    // first-use compilation doesn't stall the frame mid-combat. The warmup
-    // group must stay in the scene to keep the compiled programs refcounted.
     this.add(this._shadersManager.warmupGroup);
     this.events.on('rendererChange', ({ renderer }) =>
       this._shadersManager.warmup(renderer, this, this.camera)
     );
 
-    this._initialize(floorObject).catch((error) => {
+    this._initialize(floorObject, floorTiles).catch((error) => {
       logger({ message: `Failed to initialize GameScene: ${error.message}`, type: 'error' });
       throw new Error('Failed to initialize GameScene');
     });
@@ -52,8 +49,13 @@ export class GameScene extends Scene {
 
   protected onInit(_navMeshManager: NavMeshManager, _physicsManager: PhysicsManager): void {}
 
-  private async _initialize(floorObject: THREE.Object3D): Promise<void> {
+  private async _initialize(
+    floorObject: THREE.Object3D,
+    floorTiles?: RigidFloorObjectOptions[]
+  ): Promise<void> {
     await this.initializePhysicsWorld(GAME_GRAVITY);
+
+    this.add(floorObject);
 
     await this.initializeNavMeshManager(floorObject);
 
@@ -61,21 +63,22 @@ export class GameScene extends Scene {
       throw new Error('Failed to initialize NavMeshManager or PhysicsManager');
     }
 
-    this._rigidizeCellularFloor(floorObject);
+    const tiles = floorTiles ?? [this._getSingleFloorTile(floorObject)];
+    tiles.forEach((tile) => {
+      const rigidFloorObject = new RigidFloorObject(this, tile);
+      this.add(rigidFloorObject);
+    });
 
     this.onInit(this.navMeshManager, this.physics);
   }
 
-  private _rigidizeCellularFloor(floorObject: THREE.Object3D): void {
-    // Generate rigid floor per cell.
-    const floorObjectCells: THREE.Mesh[] = [];
-    floorObject.traverse((child) => {
-      if (isMesh(child)) floorObjectCells.push(child);
-    });
+  private _getSingleFloorTile(floorObject: THREE.Object3D): RigidFloorObjectOptions {
+    const bbox = new THREE.Box3().setFromObject(floorObject);
+    const size = bbox.getSize(new THREE.Vector3());
 
-    floorObjectCells.forEach((cell) => {
-      const cellRigidFloorObject = new RigidFloorObject(this, cell);
-      this.add(cellRigidFloorObject);
-    });
+    return {
+      position: bbox.getCenter(new THREE.Vector3()),
+      size: new THREE.Vector3(size.x, 0.1, size.z),
+    };
   }
 }

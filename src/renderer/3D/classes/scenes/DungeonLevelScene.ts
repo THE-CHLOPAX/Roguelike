@@ -11,7 +11,7 @@ export class DungeonLevelScene extends GameScene {
   private _objects: THREE.Object3D[];
 
   constructor(sceneData: LevelSceneData) {
-    super(sceneData.floorGroup);
+    super(sceneData.floorGroup, sceneData.floorTiles);
     this._objects = sceneData.objects;
   }
 

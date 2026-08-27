@@ -15,14 +15,6 @@ class MockScene extends Scene {
   camera = new MockCamera();
 }
 
-function createFlatPlane(width: number, depth: number): THREE.Mesh {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), new THREE.MeshBasicMaterial());
-  mesh.rotation.x = -Math.PI / 2;
-  return mesh;
-}
-
-// Drops a dynamic box above the given world (x, z) position and steps physics forward,
-// returning where it ends up.
 async function dropBoxAt(scene: MockScene, x: number, z: number, startY = 3): Promise<number> {
   const dynamicObject = new GameObject({ scene });
   dynamicObject.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial()));
@@ -47,19 +39,29 @@ async function createScene(): Promise<MockScene> {
   return scene;
 }
 
+function createRigidFloorObject(
+  scene: MockScene,
+  position: THREE.Vector3,
+  size: THREE.Vector3
+): RigidFloorObject {
+  const rigidFloorObject = new RigidFloorObject(scene, { position, size });
+  scene.add(rigidFloorObject);
+  rigidFloorObject.update(0);
+  return rigidFloorObject;
+}
+
 describe('RigidFloorObject', () => {
   beforeAll(async () => {
     await RAPIER.init();
   });
 
-  it('builds a static collider centered on a single mesh positioned away from local origin', async () => {
+  it('builds a static collider at the given position and size, away from local origin', async () => {
     const scene = await createScene();
-    const floorMesh = createFlatPlane(20, 20);
-    floorMesh.position.set(100, 0, 100);
-
-    const rigidFloorObject = new RigidFloorObject(scene, floorMesh);
-    scene.add(rigidFloorObject);
-    rigidFloorObject.update(0);
+    const rigidFloorObject = createRigidFloorObject(
+      scene,
+      new THREE.Vector3(100, 0, 100),
+      new THREE.Vector3(20, 0.1, 20)
+    );
 
     const collider = rigidFloorObject.getGameObjectComponentByType(RigidBody)?.getPhysicsCollider();
     assert(collider !== null && collider !== undefined, 'Collider was not created');
@@ -73,65 +75,25 @@ describe('RigidFloorObject', () => {
     expect(halfExtents.x * 2).toBeCloseTo(20);
     expect(halfExtents.z * 2).toBeCloseTo(20);
 
-    // The debug wireframe must line up with the real (offset) collider, not sit at the
-    // RigidFloorObject's own local origin.
     const debugMesh = rigidFloorObject.getGameObjectComponentByType(RigidBody)?.getDebugMesh();
     assert(debugMesh !== null && debugMesh !== undefined, 'Debug mesh was not created');
     expect(debugMesh.position.x).toBeCloseTo(100);
     expect(debugMesh.position.z).toBeCloseTo(100);
   });
 
-  it('builds a collider spanning multiple meshes forming a floor group, wherever they sit', async () => {
-    const scene = await createScene();
-
-    // Three 5x5 tiles laid out edge-to-edge along X, matching how buildDungeonLevelScene
-    // groups individual floor tile meshes.
-    const floorGroup = new THREE.Group();
-    [0, 5, 10].forEach((x) => {
-      const tile = createFlatPlane(5, 5);
-      tile.position.set(x, 0, 0);
-      floorGroup.add(tile);
-    });
-
-    const rigidFloorObject = new RigidFloorObject(scene, floorGroup);
-    scene.add(rigidFloorObject);
-    rigidFloorObject.update(0);
-
-    const collider = rigidFloorObject.getGameObjectComponentByType(RigidBody)?.getPhysicsCollider();
-    assert(collider !== null && collider !== undefined, 'Collider was not created');
-
-    // Tiles span x=[-2.5, 12.5] combined - the collider must cover the whole thing, not
-    // just one tile.
-    const translation = collider.translation();
-    const halfExtents = collider.halfExtents();
-    expect(translation.x).toBeCloseTo(5); // midpoint of the 3-tile span
-    expect(halfExtents.x * 2).toBeCloseTo(15); // -2.5 to 12.5
-  });
-
   it('stops a dynamic body dropped above the floor from falling through it', async () => {
     const scene = await createScene();
-    const floorMesh = createFlatPlane(20, 20);
-
-    const rigidFloorObject = new RigidFloorObject(scene, floorMesh);
-    scene.add(rigidFloorObject);
-    rigidFloorObject.update(0);
+    createRigidFloorObject(scene, new THREE.Vector3(0, 0, 0), new THREE.Vector3(20, 0.1, 20));
 
     const finalY = await dropBoxAt(scene, 0, 0);
 
-    // The 1x1 box should come to rest just above the floor surface (~0.5), not fall
-    // through it (which would leave it deeply negative).
     expect(finalY).toBeGreaterThan(0);
     expect(finalY).toBeLessThan(2);
   });
 
-  it('stops a dynamic body from falling through a floor whose geometry sits far from local origin', async () => {
+  it('stops a dynamic body from falling through a floor positioned far from local origin', async () => {
     const scene = await createScene();
-    const floorMesh = createFlatPlane(20, 20);
-    floorMesh.position.set(100, 0, 100);
-
-    const rigidFloorObject = new RigidFloorObject(scene, floorMesh);
-    scene.add(rigidFloorObject);
-    rigidFloorObject.update(0);
+    createRigidFloorObject(scene, new THREE.Vector3(100, 0, 100), new THREE.Vector3(20, 0.1, 20));
 
     const finalY = await dropBoxAt(scene, 100, 100);
 
@@ -141,15 +103,8 @@ describe('RigidFloorObject', () => {
 
   it('does not create a collider that catches bodies dropped well outside the floor footprint', async () => {
     const scene = await createScene();
-    const floorMesh = createFlatPlane(20, 20);
-    floorMesh.position.set(100, 0, 100);
+    createRigidFloorObject(scene, new THREE.Vector3(100, 0, 100), new THREE.Vector3(20, 0.1, 20));
 
-    const rigidFloorObject = new RigidFloorObject(scene, floorMesh);
-    scene.add(rigidFloorObject);
-    rigidFloorObject.update(0);
-
-    // Far outside the 20x20 floor's footprint (which spans x/z 90-110) - should fall
-    // freely, proving the collider is correctly bounded rather than accidentally huge.
     const finalY = await dropBoxAt(scene, -500, -500);
 
     expect(finalY).toBeLessThan(-50);

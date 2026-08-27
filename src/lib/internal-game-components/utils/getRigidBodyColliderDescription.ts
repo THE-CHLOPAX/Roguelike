@@ -15,9 +15,12 @@ export function getRigidBodyColliderDescription(
     size = bbox.getSize(new THREE.Vector3());
   }
 
-  const worldCenter = bbox.getCenter(new THREE.Vector3());
-  const objectWorldPosition = object.getWorldPosition(new THREE.Vector3());
-  const colliderOffset = worldCenter.sub(objectWorldPosition);
+  const colliderOffset = new THREE.Vector3();
+  if (!bbox.isEmpty()) {
+    const worldCenter = bbox.getCenter(new THREE.Vector3());
+    const objectWorldPosition = object.getWorldPosition(new THREE.Vector3());
+    colliderOffset.copy(worldCenter).sub(objectWorldPosition);
+  }
 
   let colliderDesc: RAPIER.ColliderDesc;
 
