@@ -52,8 +52,5 @@ export const config: PlayerOptions = {
     [PlayerActionType.RUN]: (entity: Player) => {
       return new RunningState(entity);
     },
-    [PlayerActionType.SPRINT]: (entity: Player) => {
-      return new SprintingState(entity);
-    },
   },
 };

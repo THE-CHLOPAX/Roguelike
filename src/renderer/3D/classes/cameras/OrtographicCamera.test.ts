@@ -5,8 +5,8 @@ vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
-import { CAMERA_POSITION_OFFSET } from '../../constants';
 import { OrtographicCamera } from './OrtographicCamera';
+import { CAMERA_POSITION_OFFSET } from '../../constants';
 
 // Camera direction from `position` toward `pivotPoint`, for asserting it's always facing
 // its pivot regardless of where that pivot currently is.

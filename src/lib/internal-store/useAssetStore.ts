@@ -6,17 +6,11 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export type AssetState = {
-  imageCache: Map<string, HTMLImageElement>;
   textureCache: Map<string, THREE.Texture>;
-  audioCache: Map<string, HTMLAudioElement>;
-  fontCache: Map<string, FontFace>;
   modelCacheJSON: Map<string, THREE.Object3D>;
   modelCacheGLTF: Map<string, THREE.Object3D>;
   modelCacheFBX: Map<string, THREE.Object3D>;
-  loadImage: (id: string, url: string) => Promise<HTMLImageElement>;
   loadTexture: (id: string, url: string, colorSpace?: THREE.ColorSpace) => Promise<THREE.Texture>;
-  loadAudio: (id: string, url: string, volume?: number) => Promise<HTMLAudioElement>;
-  loadFont: (id: string, url: string) => Promise<FontFace>;
   loadModelJSON: (id: string, url: string, nameExtractor?: string) => Promise<THREE.Object3D>;
   loadModelGLTF: (
     id: string,
@@ -37,43 +31,35 @@ export type LoadModelFBXOptions = {
   texturePaths?: Record<string, string>; // material name -> texture URL
 };
 
+export type ModelRecord = {
+  type: 'model';
+  id: string;
+  path: string;
+  nameExtractor?: string;
+};
+
+export type TextureRecord = {
+  type: 'texture';
+  id: string;
+  path: string;
+  colorSpace?: THREE.ColorSpace;
+};
+
+export type AssetRecord = ModelRecord | TextureRecord;
+
 const gltfLoader = new GLTFLoader();
 const fbxLoader = new FBXLoader();
+fbxLoader.setResourcePath('./assets/textures/');
 const jsonLoader = new THREE.ObjectLoader();
 const textureLoader = new THREE.TextureLoader();
 
 const COPY_ASSETS_NOTE = '\n\n❗️ Make sure to copy new assets using npm run copy-assets.\n';
 
 export const useAssetStore = create<AssetState>((set, get) => ({
-  imageCache: new Map<string, HTMLImageElement>(),
   textureCache: new Map<string, THREE.Texture>(),
-  audioCache: new Map<string, HTMLAudioElement>(),
-  fontCache: new Map<string, FontFace>(),
   modelCacheJSON: new Map<string, THREE.Object3D>(),
   modelCacheGLTF: new Map<string, THREE.Object3D>(),
   modelCacheFBX: new Map<string, THREE.Object3D>(),
-
-  loadImage: (id: string, url: string): Promise<HTMLImageElement> => {
-    // Check cache first
-    const cached = get().imageCache.get(id);
-    if (cached) {
-      return Promise.resolve(cached);
-    }
-
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        set((state) => ({
-          imageCache: new Map(state.imageCache).set(id, img),
-        }));
-        resolve(img);
-      };
-      img.onerror = () => {
-        reject(new Error(`Failed to load image: ${url}\n\n${COPY_ASSETS_NOTE}`));
-      };
-    });
-  },
 
   loadTexture: (id: string, url: string, colorSpace?: THREE.ColorSpace): Promise<THREE.Texture> => {
     // Check cache first
@@ -100,59 +86,6 @@ export const useAssetStore = create<AssetState>((set, get) => ({
           reject(new Error(`Failed to load texture: ${url}, ${error}\n\n${COPY_ASSETS_NOTE}`));
         }
       );
-    });
-  },
-
-  loadAudio: (id: string, url: string, volume?: number): Promise<HTMLAudioElement> => {
-    // Check cache first
-    const cached = get().audioCache.get(id);
-    if (cached) {
-      // Clone the audio element if volume is different
-      if (volume !== undefined && cached.volume !== volume) {
-        const clonedAudio = cached.cloneNode() as HTMLAudioElement;
-        clonedAudio.volume = volume;
-        return Promise.resolve(clonedAudio);
-      }
-      return Promise.resolve(cached);
-    }
-
-    return new Promise((resolve, reject) => {
-      const audio = new Audio();
-      audio.src = url;
-      audio.volume = volume ?? 1;
-      audio.oncanplaythrough = () => {
-        useAssetStore.setState((state) => ({
-          audioCache: new Map(state.audioCache).set(id, audio),
-        }));
-        resolve(audio);
-      };
-      audio.onerror = () => {
-        reject(new Error(`Failed to load audio: ${url}\n\n${COPY_ASSETS_NOTE}`));
-      };
-    });
-  },
-
-  loadFont: (id: string, url: string): Promise<FontFace> => {
-    // Check cache first
-    const cached = get().fontCache.get(id);
-    if (cached) {
-      return Promise.resolve(cached);
-    }
-
-    return new Promise((resolve, reject) => {
-      const font = new FontFace(id, `url(${url})`);
-      font
-        .load()
-        .then((loadedFont) => {
-          document.fonts.add(loadedFont);
-          set((state) => ({
-            fontCache: new Map(state.fontCache).set(id, loadedFont),
-          }));
-          resolve(loadedFont);
-        })
-        .catch(() => {
-          reject(new Error(`Failed to load font: ${url}\n\n${COPY_ASSETS_NOTE}`));
-        });
     });
   },
 
@@ -371,4 +304,55 @@ export const getModelFromStore = (id: string): THREE.Object3D | undefined => {
     useAssetStore.getState().modelCacheFBX.get(id);
   // Model has to be copied using skeleton utils
   return modelObject ? clone(modelObject) : undefined;
+};
+
+const MODEL_CACHE_KEYS = ['modelCacheJSON', 'modelCacheGLTF', 'modelCacheFBX'] as const;
+
+function disposeModel(model: THREE.Object3D): void {
+  model.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+
+    child.geometry.dispose();
+
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    materials.forEach((material) => material.dispose());
+  });
+}
+
+function unloadTexture(id: string): void {
+  const texture = useAssetStore.getState().textureCache.get(id);
+  if (!texture) return;
+
+  texture.dispose();
+
+  useAssetStore.setState((state) => {
+    const next = new Map(state.textureCache);
+    next.delete(id);
+    return { textureCache: next };
+  });
+}
+
+function unloadModel(id: string): void {
+  MODEL_CACHE_KEYS.forEach((cacheKey) => {
+    const model = useAssetStore.getState()[cacheKey].get(id);
+    if (!model) return;
+
+    disposeModel(model);
+
+    useAssetStore.setState((state) => {
+      const next = new Map(state[cacheKey]);
+      next.delete(id);
+      return { [cacheKey]: next };
+    });
+  });
+}
+
+export const unloadAssets = (assets: AssetRecord[]): void => {
+  assets.forEach((asset) => {
+    if (asset.type === 'texture') {
+      unloadTexture(asset.id);
+    } else {
+      unloadModel(asset.id);
+    }
+  });
 };

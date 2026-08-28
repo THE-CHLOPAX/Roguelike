@@ -1,3 +1,4 @@
+import { assert } from '@tgdf';
 import { describe, it, expect, vi } from 'vitest';
 
 import { CELL_SIZE_METERS } from '../const';
@@ -17,7 +18,15 @@ function scaled(x: number, z: number): string {
 }
 
 function absoluteTiles(cell: SceneBuilderCell): string[] {
-  return cell.tileVectors.map((tv) => `${tv.x},${tv.z}`).sort();
+  return cell.tileVectors.map((tv) => `${tv.position.x},${tv.position.z}`).sort();
+}
+
+function edgesOf(cell: SceneBuilderCell, x: number, z: number): { x: number; z: number }[] {
+  const tile = cell.tileVectors.find(
+    (tv) => tv.position.x === x * CELL_SIZE_METERS && tv.position.z === z * CELL_SIZE_METERS
+  );
+  expect(tile).toBeDefined();
+  return [...(tile?.edges ?? [])].sort((a, b) => a.x - b.x || a.z - b.z);
 }
 
 describe('parseWorldGeneratorOutput', () => {
@@ -101,7 +110,17 @@ describe('parseWorldGeneratorOutput', () => {
       const [result] = parseWorldGeneratorOutput(output);
 
       expect(result.center).toEqual({ x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS });
-      expect(result.tileVectors).toEqual([{ x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS }]);
+      expect(result.tileVectors).toEqual([
+        {
+          position: { x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS },
+          edges: expect.arrayContaining([
+            { x: 0, z: -1 },
+            { x: 0, z: 1 },
+            { x: -1, z: 0 },
+            { x: 1, z: 0 },
+          ]),
+        },
+      ]);
     });
 
     it('centers a rectangular area on the midpoint between its first and last tile', () => {
@@ -118,14 +137,7 @@ describe('parseWorldGeneratorOutput', () => {
       // (2, 2.5), which would double-count half a cell of edge padding.
       expect(result.center).toEqual({ x: 1.5 * CELL_SIZE_METERS, z: 2 * CELL_SIZE_METERS });
       expect(absoluteTiles(result)).toEqual(
-        [
-          scaled(1, 1),
-          scaled(1, 2),
-          scaled(1, 3),
-          scaled(2, 1),
-          scaled(2, 2),
-          scaled(2, 3),
-        ].sort()
+        [scaled(1, 1), scaled(1, 2), scaled(1, 3), scaled(2, 1), scaled(2, 2), scaled(2, 3)].sort()
       );
     });
   });
@@ -166,6 +178,105 @@ describe('parseWorldGeneratorOutput', () => {
 
       expect(result.tileVectors).toHaveLength(expectedCells.length);
       expect(absoluteTiles(result)).toEqual(expectedCells);
+    });
+  });
+
+  describe('tile edges', () => {
+    it('reports all 4 cardinal edges for an isolated single tile', () => {
+      const output: WorldGeneratorOutput = {
+        width: 3,
+        height: 3,
+        data: [E, E, E, E, C, E, E, E, E],
+      };
+
+      const [result] = parseWorldGeneratorOutput(output);
+
+      expect(edgesOf(result, 1, 1)).toEqual(
+        [
+          { x: 0, z: -1 },
+          { x: 0, z: 1 },
+          { x: -1, z: 0 },
+          { x: 1, z: 0 },
+        ].sort((a, b) => a.x - b.x || a.z - b.z)
+      );
+    });
+
+    it('reports an edge toward the grid boundary even with no EMPTY cell there', () => {
+      const output: WorldGeneratorOutput = {
+        width: 2,
+        height: 1,
+        data: [C, E],
+      };
+
+      const [result] = parseWorldGeneratorOutput(output);
+
+      // (0,0) has no neighbour to its left (x=-1 is out of bounds) or top/bottom
+      // (z=-1/z=1 out of bounds on a 1-row grid), but its right neighbour is EMPTY too.
+      expect(edgesOf(result, 0, 0)).toEqual(
+        [
+          { x: 0, z: -1 },
+          { x: 0, z: 1 },
+          { x: -1, z: 0 },
+          { x: 1, z: 0 },
+        ].sort((a, b) => a.x - b.x || a.z - b.z)
+      );
+    });
+
+    it('does not report an edge on the side shared with a same-type neighbour', () => {
+      const output: WorldGeneratorOutput = {
+        width: 2,
+        height: 1,
+        data: [C, C],
+      };
+
+      const [result] = parseWorldGeneratorOutput(output);
+
+      expect(edgesOf(result, 0, 0)).toEqual(
+        [
+          { x: 0, z: -1 },
+          { x: 0, z: 1 },
+          { x: -1, z: 0 },
+        ].sort((a, b) => a.x - b.x || a.z - b.z)
+      );
+      expect(edgesOf(result, 1, 0)).toEqual(
+        [
+          { x: 0, z: -1 },
+          { x: 0, z: 1 },
+          { x: 1, z: 0 },
+        ].sort((a, b) => a.x - b.x || a.z - b.z)
+      );
+    });
+
+    it('does not report an edge on the side shared with a different non-empty type', () => {
+      const output: WorldGeneratorOutput = {
+        width: 4,
+        height: 1,
+        data: [C, C, F, F],
+      };
+
+      const result = parseWorldGeneratorOutput(output);
+      const corridor = result.find((area) => area.type === C);
+      const fightArea = result.find((area) => area.type === F);
+
+      assert(corridor !== undefined && fightArea !== undefined);
+
+      // Corridor's right side (x=1 -> neighbour x=2, a FIGHT_AREA) is floor continuing,
+      // not an edge - even though it's a different area/type from this tile's own.
+      expect(edgesOf(corridor, 1, 0)).not.toContainEqual({ x: 1, z: 0 });
+      expect(edgesOf(fightArea, 2, 0)).not.toContainEqual({ x: -1, z: 0 });
+    });
+
+    it('reports no edges for a tile fully surrounded on all 4 cardinal sides', () => {
+      // A 3x3 solid block - the center tile (1,1) has floor on all 4 sides.
+      const output: WorldGeneratorOutput = {
+        width: 3,
+        height: 3,
+        data: [C, C, C, C, C, C, C, C, C],
+      };
+
+      const [result] = parseWorldGeneratorOutput(output);
+
+      expect(edgesOf(result, 1, 1)).toEqual([]);
     });
   });
 });

@@ -6,16 +6,25 @@ import { CELL_SIZE_METERS } from '../const';
 import { getNeighbourCellIndexes } from './getNeighbourCellIndexes';
 import {
   SceneBuilderData,
+  SceneBuilderTileVector,
   WorldGeneratorCellType,
   WorldGeneratorOutput,
   WorldGeneratorVec2,
 } from '../types';
+
+export const CARDINAL_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
+  { x: 0, z: -1 },
+  { x: 0, z: 1 },
+  { x: -1, z: 0 },
+  { x: 1, z: 0 },
+];
 
 type TypedCellWithNeighbours = {
   type: WorldGeneratorCellType;
   index: number;
   checked: boolean;
   neighbourIndexes: number[];
+  edges: WorldGeneratorVec2[];
 };
 
 type TypedCellArea = {
@@ -30,31 +39,33 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
   const areas = detectAreasFromNeighbours(typedNonEmptyCellsMap);
 
   const sceneBuilderData: SceneBuilderData = areas.map((area) => {
-    const tileVectors = area.indexes
-      .map((i) => {
-        const tilePosition = indexToVec2(i, width);
+    const tileVectors: SceneBuilderTileVector[] = area.indexes.map((i) => {
+      const tilePosition = indexToVec2(i, width);
 
-        assert(tilePosition !== null, 'Error while mapping tile vectors');
+      assert(tilePosition !== null, 'Error while mapping tile vectors');
 
-        const { x, z } = tilePosition;
+      const { x, z } = tilePosition;
+      const edges = typedNonEmptyCellsMap.get(i)?.edges ?? [];
 
-        return {
+      return {
+        position: {
           x: x * CELL_SIZE_METERS,
           z: z * CELL_SIZE_METERS,
-        };
-      })
-      .filter((aT): aT is WorldGeneratorVec2 => aT !== null);
+        },
+        edges,
+      };
+    });
 
     let startX = Infinity;
     let startZ = Infinity;
     let endX = -Infinity;
     let endZ = -Infinity;
 
-    for (const { x, z } of tileVectors) {
-      if (x < startX) startX = x;
-      if (z < startZ) startZ = z;
-      if (x > endX) endX = x;
-      if (z > endZ) endZ = z;
+    for (const { position } of tileVectors) {
+      if (position.x < startX) startX = position.x;
+      if (position.z < startZ) startZ = position.z;
+      if (position.x > endX) endX = position.x;
+      if (position.z > endZ) endZ = position.z;
     }
 
     const start = {
@@ -108,12 +119,32 @@ function getTypedCellIndexesWithNeighboursMap(
         index,
         checked: false,
         neighbourIndexes,
+        edges: getCellEdges(x, z, width, depth, data),
       };
 
       nonEmptyCellsMap.set(index, nonEmptyCell);
     }
   }
   return nonEmptyCellsMap;
+}
+
+function getCellEdges(
+  x: number,
+  z: number,
+  width: number,
+  depth: number,
+  data: WorldGeneratorCellType[]
+): WorldGeneratorVec2[] {
+  return CARDINAL_EDGE_DIRECTIONS.filter((direction) => {
+    const neighbourX = x + direction.x;
+    const neighbourZ = z + direction.z;
+    const outOfBounds =
+      neighbourX < 0 || neighbourX >= width || neighbourZ < 0 || neighbourZ >= depth;
+
+    if (outOfBounds) return true;
+
+    return data[vec2toIndex(neighbourX, neighbourZ, width)] === WorldGeneratorCellType.EMPTY;
+  });
 }
 
 function detectAreasFromNeighbours(

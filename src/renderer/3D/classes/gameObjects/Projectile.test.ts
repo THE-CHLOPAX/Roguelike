@@ -14,11 +14,7 @@ import { GameScene } from '../scenes/GameScene';
 import { Projectile, ProjectileOptions } from './Projectile';
 import { ModelRenderer } from '../gameObjectComponents/ModelRenderer/ModelRenderer';
 
-class MockScene extends GameScene {
-  constructor() {
-    super(new THREE.Mesh(new THREE.PlaneGeometry(10, 10)));
-  }
-}
+class MockScene extends GameScene {}
 
 /**
  * Exposes Projectile's overridable onCollision/onMaxRangeReached hooks as spies,
