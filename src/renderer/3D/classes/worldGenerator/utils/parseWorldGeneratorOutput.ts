@@ -2,19 +2,29 @@ import { assert } from '@tgdf';
 
 import { vec2toIndex } from './vec2ToIndex';
 import { indexToVec2 } from './indexToVec2';
+import { CELL_SIZE_METERS } from '../const';
 import { getNeighbourCellIndexes } from './getNeighbourCellIndexes';
 import {
-  SceneBuilderData,
+  SceneBuilderCell,
+  SceneBuilderCellTile,
   WorldGeneratorCellType,
   WorldGeneratorOutput,
   WorldGeneratorVec2,
 } from '../types';
+
+export const CARDINAL_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
+  { x: 0, z: -1 },
+  { x: 0, z: 1 },
+  { x: -1, z: 0 },
+  { x: 1, z: 0 },
+];
 
 type TypedCellWithNeighbours = {
   type: WorldGeneratorCellType;
   index: number;
   checked: boolean;
   neighbourIndexes: number[];
+  edges: WorldGeneratorVec2[];
 };
 
 type TypedCellArea = {
@@ -22,27 +32,40 @@ type TypedCellArea = {
   indexes: number[];
 };
 
-export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderData {
+export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderCell[] {
   const { width, height: depth, data } = outputRaw;
 
   const typedNonEmptyCellsMap = getTypedCellIndexesWithNeighboursMap(width, depth, data);
   const areas = detectAreasFromNeighbours(typedNonEmptyCellsMap);
 
-  const sceneBuilderData: SceneBuilderData = areas.map((area) => {
-    const areaTileVectors = area.indexes
-      .map((i) => indexToVec2(i, width))
-      .filter((aT): aT is WorldGeneratorVec2 => aT !== null);
+  const sceneBuilderData: SceneBuilderCell[] = areas.map((area) => {
+    const cellTiles: SceneBuilderCellTile[] = area.indexes.map((i) => {
+      const tilePosition = indexToVec2(i, width);
 
-    let startX = width;
-    let startZ = depth;
-    let endX = 0;
-    let endZ = 0;
+      assert(tilePosition !== null, 'Error while mapping tile vectors');
 
-    for (const { x, z } of areaTileVectors) {
-      if (x < startX) startX = x;
-      if (z < startZ) startZ = z;
-      if (x > endX) endX = x;
-      if (z > endZ) endZ = z;
+      const { x, z } = tilePosition;
+      const edges = typedNonEmptyCellsMap.get(i)?.edges ?? [];
+
+      return {
+        position: {
+          x: x * CELL_SIZE_METERS,
+          z: z * CELL_SIZE_METERS,
+        },
+        edges,
+      };
+    });
+
+    let startX = Infinity;
+    let startZ = Infinity;
+    let endX = -Infinity;
+    let endZ = -Infinity;
+
+    for (const { position } of cellTiles) {
+      if (position.x < startX) startX = position.x;
+      if (position.z < startZ) startZ = position.z;
+      if (position.x > endX) endX = position.x;
+      if (position.z > endZ) endZ = position.z;
     }
 
     const start = {
@@ -56,26 +79,16 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
 
     const { type } = area;
 
-    // Since we're in XZ coordinates indexed from 0, we need to add 1 to
-    // vector subtraction results for actual dimensions.
-    const areaDepth = end.z - start.z + 1;
-    const areaWidth = end.x - start.x + 1;
-
+    // The center of the tile span is the midpoint between the first and last tile's
+    // centers - start.x + (end.x - start.x + 1) / 2 would be off by half a cell.
     const center: WorldGeneratorVec2 = {
-      x: start.x + areaWidth / 2,
-      z: start.z + areaDepth / 2,
+      x: (start.x + end.x) / 2,
+      z: (start.z + end.z) / 2,
     };
-
-    // Format area tile vectors to area-local coordinates by subtracting the
-    // area center position.
-    const tileVectorsLocal = areaTileVectors.map((atv) => ({
-      x: atv.x - center.x,
-      z: atv.z - center.z,
-    }));
 
     return {
       center,
-      tileVectors: tileVectorsLocal,
+      cellTiles,
       type,
     };
   });
@@ -106,12 +119,32 @@ function getTypedCellIndexesWithNeighboursMap(
         index,
         checked: false,
         neighbourIndexes,
+        edges: getCellEdges(x, z, width, depth, data),
       };
 
       nonEmptyCellsMap.set(index, nonEmptyCell);
     }
   }
   return nonEmptyCellsMap;
+}
+
+function getCellEdges(
+  x: number,
+  z: number,
+  width: number,
+  depth: number,
+  data: WorldGeneratorCellType[]
+): WorldGeneratorVec2[] {
+  return CARDINAL_EDGE_DIRECTIONS.filter((direction) => {
+    const neighbourX = x + direction.x;
+    const neighbourZ = z + direction.z;
+    const outOfBounds =
+      neighbourX < 0 || neighbourX >= width || neighbourZ < 0 || neighbourZ >= depth;
+
+    if (outOfBounds) return true;
+
+    return data[vec2toIndex(neighbourX, neighbourZ, width)] === WorldGeneratorCellType.EMPTY;
+  });
 }
 
 function detectAreasFromNeighbours(

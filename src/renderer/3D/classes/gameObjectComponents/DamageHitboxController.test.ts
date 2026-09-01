@@ -13,11 +13,7 @@ vi.mock('electron', () => ({
   ipcRenderer: { send: vi.fn(), on: vi.fn(), removeListener: vi.fn(), once: vi.fn() },
 }));
 
-class TestScene extends GameScene {
-  constructor() {
-    super(new THREE.Mesh(new THREE.PlaneGeometry(10, 10)));
-  }
-}
+class TestScene extends GameScene {}
 
 const SIZE = new THREE.Vector3(1, 1, 1);
 const DAMAGE = 10;

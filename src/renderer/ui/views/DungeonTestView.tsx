@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import { useGraphicsStore } from '@tgdf';
 
-import { buildTestScene } from 'renderer/3D/classes/worldGenerator/sceneBuilder/buildTestScene';
+import { buildDungeonLevelScene } from '3D/classes/worldGenerator/sceneBuilder/dungeon/buildDungeonLevelScene';
 
 import { LoadingView } from './LoadingView';
 import { MODELS, TEXTURES } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
-import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
+import { DungeonLevelScene } from '../../3D/classes/scenes/DungeonLevelScene';
 
-export function TestView() {
+export function DungeonTestView() {
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
-    sceneClass: TestScene,
-    sceneBuilder: buildTestScene,
-    preloadAssets: [MODELS.MONK, MODELS.SKELETON, TEXTURES.EXPLOSION, TEXTURES.ARCANE_CIRCLE],
+    sceneClass: DungeonLevelScene,
+    sceneBuilder: buildDungeonLevelScene,
+    preloadAssets: [
+      MODELS.MONK,
+      MODELS.DUNGEON_DOOR,
+      MODELS.DUNGEON_DOOR_FRAME,
+      MODELS.DUNGEON_PILLAR,
+      MODELS.DUNGEON_TORCH_WALL,
+      MODELS.DUNGEON_WALL_BRICK_TALL,
+      MODELS.DUNGEON_FLOOR,
+      MODELS.DUNGEON_PLINTH,
+      TEXTURES.ARCANE_CIRCLE,
+      TEXTURES.EXPLOSION,
+    ],
   });
 
   const [loadingFinished, setLoadingFinished] = useState(false);

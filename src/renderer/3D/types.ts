@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import { SceneCamera } from '@tgdf';
+import { Scene, SceneCamera } from '@tgdf';
 
 import { State } from './classes/states';
 import { Entity } from './classes/gameObjects/Entity';
 import { Player } from './classes/gameObjects/players/Player';
+import { WorldGeneratorOutput } from './classes/worldGenerator/types';
 
 export enum AnimationClipNamesShared {
   SPAWN = 'spawn',
@@ -28,11 +29,7 @@ export enum PlayerActionType {
   ACTION_FOCUS = 'action-focus',
 }
 
-export type ModelRecord = {
-  id: string;
-  path: string;
-  nameExtractor?: string;
-};
+export type { ModelRecord, TextureRecord, AssetRecord } from '@tgdf';
 
 export type AsyncAction = (entity: Entity) => Promise<void>;
 
@@ -82,3 +79,12 @@ export type GameCamera = SceneCamera & {
   addShake: (intensity: number) => void;
   pivotPoint: THREE.Vector3;
 };
+
+export type LevelSceneData = {
+  floorMesh: THREE.Object3D; // Used for NavMesh calculation
+};
+
+export type LevelSceneBuilder = (
+  scene: Scene,
+  worldGenOutput: WorldGeneratorOutput
+) => Promise<LevelSceneData>;
