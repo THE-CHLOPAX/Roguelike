@@ -68,7 +68,6 @@ export class Explosion extends GameSceneObject {
         })
       );
     }
-
   }
 
   protected override onAwake(): void {
@@ -85,11 +84,11 @@ export class Explosion extends GameSceneObject {
     if (this._explosionFlash) {
       this._explosionFlash.color.set(0xffaa33);
       this._explosionFlash.intensity = 0;
-      this._explosionFlash.distance = 10;
+      this._explosionFlash.distance = 20;
       this._explosionFlash.decay = 2;
 
       this._flashTimeline = gsap.timeline();
-      this._flashTimeline.to(this._explosionFlash, { intensity: 2, duration: 0.25 });
+      this._flashTimeline.to(this._explosionFlash, { intensity: 10, duration: 0.25 });
       this._flashTimeline.to(this._explosionFlash, { intensity: 0, duration: 0.4 });
     }
 
