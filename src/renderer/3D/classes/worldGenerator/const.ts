@@ -1,4 +1,4 @@
-import { WorldGeneratorCellType, WorldGeneratorOutput } from './types';
+import { WorldGeneratorCellType, WorldGeneratorOutput, WorldGeneratorVec2 } from './types';
 import {
   MOCK_WORLD_GEN_WIDTH,
   MOCK_WORLD_GEN_HEIGHT,
@@ -24,3 +24,13 @@ export const CELL_SIZE_METERS = 4;
 
 export const MODEL_NATIVE_TILE_SIZE_METERS = 5;
 export const TILE_SCALE_FACTOR = CELL_SIZE_METERS / MODEL_NATIVE_TILE_SIZE_METERS;
+
+export const VISIBLE_WALL_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
+  { x: -1, z: 0 },
+  { x: 0, z: -1 },
+];
+
+export const VISIBLE_FLOOR_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
+  { x: 1, z: 0 },
+  { x: 0, z: 1 },
+];

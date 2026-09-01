@@ -1,7 +1,10 @@
 import * as THREE from 'three';
-import { arrayShallowIncludes, assert, getModelFromStore, isMesh, ModelRecord, Scene } from '@tgdf';
+import { assert, getModelFromStore, isMesh, ModelRecord, Scene } from '@tgdf';
 
+import { edgeDirectionKey } from '../../utils/edgeDirectionKey';
 import { CELL_SIZE_METERS, TILE_SCALE_FACTOR } from '../../const';
+import { getWallYawForEdge } from '../../utils/getWallYawForEdge';
+import { isVisibleWallEdge } from '../../utils/isVisibleWallEdge';
 import { getWallPositionOnTile } from '../../utils/getWallPositionOnTile';
 import { pixelateModelMaterial } from '../../utils/pixelateModelMaterial';
 import { SceneBuilderCell, SceneBuilderCellTile, WorldGeneratorVec2 } from '../../types';
@@ -19,18 +22,6 @@ type PillarPlacement = {
 };
 
 const WALL_DECORATIONS_GROUP_NAME = 'level-wall-decorations-group';
-
-const VISIBLE_WALL_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
-  { x: -1, z: 0 },
-  { x: 0, z: -1 },
-];
-
-const WALL_YAW_BY_EDGE_DIRECTION: Record<string, number> = {
-  '0,-1': 0,
-  '-1,0': Math.PI / 2,
-  '0,1': Math.PI,
-  '1,0': Math.PI * 1.5,
-};
 
 export function buildWallDecorations(
   scene: Scene,
@@ -63,7 +54,7 @@ export function buildWallDecorations(
     cell.cellTiles.flatMap((tile) =>
       tile.edges
         .map((edge) => ({ tile, edge, cellIndex }))
-        .filter((placement) => arrayShallowIncludes(VISIBLE_WALL_EDGE_DIRECTIONS, placement.edge))
+        .filter((placement) => isVisibleWallEdge(placement.edge))
     )
   );
 
@@ -73,15 +64,19 @@ export function buildWallDecorations(
     const cellWallPlacements = wallPlacements.filter((p) => p.cellIndex === cellIndex);
     const cellPillarPlacements = pillarPlacements.filter((p) => p.cellIndex === cellIndex);
 
-    const plinthInstancedMesh = buildWallPlacementInstancedMesh(
-      plinthGeometry,
-      plinthMaterial,
-      cellWallPlacements
-    );
-    plinthInstancedMesh.position.y += CELL_SIZE_METERS;
-    meshGroup.add(plinthInstancedMesh);
+    if (cellWallPlacements.length > 0) {
+      const plinthInstancedMesh = buildWallPlacementInstancedMesh(
+        plinthGeometry,
+        plinthMaterial,
+        cellWallPlacements
+      );
+      plinthInstancedMesh.position.y += CELL_SIZE_METERS;
+      meshGroup.add(plinthInstancedMesh);
+    }
 
-    meshGroup.add(buildPillarInstancedMesh(pillarGeometry, pillarMaterial, cellPillarPlacements));
+    if (cellPillarPlacements.length > 0) {
+      meshGroup.add(buildPillarInstancedMesh(pillarGeometry, pillarMaterial, cellPillarPlacements));
+    }
   });
 
   scene.add(meshGroup);
@@ -98,7 +93,7 @@ function buildPillarPlacements(wallPlacements: WallPlacement[]): PillarPlacement
 
   wallPlacements.forEach(({ tile, edge, cellIndex }) => {
     const wallCenter = getWallPositionOnTile(tile, edge);
-    const yaw = WALL_YAW_BY_EDGE_DIRECTION[`${edge.x},${edge.z}`] ?? 0;
+    const yaw = getWallYawForEdge(edge);
     const lengthAxis: WorldGeneratorVec2 = { x: edge.z, z: edge.x };
 
     pillarPlacements.push({
@@ -136,7 +131,7 @@ function buildPillarPlacements(wallPlacements: WallPlacement[]): PillarPlacement
 }
 
 function getWallPlacementKey(position: WorldGeneratorVec2, edge: WorldGeneratorVec2): string {
-  return `${position.x},${position.z},${edge.x},${edge.z}`;
+  return `${position.x},${position.z},${edgeDirectionKey(edge)}`;
 }
 
 function buildWallPlacementInstancedMesh(
@@ -151,7 +146,7 @@ function buildWallPlacementInstancedMesh(
 
   placements.forEach(({ tile, edge }, index) => {
     const position = getWallPositionOnTile(tile, edge);
-    const yaw = WALL_YAW_BY_EDGE_DIRECTION[`${edge.x},${edge.z}`] ?? 0;
+    const yaw = getWallYawForEdge(edge);
 
     const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, yaw));
     matrix.compose(position, quaternion, scale);

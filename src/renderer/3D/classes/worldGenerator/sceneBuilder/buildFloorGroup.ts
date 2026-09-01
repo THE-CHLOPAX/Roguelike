@@ -1,16 +1,12 @@
 import * as THREE from 'three';
-import { arrayShallowIncludes, assert, getModelFromStore, isMesh, ModelRecord, Scene } from '@tgdf';
+import { assert, getModelFromStore, isMesh, ModelRecord, Scene } from '@tgdf';
 
 import { CELL_SIZE_METERS, TILE_SCALE_FACTOR } from '../const';
 import { getTopFaceGeometry } from '../utils/getTopFaceGeometry';
+import { isVisibleFloorEdge } from '../utils/isVisibleFloorEdge';
+import { SceneBuilderCell, SceneBuilderCellTile } from '../types';
 import { pixelateModelMaterial } from '../utils/pixelateModelMaterial';
 import { RigidStaticObject } from '../../gameObjects/RigidStaticObject';
-import { SceneBuilderCell, SceneBuilderCellTile, WorldGeneratorVec2 } from '../types';
-
-const VISIBLE_FLOOR_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
-  { x: 1, z: 0 },
-  { x: 0, z: 1 },
-];
 
 const TILE_TOP_FACE_REFERENCE_QUATERNION = new THREE.Quaternion().setFromEuler(
   new THREE.Euler(-Math.PI / 2, 0, 0)
@@ -44,15 +40,15 @@ export function buildFloorGroup(
   parsedData.forEach((cell) => {
     const { cellTiles } = cell;
 
-    const edgeTiles = cellTiles.filter((tile) =>
-      tile.edges.some((edgeDir) => {
-        return arrayShallowIncludes(VISIBLE_FLOOR_EDGE_DIRECTIONS, edgeDir);
-      })
-    );
+    const edgeTiles = cellTiles.filter((tile) => tile.edges.some(isVisibleFloorEdge));
     const nonEdgeTiles = cellTiles.filter((tile) => edgeTiles.includes(tile) === false);
 
-    meshGroup.add(buildTileInstancedMesh(fullGeometry, material, edgeTiles));
-    meshGroup.add(buildTileInstancedMesh(topFaceGeometry, material, nonEdgeTiles));
+    if (edgeTiles.length > 0) {
+      meshGroup.add(buildTileInstancedMesh(fullGeometry, material, edgeTiles));
+    }
+    if (nonEdgeTiles.length > 0) {
+      meshGroup.add(buildTileInstancedMesh(topFaceGeometry, material, nonEdgeTiles));
+    }
 
     cellTiles.forEach((tile) => {
       const position = new THREE.Vector3(tile.position.x, 0, tile.position.z);

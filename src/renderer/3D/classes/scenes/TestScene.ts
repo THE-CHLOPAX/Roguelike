@@ -38,5 +38,7 @@ export class TestScene extends GameScene {
     this.add(skeleton);
 
     this.camera.follow(monk);
+
+    navMeshManager.toggleDebugNavMesh(true);
   }
 }

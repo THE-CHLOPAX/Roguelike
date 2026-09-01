@@ -7,18 +7,15 @@ import { SceneBuilderCell, WorldGeneratorCellType } from '../../types';
 
 export function buildSpawner(scene: Scene, parsedData: SceneBuilderCell[]): void {
   parsedData.forEach((cell) => {
-    switch (cell.type) {
-      case WorldGeneratorCellType.SPAWN_AREA: {
-        const playerSpawner = new THREE.Object3D();
+    if (cell.type !== WorldGeneratorCellType.SPAWN_AREA) return;
 
-        const { x, z } = cell.center;
+    const playerSpawner = new THREE.Object3D();
 
-        playerSpawner.position.set(x, 0, z);
-        playerSpawner.name = SPAWNER_IDS.PLAYER;
+    const { x, z } = cell.center;
 
-        scene.add(playerSpawner);
-        break;
-      }
-    }
+    playerSpawner.position.set(x, 0, z);
+    playerSpawner.name = SPAWNER_IDS.PLAYER;
+
+    scene.add(playerSpawner);
   });
 }

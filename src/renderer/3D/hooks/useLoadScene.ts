@@ -60,24 +60,34 @@ export function useLoadScene({
   useEffect(() => {
     let cancelled = false;
 
-    const scene = new sceneClass();
+    const nextScene = new sceneClass();
 
     const preloadAssetOperations = preloadAssets.map(loadAssetRecord);
 
-    const sceneReadyPromise = scene
+    // The build (physics -> assets -> sceneBuilder -> finalize) is tracked as a single
+    // unit alongside the individual asset loads, so the progress bar advances as each
+    // asset resolves without those loads also being counted a second time inside the
+    // build promise.
+    const buildPromise = nextScene
       .initializePhysics()
       .then(() => Promise.all(preloadAssetOperations))
-      .then(() => sceneBuilder(scene))
-      .then(() => scene.completeLevelInitialization());
+      .then(() => sceneBuilder(nextScene))
+      .then(() => nextScene.completeLevelInitialization());
 
-    const trackedOperations: Array<Promise<unknown>> = [
-      sceneReadyPromise,
-      ...preloadAssetOperations,
-    ];
+    const trackedOperations: Array<Promise<unknown>> = [...preloadAssetOperations, buildPromise];
 
-    executeAsyncOperationsWithProgress(trackedOperations, setLoadingProgress).then(() => {
-      if (cancelled) return;
-      setScene(scene);
+    const reportProgress = (progress: number): void => {
+      if (!cancelled) setLoadingProgress(progress);
+    };
+
+    executeAsyncOperationsWithProgress(trackedOperations, reportProgress).then(() => {
+      if (cancelled) {
+        // Component unmounted mid-load; tear down the fully-built scene (physics
+        // world, nav mesh) that the cleanup effect below never received.
+        nextScene.dispose();
+        return;
+      }
+      setScene(nextScene);
       setLoading(false);
     });
 
