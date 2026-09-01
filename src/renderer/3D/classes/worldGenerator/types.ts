@@ -15,7 +15,7 @@ export type WorldGeneratorOutput = {
 
 export type SceneBuilderCell = {
   center: WorldGeneratorVec2;
-  tileVectors: Array<SceneBuilderTileVector>;
+  cellTiles: Array<SceneBuilderCellTile>;
   type: WorldGeneratorCellType;
 };
 
@@ -24,11 +24,9 @@ export type WorldGeneratorVec2 = {
   z: number;
 };
 
-export type SceneBuilderTileVector = {
+export type SceneBuilderCellTile = {
   position: WorldGeneratorVec2;
   edges: WorldGeneratorVec2[];
 };
-
-export type SceneBuilderData = Array<SceneBuilderCell>;
 
 export type WorldGenerator = () => Promise<WorldGeneratorOutput>;

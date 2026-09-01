@@ -5,8 +5,8 @@ import { indexToVec2 } from './indexToVec2';
 import { CELL_SIZE_METERS } from '../const';
 import { getNeighbourCellIndexes } from './getNeighbourCellIndexes';
 import {
-  SceneBuilderData,
-  SceneBuilderTileVector,
+  SceneBuilderCell,
+  SceneBuilderCellTile,
   WorldGeneratorCellType,
   WorldGeneratorOutput,
   WorldGeneratorVec2,
@@ -32,14 +32,14 @@ type TypedCellArea = {
   indexes: number[];
 };
 
-export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderData {
+export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderCell[] {
   const { width, height: depth, data } = outputRaw;
 
   const typedNonEmptyCellsMap = getTypedCellIndexesWithNeighboursMap(width, depth, data);
   const areas = detectAreasFromNeighbours(typedNonEmptyCellsMap);
 
-  const sceneBuilderData: SceneBuilderData = areas.map((area) => {
-    const tileVectors: SceneBuilderTileVector[] = area.indexes.map((i) => {
+  const sceneBuilderData: SceneBuilderCell[] = areas.map((area) => {
+    const cellTiles: SceneBuilderCellTile[] = area.indexes.map((i) => {
       const tilePosition = indexToVec2(i, width);
 
       assert(tilePosition !== null, 'Error while mapping tile vectors');
@@ -61,7 +61,7 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
     let endX = -Infinity;
     let endZ = -Infinity;
 
-    for (const { position } of tileVectors) {
+    for (const { position } of cellTiles) {
       if (position.x < startX) startX = position.x;
       if (position.z < startZ) startZ = position.z;
       if (position.x > endX) endX = position.x;
@@ -88,7 +88,7 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
 
     return {
       center,
-      tileVectors,
+      cellTiles,
       type,
     };
   });

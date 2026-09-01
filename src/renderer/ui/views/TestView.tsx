@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useGraphicsStore } from '@tgdf';
 
+import { buildTestScene } from 'renderer/3D/classes/worldGenerator/sceneBuilder/buildTestScene';
+
 import { LoadingView } from './LoadingView';
 import { MODELS, TEXTURES } from '../../3D/constants';
 import { useLoadScene } from '../../3D/hooks/useLoadScene';
 import { TestScene } from '../../3D/classes/scenes/TestScene';
 import { BackToViewLayout } from '../layouts/BackToViewLayout';
-import { buildTestScene } from '../../3D/classes/scenes/buildTestScene';
 import { ThreeDViewerPixelated } from '../components/ThreeDViewerPixelated';
 
 export function TestView() {

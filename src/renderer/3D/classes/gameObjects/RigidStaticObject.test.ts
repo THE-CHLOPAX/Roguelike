@@ -9,7 +9,7 @@ vi.mock('electron', () => ({
 import { Scene, GameObject, RigidBody } from '@tgdf';
 import { MockCamera } from '@tgdf/internal-3d/testUtils/MockCamera';
 
-import { RigidFloorObject } from './RigidFloorObject';
+import { RigidStaticObject } from './RigidStaticObject';
 
 class MockScene extends Scene {
   camera = new MockCamera();
@@ -39,31 +39,32 @@ async function createScene(): Promise<MockScene> {
   return scene;
 }
 
-function createRigidFloorObject(
+function createRigidStaticObject(
   scene: MockScene,
   position: THREE.Vector3,
   size: THREE.Vector3
-): RigidFloorObject {
-  const rigidFloorObject = new RigidFloorObject(scene, { position, size });
-  scene.add(rigidFloorObject);
-  rigidFloorObject.update(0);
-  return rigidFloorObject;
+): RigidStaticObject {
+  const rigidStaticObject = new RigidStaticObject(scene, { position, size });
+  scene.add(rigidStaticObject);
+  rigidStaticObject.update(0);
+  return rigidStaticObject;
 }
 
-describe('RigidFloorObject', () => {
+describe('RigidStaticObject', () => {
   beforeAll(async () => {
     await RAPIER.init();
   });
 
   it('builds a static collider at the given position and size, away from local origin', async () => {
     const scene = await createScene();
-    const rigidFloorObject = createRigidFloorObject(
+    const RigidStaticObject = createRigidStaticObject(
       scene,
       new THREE.Vector3(100, 0, 100),
       new THREE.Vector3(20, 0.1, 20)
     );
 
-    const collider = rigidFloorObject.getGameObjectComponentByType(RigidBody)?.getPhysicsCollider();
+    const collider =
+      RigidStaticObject.getGameObjectComponentByType(RigidBody)?.getPhysicsCollider();
     assert(collider !== null && collider !== undefined, 'Collider was not created');
 
     const translation = collider.translation();
@@ -75,7 +76,7 @@ describe('RigidFloorObject', () => {
     expect(halfExtents.x * 2).toBeCloseTo(20);
     expect(halfExtents.z * 2).toBeCloseTo(20);
 
-    const debugMesh = rigidFloorObject.getGameObjectComponentByType(RigidBody)?.getDebugMesh();
+    const debugMesh = RigidStaticObject.getGameObjectComponentByType(RigidBody)?.getDebugMesh();
     assert(debugMesh !== null && debugMesh !== undefined, 'Debug mesh was not created');
     const debugMeshWorldPosition = debugMesh.getWorldPosition(new THREE.Vector3());
     expect(debugMeshWorldPosition.x).toBeCloseTo(100);
@@ -84,7 +85,7 @@ describe('RigidFloorObject', () => {
 
   it('stops a dynamic body dropped above the floor from falling through it', async () => {
     const scene = await createScene();
-    createRigidFloorObject(scene, new THREE.Vector3(0, 0, 0), new THREE.Vector3(20, 0.1, 20));
+    createRigidStaticObject(scene, new THREE.Vector3(0, 0, 0), new THREE.Vector3(20, 0.1, 20));
 
     const finalY = await dropBoxAt(scene, 0, 0);
 
@@ -94,7 +95,7 @@ describe('RigidFloorObject', () => {
 
   it('stops a dynamic body from falling through a floor positioned far from local origin', async () => {
     const scene = await createScene();
-    createRigidFloorObject(scene, new THREE.Vector3(100, 0, 100), new THREE.Vector3(20, 0.1, 20));
+    createRigidStaticObject(scene, new THREE.Vector3(100, 0, 100), new THREE.Vector3(20, 0.1, 20));
 
     const finalY = await dropBoxAt(scene, 100, 100);
 
@@ -104,7 +105,7 @@ describe('RigidFloorObject', () => {
 
   it('does not create a collider that catches bodies dropped well outside the floor footprint', async () => {
     const scene = await createScene();
-    createRigidFloorObject(scene, new THREE.Vector3(100, 0, 100), new THREE.Vector3(20, 0.1, 20));
+    createRigidStaticObject(scene, new THREE.Vector3(100, 0, 100), new THREE.Vector3(20, 0.1, 20));
 
     const finalY = await dropBoxAt(scene, -500, -500);
 

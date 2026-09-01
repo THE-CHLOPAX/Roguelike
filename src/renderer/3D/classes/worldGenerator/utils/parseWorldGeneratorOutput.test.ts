@@ -11,18 +11,18 @@ vi.mock('electron', () => ({
 
 const { EMPTY: E, CORRIDOR: C, FIGHT_AREA: F, SPAWN_AREA: S } = WorldGeneratorCellType;
 
-// tileVectors hold absolute, CELL_SIZE_METERS-scaled world positions. This scales a raw
+// cellTiles hold absolute, CELL_SIZE_METERS-scaled world positions. This scales a raw
 // grid (x, z) the same way, so expectations can be written in raw grid coordinates.
 function scaled(x: number, z: number): string {
   return `${x * CELL_SIZE_METERS},${z * CELL_SIZE_METERS}`;
 }
 
 function absoluteTiles(cell: SceneBuilderCell): string[] {
-  return cell.tileVectors.map((tv) => `${tv.position.x},${tv.position.z}`).sort();
+  return cell.cellTiles.map((tv) => `${tv.position.x},${tv.position.z}`).sort();
 }
 
 function edgesOf(cell: SceneBuilderCell, x: number, z: number): { x: number; z: number }[] {
-  const tile = cell.tileVectors.find(
+  const tile = cell.cellTiles.find(
     (tv) => tv.position.x === x * CELL_SIZE_METERS && tv.position.z === z * CELL_SIZE_METERS
   );
   expect(tile).toBeDefined();
@@ -41,7 +41,7 @@ describe('parseWorldGeneratorOutput', () => {
       const result = parseWorldGeneratorOutput(output);
 
       expect(result).toHaveLength(1);
-      expect(result[0].tileVectors).toHaveLength(2);
+      expect(result[0].cellTiles).toHaveLength(2);
     });
 
     it('keeps two same-type areas separate when no path of neighbours connects them', () => {
@@ -54,7 +54,7 @@ describe('parseWorldGeneratorOutput', () => {
       const result = parseWorldGeneratorOutput(output);
 
       expect(result).toHaveLength(2);
-      expect(result.every((area) => area.tileVectors.length === 2)).toBe(true);
+      expect(result.every((area) => area.cellTiles.length === 2)).toBe(true);
     });
 
     it('does not merge adjacent cells of different types into one area', () => {
@@ -69,8 +69,8 @@ describe('parseWorldGeneratorOutput', () => {
       expect(result).toHaveLength(2);
       const corridor = result.find((area) => area.type === C);
       const fightArea = result.find((area) => area.type === F);
-      expect(corridor?.tileVectors).toHaveLength(2);
-      expect(fightArea?.tileVectors).toHaveLength(2);
+      expect(corridor?.cellTiles).toHaveLength(2);
+      expect(fightArea?.cellTiles).toHaveLength(2);
     });
 
     it('excludes EMPTY cells from every area', () => {
@@ -84,7 +84,7 @@ describe('parseWorldGeneratorOutput', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(S);
-      expect(result[0].tileVectors).toHaveLength(1);
+      expect(result[0].cellTiles).toHaveLength(1);
     });
 
     it('returns no areas for an all-EMPTY grid', () => {
@@ -110,7 +110,7 @@ describe('parseWorldGeneratorOutput', () => {
       const [result] = parseWorldGeneratorOutput(output);
 
       expect(result.center).toEqual({ x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS });
-      expect(result.tileVectors).toEqual([
+      expect(result.cellTiles).toEqual([
         {
           position: { x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS },
           edges: expect.arrayContaining([
@@ -152,7 +152,7 @@ describe('parseWorldGeneratorOutput', () => {
 
       const [result] = parseWorldGeneratorOutput(output);
 
-      expect(result.tileVectors).toHaveLength(4);
+      expect(result.cellTiles).toHaveLength(4);
       expect(absoluteTiles(result)).toEqual(
         [scaled(0, 0), scaled(0, 1), scaled(1, 0), scaled(1, 1)].sort()
       );
@@ -176,7 +176,7 @@ describe('parseWorldGeneratorOutput', () => {
         scaled(2, 3),
       ].sort();
 
-      expect(result.tileVectors).toHaveLength(expectedCells.length);
+      expect(result.cellTiles).toHaveLength(expectedCells.length);
       expect(absoluteTiles(result)).toEqual(expectedCells);
     });
   });

@@ -1,16 +1,18 @@
 import * as THREE from 'three';
 import { Scene, useAssetStore } from '@tgdf';
 
-import { LevelSceneData } from '../../types';
-import { CHECKERBOARD_TEXTURE } from '../../constants';
-import { pixelateTexture } from '../../utils/pixelateTexture';
-import { RigidFloorObject } from '../gameObjects/RigidFloorObject';
+import { CHECKERBOARD_TEXTURE } from 'renderer/3D/constants';
+import { pixelateTexture } from 'renderer/3D/utils/pixelateTexture';
+
+import { RigidStaticObject } from '../../gameObjects/RigidStaticObject';
 
 const PLANE_WIDTH = 30;
 const PLANE_HEIGHT = 30;
 const CHECKERBOARD_REPEAT = 3;
 
-export async function buildTestScene(scene: Scene): Promise<LevelSceneData> {
+export async function buildTestScene(scene: Scene): Promise<void> {
+  const floorGroup = new THREE.Group();
+
   const checkerboardTexture = pixelateTexture(
     await useAssetStore.getState().loadTexture(CHECKERBOARD_TEXTURE, './assets/checker.png')
   );
@@ -22,13 +24,16 @@ export async function buildTestScene(scene: Scene): Promise<LevelSceneData> {
     floorMaterial
   );
   floorMesh.rotation.x = -Math.PI / 2;
-  scene.add(floorMesh);
+  floorGroup.add(floorMesh);
+  scene.add(floorGroup);
 
-  const rigidFloorObject = new RigidFloorObject(scene, {
+  const rigidFloorObject = new RigidStaticObject(scene, {
     position: new THREE.Vector3(0, 0, 0),
     size: new THREE.Vector3(PLANE_WIDTH, 0.1, PLANE_HEIGHT),
   });
   scene.add(rigidFloorObject);
 
-  return { floorMesh };
+  await scene.initializeNavMeshManager(floorGroup);
+
+  return Promise.resolve();
 }

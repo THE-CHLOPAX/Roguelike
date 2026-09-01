@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { executeAsyncOperationsWithProgress, useAssetStore, AssetRecord, ModelRecord } from '@tgdf';
+import {
+  executeAsyncOperationsWithProgress,
+  useAssetStore,
+  AssetRecord,
+  ModelRecord,
+  Scene,
+} from '@tgdf';
 
-import { LevelSceneBuilder } from '../types';
 import { GameScene } from '../classes/scenes/GameScene';
-import { WorldGenerator, WorldGeneratorOutput } from '../classes/worldGenerator/types';
 
 export type UseLoadSceneProps = {
   sceneClass: new () => GameScene;
-  worldGenerator?: WorldGenerator;
-  sceneBuilder?: LevelSceneBuilder;
+  sceneBuilder: (scene: Scene) => Promise<void>;
   preloadAssets?: AssetRecord[];
 };
 
@@ -47,7 +50,6 @@ function loadAssetRecord(record: AssetRecord): Promise<unknown> {
 
 export function useLoadScene({
   sceneClass,
-  worldGenerator,
   sceneBuilder,
   preloadAssets = [],
 }: UseLoadSceneProps): UseLoadSceneResult {
@@ -58,34 +60,24 @@ export function useLoadScene({
   useEffect(() => {
     let cancelled = false;
 
-    const newScene = new sceneClass();
-
-    const worldGenPromise: Promise<WorldGeneratorOutput | undefined> = worldGenerator
-      ? worldGenerator()
-      : Promise.resolve(undefined);
+    const scene = new sceneClass();
 
     const preloadAssetOperations = preloadAssets.map(loadAssetRecord);
 
-    const sceneReadyPromise = newScene.initializePhysics().then(async () => {
-      if (!sceneBuilder) return;
-
-      const worldGenOutput = await worldGenPromise;
-
-      await Promise.all(preloadAssetOperations);
-      const { floorMesh } = await sceneBuilder(newScene, worldGenOutput as WorldGeneratorOutput);
-
-      await newScene.completeLevelInitialization(floorMesh);
-    });
+    const sceneReadyPromise = scene
+      .initializePhysics()
+      .then(() => Promise.all(preloadAssetOperations))
+      .then(() => sceneBuilder(scene))
+      .then(() => scene.completeLevelInitialization());
 
     const trackedOperations: Array<Promise<unknown>> = [
-      ...(worldGenerator ? [worldGenPromise] : []),
       sceneReadyPromise,
       ...preloadAssetOperations,
     ];
 
     executeAsyncOperationsWithProgress(trackedOperations, setLoadingProgress).then(() => {
       if (cancelled) return;
-      setScene(newScene);
+      setScene(scene);
       setLoading(false);
     });
 

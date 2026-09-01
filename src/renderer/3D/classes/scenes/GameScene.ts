@@ -35,6 +35,17 @@ export class GameScene extends Scene {
     );
   }
 
+  public async initializePhysics(): Promise<void> {
+    await this.initializePhysicsWorld(GAME_GRAVITY);
+  }
+
+  public async completeLevelInitialization(): Promise<void> {
+    if (!this.navMeshManager || !this.physics) {
+      throw new Error('Failed to initialize NavMeshManager or PhysicsManager');
+    }
+    this.onInit(this.navMeshManager, this.physics);
+  }
+
   protected override onUpdate(_deltaTime: number): void {
     if (process.env.NODE_ENV === 'development') {
       this._shadersManager.checkForLateCompiles(this.renderer);
@@ -42,18 +53,4 @@ export class GameScene extends Scene {
   }
 
   protected onInit(_navMeshManager: NavMeshManager, _physicsManager: PhysicsManager): void {}
-
-  public async initializePhysics(): Promise<void> {
-    await this.initializePhysicsWorld(GAME_GRAVITY);
-  }
-
-  public async completeLevelInitialization(floorMesh: THREE.Object3D): Promise<void> {
-    await this.initializeNavMeshManager(floorMesh);
-
-    if (!this.navMeshManager || !this.physics) {
-      throw new Error('Failed to initialize NavMeshManager or PhysicsManager');
-    }
-
-    this.onInit(this.navMeshManager, this.physics);
-  }
 }

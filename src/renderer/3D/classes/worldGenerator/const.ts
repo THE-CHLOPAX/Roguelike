@@ -20,4 +20,7 @@ export const MOCK_WORLD_GEN_OUTPUT: WorldGeneratorOutput = {
   data: buildMockWorldGenData(),
 };
 
-export const CELL_SIZE_METERS = 5;
+export const CELL_SIZE_METERS = 4;
+
+export const MODEL_NATIVE_TILE_SIZE_METERS = 5;
+export const TILE_SCALE_FACTOR = CELL_SIZE_METERS / MODEL_NATIVE_TILE_SIZE_METERS;

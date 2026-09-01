@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useGraphicsStore } from '@tgdf';
 
-import { MOCK_WORLD_GEN_OUTPUT } from '3D/classes/worldGenerator/const';
-import { buildDungeonLevelScene } from '3D/classes/worldGenerator/dungeon/buildDungeonLevelScene';
+import { buildDungeonLevelScene } from '3D/classes/worldGenerator/sceneBuilder/dungeon/buildDungeonLevelScene';
 
 import { LoadingView } from './LoadingView';
 import { MODELS, TEXTURES } from '../../3D/constants';
@@ -15,7 +14,6 @@ export function DungeonTestView() {
   const { resolution } = useGraphicsStore();
   const { scene, loadingProgress } = useLoadScene({
     sceneClass: DungeonLevelScene,
-    worldGenerator: () => Promise.resolve(MOCK_WORLD_GEN_OUTPUT),
     sceneBuilder: buildDungeonLevelScene,
     preloadAssets: [
       MODELS.MONK,
@@ -25,6 +23,7 @@ export function DungeonTestView() {
       MODELS.DUNGEON_TORCH_WALL,
       MODELS.DUNGEON_WALL_BRICK_TALL,
       MODELS.DUNGEON_FLOOR,
+      MODELS.DUNGEON_PLINTH,
       TEXTURES.DUNGEON_BLOCKS,
       TEXTURES.DUNGEON_PROPS_1,
       TEXTURES.DUNGEON_PROPS_2,
