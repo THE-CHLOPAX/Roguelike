@@ -25,8 +25,16 @@ export type WorldGeneratorVec2 = {
 };
 
 export type SceneBuilderCellTile = {
+  index: number;
+  type: WorldGeneratorCellType;
   position: WorldGeneratorVec2;
   edges: WorldGeneratorVec2[];
 };
 
 export type WorldGenerator = () => Promise<WorldGeneratorOutput>;
+
+export type WorldParsedData = {
+  width: number;
+  height: number;
+  data: SceneBuilderCell[];
+};

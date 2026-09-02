@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { clamp, useAssetStore } from '@tgdf';
 import { RigidBody, RigidBodyCollisionParams } from '@tgdf';
 
+import { COLORS } from 'renderer/constants';
 import { isEntity } from 'renderer/3D/utils/isEntity';
 import { EXPLOSION_SPRITESHEET_TEXTURE } from 'renderer/3D/constants';
 
@@ -82,7 +83,7 @@ export class Explosion extends GameSceneObject {
 
     this._explosionFlash = this.scene.lightPool.acquire(this);
     if (this._explosionFlash) {
-      this._explosionFlash.color.set(0xffaa33);
+      this._explosionFlash.color.set(COLORS.ORANGE);
       this._explosionFlash.intensity = 0;
       this._explosionFlash.distance = 20;
       this._explosionFlash.decay = 2;

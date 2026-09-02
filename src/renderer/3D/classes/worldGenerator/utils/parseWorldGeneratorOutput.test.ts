@@ -29,6 +29,10 @@ function edgesOf(cell: SceneBuilderCell, x: number, z: number): { x: number; z: 
   return [...(tile?.edges ?? [])].sort((a, b) => a.x - b.x || a.z - b.z);
 }
 
+function parseAreas(output: WorldGeneratorOutput): SceneBuilderCell[] {
+  return parseWorldGeneratorOutput(output).data;
+}
+
 describe('parseWorldGeneratorOutput', () => {
   describe('area detection via neighbour adjacency', () => {
     it('merges cells connected only diagonally into a single area', () => {
@@ -38,7 +42,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, E, E, E, E, C, E, E, E, E, E, E, E, E, E, E],
       };
 
-      const result = parseWorldGeneratorOutput(output);
+      const result = parseAreas(output);
 
       expect(result).toHaveLength(1);
       expect(result[0].cellTiles).toHaveLength(2);
@@ -51,7 +55,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, C, E, C, C],
       };
 
-      const result = parseWorldGeneratorOutput(output);
+      const result = parseAreas(output);
 
       expect(result).toHaveLength(2);
       expect(result.every((area) => area.cellTiles.length === 2)).toBe(true);
@@ -64,7 +68,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, C, F, F],
       };
 
-      const result = parseWorldGeneratorOutput(output);
+      const result = parseAreas(output);
 
       expect(result).toHaveLength(2);
       const corridor = result.find((area) => area.type === C);
@@ -80,7 +84,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [E, E, E, E, S, E, E, E, E],
       };
 
-      const result = parseWorldGeneratorOutput(output);
+      const result = parseAreas(output);
 
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(S);
@@ -94,7 +98,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [E, E, E, E, E, E, E, E, E],
       };
 
-      expect(parseWorldGeneratorOutput(output)).toEqual([]);
+      expect(parseAreas(output)).toEqual([]);
     });
   });
 
@@ -107,11 +111,13 @@ describe('parseWorldGeneratorOutput', () => {
       };
       output.data[6 * 3 + 2] = C; // x=2, z=3
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       expect(result.center).toEqual({ x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS });
       expect(result.cellTiles).toEqual([
         {
+          index: 6 * 3 + 2,
+          neighbourIndexes: [],
           position: { x: 2 * CELL_SIZE_METERS, z: 3 * CELL_SIZE_METERS },
           edges: expect.arrayContaining([
             { x: 0, z: -1 },
@@ -131,7 +137,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [E, E, E, E, E, E, C, C, E, E, E, C, C, E, E, E, C, C, E, E, E, E, E, E, E],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       // Tile centers span x:[1,2] and z:[1,3], so the true midpoint is (1.5, 2) - not
       // (2, 2.5), which would double-count half a cell of edge padding.
@@ -150,7 +156,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [F, F, E, E, F, F, E, E, E, E, E, E, E, E, E, E],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       expect(result.cellTiles).toHaveLength(4);
       expect(absoluteTiles(result)).toEqual(
@@ -165,7 +171,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, C, E, E, E, C, E, E, E, E, C, E, E, E, E, C, C, C, E, E, E, E, E, E, E],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
       const expectedCells = [
         scaled(0, 0),
         scaled(1, 0),
@@ -189,7 +195,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [E, E, E, E, C, E, E, E, E],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       expect(edgesOf(result, 1, 1)).toEqual(
         [
@@ -208,7 +214,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, E],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       // (0,0) has no neighbour to its left (x=-1 is out of bounds) or top/bottom
       // (z=-1/z=1 out of bounds on a 1-row grid), but its right neighbour is EMPTY too.
@@ -229,7 +235,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, C],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       expect(edgesOf(result, 0, 0)).toEqual(
         [
@@ -254,7 +260,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, C, F, F],
       };
 
-      const result = parseWorldGeneratorOutput(output);
+      const result = parseAreas(output);
       const corridor = result.find((area) => area.type === C);
       const fightArea = result.find((area) => area.type === F);
 
@@ -274,7 +280,7 @@ describe('parseWorldGeneratorOutput', () => {
         data: [C, C, C, C, C, C, C, C, C],
       };
 
-      const [result] = parseWorldGeneratorOutput(output);
+      const [result] = parseAreas(output);
 
       expect(edgesOf(result, 1, 1)).toEqual([]);
     });

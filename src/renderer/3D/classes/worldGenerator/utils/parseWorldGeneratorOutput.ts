@@ -10,6 +10,7 @@ import {
   WorldGeneratorCellType,
   WorldGeneratorOutput,
   WorldGeneratorVec2,
+  WorldParsedData,
 } from '../types';
 
 export const CARDINAL_EDGE_DIRECTIONS: WorldGeneratorVec2[] = [
@@ -32,7 +33,7 @@ type TypedCellArea = {
   indexes: number[];
 };
 
-export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): SceneBuilderCell[] {
+export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): WorldParsedData {
   const { width, height: depth, data } = outputRaw;
 
   const typedNonEmptyCellsMap = getTypedCellIndexesWithNeighboursMap(width, depth, data);
@@ -46,6 +47,7 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
 
       const { x, z } = tilePosition;
       const edges = typedNonEmptyCellsMap.get(i)?.edges ?? [];
+      const type = typedNonEmptyCellsMap.get(i)?.type ?? WorldGeneratorCellType.EMPTY;
 
       return {
         position: {
@@ -53,6 +55,8 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
           z: z * CELL_SIZE_METERS,
         },
         edges,
+        index: i,
+        type,
       };
     });
 
@@ -93,7 +97,11 @@ export function parseWorldGeneratorOutput(outputRaw: WorldGeneratorOutput): Scen
     };
   });
 
-  return sceneBuilderData;
+  return {
+    width,
+    height: depth,
+    data: sceneBuilderData,
+  };
 }
 
 function getTypedCellIndexesWithNeighboursMap(

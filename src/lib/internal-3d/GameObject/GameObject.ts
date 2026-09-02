@@ -12,7 +12,6 @@ import {
 import { Emitter } from '../Emitter';
 import { Scene } from '../Scene/Scene';
 import { GAME_OBJECT_MESSAGES } from './constants';
-import { isChildOfObject } from '../utils/isChildOfObject';
 import { InputNotifiable } from '../../internal-input/Input';
 
 export class GameObject extends THREE.Object3D implements InputNotifiable {
@@ -27,6 +26,8 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
     super();
     this._scene = scene;
     this._gameObjectComponents = new Map<string, GameObjectComponent>();
+
+    this.addEventListener('added', this._onAwakeHandler);
 
     Input.registerNotifiable(this);
   }
@@ -68,13 +69,6 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   }
 
   public update(deltaTime: number): void {
-    const scene = this.scene;
-    if (scene) {
-      if (isChildOfObject(this, scene) && !this.isAwake) {
-        this._onAwakeHandler();
-      }
-    }
-
     this.events.trigger('update', { deltaTime });
 
     this.onUpdate(deltaTime);
@@ -124,6 +118,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
 
     this.onDestroyed();
     this._isAwake = false;
+    this.removeEventListener('added', this._onAwakeHandler);
   }
 
   public override add(...objects: THREE.Object3D[]): this {
@@ -179,6 +174,7 @@ export class GameObject extends THREE.Object3D implements InputNotifiable {
   protected onInput(_inputState: InputState): void {}
 
   private _onAwakeHandler = () => {
+    if (this._isAwake) return;
     this._isAwake = true;
     this._emitter.trigger('awake');
     this.onAwake();

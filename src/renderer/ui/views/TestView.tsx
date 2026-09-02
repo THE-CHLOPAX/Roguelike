@@ -15,7 +15,13 @@ export function TestView() {
   const { scene, loadingProgress } = useLoadScene({
     sceneClass: TestScene,
     sceneBuilder: buildTestScene,
-    preloadAssets: [MODELS.MONK, MODELS.SKELETON, TEXTURES.EXPLOSION, TEXTURES.ARCANE_CIRCLE],
+    preloadAssets: [
+      MODELS.MONK,
+      MODELS.SKELETON,
+      TEXTURES.EXPLOSION,
+      TEXTURES.ARCANE_CIRCLE,
+      MODELS.DUNGEON_WALL_TORCH,
+    ],
   });
 
   const [loadingFinished, setLoadingFinished] = useState(false);

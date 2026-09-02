@@ -24,8 +24,7 @@ export function buildWallGroup(
   const meshGroup = new THREE.Group();
   meshGroup.name = WALL_GROUP_NAME;
 
-  const wallModel = getModelFromStore(wallModelRecord.id);
-  const wallMesh = wallModel?.children[0];
+  const wallMesh = getModelFromStore(wallModelRecord.id);
 
   assert(isMesh(wallMesh));
 

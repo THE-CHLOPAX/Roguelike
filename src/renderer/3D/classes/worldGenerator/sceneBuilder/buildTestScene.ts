@@ -4,6 +4,7 @@ import { Scene, useAssetStore } from '@tgdf';
 import { CHECKERBOARD_TEXTURE } from 'renderer/3D/constants';
 import { pixelateTexture } from 'renderer/3D/utils/pixelateTexture';
 
+import { Flame } from '../../gameObjects/props/Flame';
 import { RigidStaticObject } from '../../gameObjects/RigidStaticObject';
 
 const PLANE_WIDTH = 30;
@@ -32,6 +33,8 @@ export async function buildTestScene(scene: Scene): Promise<void> {
     size: new THREE.Vector3(PLANE_WIDTH, 0.1, PLANE_HEIGHT),
   });
   scene.add(rigidFloorObject);
+
+  scene.add(new Flame({ scale: 3 }));
 
   await scene.initializeNavMeshManager(floorGroup);
 

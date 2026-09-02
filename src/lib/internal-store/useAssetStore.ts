@@ -20,14 +20,14 @@ export type AssetState = {
   loadModelFBX: (id: string, url: string, options?: LoadModelFBXOptions) => Promise<THREE.Object3D>;
 };
 
-export type LoadModelGLTFOptions = {
+export type LoadModelOptions = {
   nameExtractor?: string;
-  centerOrigin?: boolean; // Whether to reposition the model's origin to its geometric center (default: true)
+  centerOrigin?: boolean;
 };
 
-export type LoadModelFBXOptions = {
-  nameExtractor?: string;
-  centerOrigin?: boolean; // Whether to reposition the model's origin to its geometric center (default: true)
+export type LoadModelGLTFOptions = LoadModelOptions;
+
+export type LoadModelFBXOptions = LoadModelOptions & {
   texturePaths?: Record<string, string>; // material name -> texture URL
 };
 
@@ -36,6 +36,7 @@ export type ModelRecord = {
   id: string;
   path: string;
   nameExtractor?: string;
+  centerOrigin?: boolean;
 };
 
 export type TextureRecord = {
@@ -54,6 +55,54 @@ const jsonLoader = new THREE.ObjectLoader();
 const textureLoader = new THREE.TextureLoader();
 
 const COPY_ASSETS_NOTE = '\n\n❗️ Make sure to copy new assets using npm run copy-assets.\n';
+
+function extractNamedObject(
+  root: THREE.Object3D,
+  nameExtractor: string | undefined,
+  url: string,
+  format: string
+): THREE.Object3D {
+  if (!nameExtractor) return root;
+
+  const found = traverseFind(
+    root,
+    (obj) => obj.name === nameExtractor && obj instanceof THREE.Object3D
+  );
+
+  if (!found) {
+    logger({
+      message:
+        `AssetStore: Object with name '${nameExtractor}' not found in ${format} model: ` +
+        `${url}. Using entire scene as fallback.`,
+      type: 'warn',
+    });
+  }
+
+  return found ?? root;
+}
+
+function finalizeLoadedModel(
+  object: THREE.Object3D,
+  animations: THREE.AnimationClip[],
+  options?: Pick<LoadModelOptions, 'centerOrigin'>
+): THREE.Object3D {
+  animations.forEach((clip) => {
+    clip.name = clip.name.toLowerCase();
+  });
+
+  if (options?.centerOrigin) {
+    if (object instanceof THREE.Mesh) {
+      object.geometry.center();
+    } else {
+      const center = new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3());
+      object.position.sub(center);
+    }
+  }
+
+  object.animations = animations;
+
+  return object;
+}
 
 export const useAssetStore = create<AssetState>((set, get) => ({
   textureCache: new Map<string, THREE.Texture>(),
@@ -101,22 +150,8 @@ export const useAssetStore = create<AssetState>((set, get) => ({
         .then((response) => response.json())
         .then((data) => {
           const scene = jsonLoader.parse(data.scene);
-          let object: THREE.Object3D = scene;
+          const object = extractNamedObject(scene, nameExtractor, url, 'JSON');
 
-          if (nameExtractor) {
-            const foundObject = traverseFind(
-              scene,
-              (obj) => obj.name === nameExtractor && obj instanceof THREE.Object3D
-            );
-            if (!foundObject) {
-              logger({
-                message: `AssetStore: Object with name '${nameExtractor}' not found
-                in model JSON: ${url}. Using entire scene as fallback.`,
-                type: 'warn',
-              });
-            }
-            object = foundObject || scene;
-          }
           set((state) => ({
             modelCacheJSON: new Map(state.modelCacheJSON).set(id, object),
           }));
@@ -143,52 +178,13 @@ export const useAssetStore = create<AssetState>((set, get) => ({
       gltfLoader.load(
         url,
         (gltf) => {
-          let object: THREE.Object3D = gltf.scene;
-          const nameExtractor = options?.nameExtractor;
-
-          if (nameExtractor) {
-            const foundObject = traverseFind(
-              gltf.scene,
-              (obj) => obj.name === nameExtractor && obj instanceof THREE.Object3D
-            );
-            if (!foundObject) {
-              logger({
-                message: `AssetStore: Object with name '${nameExtractor}' not found
-                in GLTF model: ${url}. Using entire scene as fallback.`,
-                type: 'warn',
-              });
-            }
-            object = foundObject || gltf.scene;
-          }
-
-          // Reposition origin to geometric center by wrapping in a container
-          const bbox = new THREE.Box3().setFromObject(object);
-          const center = bbox.getCenter(new THREE.Vector3());
-
-          // Create a container that will become the new "root" with centered origin
-          const container = new THREE.Group();
-          container.name = object.name + '_Container';
-
-          if (options?.centerOrigin) {
-            // Move the model so its geometric center is at the container's origin
-            object.position.sub(center);
-          }
-
-          // Add model as child of container
-          container.add(object);
-
-          // Pass animations to the container (so they're accessible via the returned object)
-          container.animations = gltf.animations;
-
-          // Format animation names to lowercase for easier retrieval
-          container.animations.forEach((clip) => {
-            clip.name = clip.name.toLowerCase();
-          });
+          const object = extractNamedObject(gltf.scene, options?.nameExtractor, url, 'GLTF');
+          const model = finalizeLoadedModel(object, gltf.animations, options);
 
           set((state) => ({
-            modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, container),
+            modelCacheGLTF: new Map(state.modelCacheGLTF).set(id, model),
           }));
-          resolve(container);
+          resolve(model);
         },
         undefined,
         (error) => {
@@ -213,47 +209,8 @@ export const useAssetStore = create<AssetState>((set, get) => ({
       fbxLoader.load(
         url,
         (fbx) => {
-          let object: THREE.Object3D = fbx;
-          const nameExtractor = options?.nameExtractor;
-
-          if (nameExtractor) {
-            const foundObject = traverseFind(
-              fbx,
-              (obj) => obj.name === nameExtractor && obj instanceof THREE.Object3D
-            );
-            if (!foundObject) {
-              logger({
-                message: `AssetStore: Object with name '${nameExtractor}' not found
-                in FBX model: ${url}. Using entire scene as fallback.`,
-                type: 'warn',
-              });
-            }
-            object = foundObject || fbx;
-          }
-
-          // Reposition origin to geometric center by wrapping in a container
-          const bbox = new THREE.Box3().setFromObject(object);
-          const center = bbox.getCenter(new THREE.Vector3());
-
-          // Create a container that will become the new "root" with centered origin
-          const container = new THREE.Group();
-          container.name = object.name + '_Container';
-
-          if (options?.centerOrigin) {
-            // Move the model so its geometric center is at the container's origin
-            object.position.sub(center);
-          }
-
-          // Add model as child of container
-          container.add(object);
-
-          // Pass animations to the container (so they're accessible via the returned object)
-          container.animations = fbx.animations;
-
-          // Format animation names to lowercase for easier retrieval
-          container.animations.forEach((clip) => {
-            clip.name = clip.name.toLowerCase();
-          });
+          const object = extractNamedObject(fbx, options?.nameExtractor, url, 'FBX');
+          const model = finalizeLoadedModel(object, fbx.animations, options);
 
           // Load and assign each named material's texture (FBX doesn't embed textures like
           // GLTF does, so they're fetched separately and matched onto materials by name).
@@ -261,7 +218,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
           const textureAssignments: Promise<void>[] = [];
 
           if (texturePaths) {
-            container.traverse((child) => {
+            model.traverse((child) => {
               if (!(child instanceof THREE.Mesh)) return;
 
               const materials = Array.isArray(child.material) ? child.material : [child.material];
@@ -283,9 +240,9 @@ export const useAssetStore = create<AssetState>((set, get) => ({
 
           Promise.all(textureAssignments).then(() => {
             set((state) => ({
-              modelCacheFBX: new Map(state.modelCacheFBX).set(id, container),
+              modelCacheFBX: new Map(state.modelCacheFBX).set(id, model),
             }));
-            resolve(container);
+            resolve(model);
           });
         },
         undefined,

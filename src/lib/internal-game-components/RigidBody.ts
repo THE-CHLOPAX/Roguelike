@@ -321,8 +321,6 @@ export class RigidBody extends GameObjectComponent<RigidBodyOptions> {
       new THREE.Vector3(1, 1, 1)
     );
 
-    // Collider dimensions are in world units, so a scaled gameObject would otherwise
-    // stretch the debug mesh - decompose the parent-local scale back out and apply it.
     parentWorldMatrixInverse
       .multiply(colliderWorldMatrix)
       .decompose(mesh.position, mesh.quaternion, mesh.scale);

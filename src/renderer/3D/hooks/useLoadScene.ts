@@ -25,19 +25,18 @@ function loadModelRecord(record: ModelRecord): Promise<unknown> {
   const { loadModelGLTF, loadModelFBX, loadModelJSON } = useAssetStore.getState();
   const extension = record.path.split('.').pop()?.toLowerCase();
 
+  const modelOptions = {
+    nameExtractor: record.nameExtractor,
+    centerOrigin: record.centerOrigin ?? true,
+  };
+
   switch (extension) {
     case 'fbx':
-      return loadModelFBX(record.id, record.path, {
-        nameExtractor: record.nameExtractor,
-        centerOrigin: true,
-      });
+      return loadModelFBX(record.id, record.path, modelOptions);
     case 'json':
       return loadModelJSON(record.id, record.path, record.nameExtractor);
     default:
-      return loadModelGLTF(record.id, record.path, {
-        nameExtractor: record.nameExtractor,
-        centerOrigin: true,
-      });
+      return loadModelGLTF(record.id, record.path, modelOptions);
   }
 }
 
@@ -64,10 +63,6 @@ export function useLoadScene({
 
     const preloadAssetOperations = preloadAssets.map(loadAssetRecord);
 
-    // The build (physics -> assets -> sceneBuilder -> finalize) is tracked as a single
-    // unit alongside the individual asset loads, so the progress bar advances as each
-    // asset resolves without those loads also being counted a second time inside the
-    // build promise.
     const buildPromise = nextScene
       .initializePhysics()
       .then(() => Promise.all(preloadAssetOperations))
@@ -82,8 +77,6 @@ export function useLoadScene({
 
     executeAsyncOperationsWithProgress(trackedOperations, reportProgress).then(() => {
       if (cancelled) {
-        // Component unmounted mid-load; tear down the fully-built scene (physics
-        // world, nav mesh) that the cleanup effect below never received.
         nextScene.dispose();
         return;
       }

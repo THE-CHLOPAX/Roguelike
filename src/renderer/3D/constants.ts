@@ -132,29 +132,35 @@ export const MODELS: Record<string, ModelRecord> = {
     id: 'model_dungeon_pillar',
     path: './assets/models/model_dungeon_pillar.fbx',
     nameExtractor: 'Pillar_03_001',
-  },
-  DUNGEON_TORCH_WALL: {
-    type: 'model',
-    id: 'model_dungeon_torch_wall',
-    path: './assets/models/model_dungeon_torch_wall.fbx',
+    centerOrigin: false,
   },
   DUNGEON_WALL_BRICK_TALL: {
     type: 'model',
     id: 'model_dungeon_wall_brick_tall',
     path: './assets/models/model_dungeon_wall_brick_tall.fbx',
     nameExtractor: 'WallBrick_Tall_01_001',
+    centerOrigin: false,
   },
   DUNGEON_FLOOR: {
     type: 'model',
     id: 'model_dungeon_floor',
     path: './assets/models/model_dungeon_floor.fbx',
     nameExtractor: 'Floor_Corner_01_001',
+    centerOrigin: false,
   },
   DUNGEON_PLINTH: {
     type: 'model',
     id: 'model_dungeon_plinth',
     path: './assets/models/model_dungeon_plinth.fbx',
     nameExtractor: 'Plinth_Big_01_001',
+    centerOrigin: false,
+  },
+  DUNGEON_WALL_TORCH: {
+    type: 'model',
+    id: 'model_dungeon_torch_wall',
+    path: './assets/models/model_dungeon_wall_torch.glb',
+    centerOrigin: false,
+    nameExtractor: 'dungeon_wall_torch_body',
   },
 };
 

@@ -23,8 +23,7 @@ export function buildFloorGroup(
   meshGroup.name = FLOOR_GROUP_NAME;
 
   // Floor models
-  const floorModel = getModelFromStore(floorModelRecord.id);
-  const floorMesh = floorModel?.children[0];
+  const floorMesh = getModelFromStore(floorModelRecord.id);
 
   assert(isMesh(floorMesh));
 

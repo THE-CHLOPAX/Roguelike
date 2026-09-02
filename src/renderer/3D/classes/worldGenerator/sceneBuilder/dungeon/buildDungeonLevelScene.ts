@@ -17,7 +17,8 @@ export async function buildDungeonLevelScene(scene: Scene): Promise<void> {
   const worldGenOutput = MOCK_WORLD_GEN_OUTPUT; // TODO: Replace with real world gen when ready
 
   // STEP 2: World data parsing
-  const parsedData = parseWorldGeneratorOutput(worldGenOutput);
+  const worldParsed = parseWorldGeneratorOutput(worldGenOutput);
+  const { data: parsedData } = worldParsed;
 
   // Lighting - the floor/wall/decoration materials are MeshStandardMaterial (PBR),
   // which render pure black with no light in the scene.

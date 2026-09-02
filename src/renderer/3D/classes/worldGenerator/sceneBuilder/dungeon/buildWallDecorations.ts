@@ -19,6 +19,7 @@ type PillarPlacement = {
   position: THREE.Vector3;
   yaw: number;
   cellIndex: number;
+  tileIndex: number;
 };
 
 const WALL_DECORATIONS_GROUP_NAME = 'level-wall-decorations-group';
@@ -32,8 +33,7 @@ export function buildWallDecorations(
   const meshGroup = new THREE.Group();
   meshGroup.name = WALL_DECORATIONS_GROUP_NAME;
 
-  const plinthModel = getModelFromStore(plinthModelRecord.id);
-  const plinthMesh = plinthModel?.children[0];
+  const plinthMesh = getModelFromStore(plinthModelRecord.id);
 
   assert(isMesh(plinthMesh));
 
@@ -41,8 +41,7 @@ export function buildWallDecorations(
   const plinthMaterial = plinthMesh.material;
   pixelateModelMaterial(plinthMaterial);
 
-  const pillarModel = getModelFromStore(pillarModelRecord.id);
-  const pillarMesh = pillarModel?.children[0];
+  const pillarMesh = getModelFromStore(pillarModelRecord.id);
 
   assert(isMesh(pillarMesh));
 
@@ -96,15 +95,21 @@ function buildPillarPlacements(wallPlacements: WallPlacement[]): PillarPlacement
     const yaw = getWallYawForEdge(edge);
     const lengthAxis: WorldGeneratorVec2 = { x: edge.z, z: edge.x };
 
-    pillarPlacements.push({
-      position: new THREE.Vector3(
-        wallCenter.x + (lengthAxis.x * CELL_SIZE_METERS) / 2,
-        0,
-        wallCenter.z + (lengthAxis.z * CELL_SIZE_METERS) / 2
-      ),
-      yaw,
-      cellIndex,
-    });
+    const pillarPosition = new THREE.Vector3(
+      wallCenter.x + (lengthAxis.x * CELL_SIZE_METERS) / 2,
+      0,
+      wallCenter.z + (lengthAxis.z * CELL_SIZE_METERS) / 2
+    );
+
+    // Only one pillar can exist at a given position, regardless of its rotation.
+    if (!pillarPlacements.some((p) => p.position.equals(pillarPosition))) {
+      pillarPlacements.push({
+        position: pillarPosition,
+        yaw,
+        cellIndex,
+        tileIndex: tile.index,
+      });
+    }
 
     const negativeSideNeighbourPosition: WorldGeneratorVec2 = {
       x: tile.position.x - lengthAxis.x * CELL_SIZE_METERS,
@@ -115,15 +120,20 @@ function buildPillarPlacements(wallPlacements: WallPlacement[]): PillarPlacement
     );
 
     if (!hasNegativeSideNeighbour) {
-      pillarPlacements.push({
-        position: new THREE.Vector3(
-          wallCenter.x - (lengthAxis.x * CELL_SIZE_METERS) / 2,
-          0,
-          wallCenter.z - (lengthAxis.z * CELL_SIZE_METERS) / 2
-        ),
-        yaw,
-        cellIndex,
-      });
+      const negativeSidePillarPosition = new THREE.Vector3(
+        wallCenter.x - (lengthAxis.x * CELL_SIZE_METERS) / 2,
+        0,
+        wallCenter.z - (lengthAxis.z * CELL_SIZE_METERS) / 2
+      );
+
+      if (!pillarPlacements.some((p) => p.position.equals(negativeSidePillarPosition))) {
+        pillarPlacements.push({
+          position: negativeSidePillarPosition,
+          yaw,
+          cellIndex,
+          tileIndex: tile.index,
+        });
+      }
     }
   });
 
